@@ -143,6 +143,22 @@ export default function ServiceChecklists() {
           const total = checklist.items.length;
           const progress = (completed / total) * 100;
 
+          const renderChecklistItems = () => {
+            return checklist.items.map((item, itemIdx) => (
+              <div key={itemIdx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={item.completed}
+                  onChange={() => toggleItem(checklist.checklist_id, item.item_id)}
+                  className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                />
+                <span className={`flex-1 text-sm ${item.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>
+                  {item.text}
+                </span>
+              </div>
+            ));
+          };
+
           return (
             <div key={idx} className="bg-white rounded-2xl p-6 shadow-lg border border-slate-100">
               <div className="mb-4">
@@ -157,19 +173,7 @@ export default function ServiceChecklists() {
               </div>
 
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {checklist.items.map((item, itemIdx) => (
-                  <div key={itemIdx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-slate-50 transition-colors">
-                    <input
-                      type="checkbox"
-                      checked={item.completed}
-                      onChange={() => toggleItem(checklist.checklist_id, item.item_id)}
-                      className="mt-1 w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className={`flex-1 text-sm ${item.completed ? 'line-through text-slate-400' : 'text-slate-700'}`}>
-                      {item.text}
-                    </span>
-                  </div>
-                ))}
+                {renderChecklistItems()}
               </div>
             </div>
           );
