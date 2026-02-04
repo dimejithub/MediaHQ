@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
-import TeamDirectory from '@/pages/TeamDirectory';
+// import TeamDirectory from '@/pages/TeamDirectory';
 import Services from '@/pages/Services';
 import MyRotas from '@/pages/MyRotas';
 import Equipment from '@/pages/Equipment';
