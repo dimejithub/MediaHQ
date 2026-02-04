@@ -98,13 +98,13 @@ export default function Dashboard() {
             <CardTitle className="text-xl font-heading font-semibold">Upcoming Services</CardTitle>
           </CardHeader>
           <CardContent>
-            {kpis?.upcoming_services?.length > 0 ? (
+            {kpis && kpis.upcoming_services && kpis.upcoming_services.length > 0 ? (
               <div className="space-y-4">
-                {kpis.upcoming_services.map((service) => (
+                {kpis.upcoming_services.slice(0, 5).map((service, index) => (
                   <div
-                    key={service.service_id}
-                    className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-secondary/50 transition-colors"
-                    data-testid={`service-${service.service_id}`}
+                    key={service.service_id || index}
+                    className="flex items-start justify-between p-4 border border-border rounded-lg hover:bg-secondary/50"
+                    data-testid={`service-${service.service_id || index}`}
                   >
                     <div className="flex-1">
                       <h3 className="font-medium text-base">{service.title}</h3>
