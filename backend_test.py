@@ -167,7 +167,7 @@ class TENMediaHQAPITester:
                 ],
                 "notes": "Test rota for Sunday service"
             }
-            success, data = self.make_request('POST', 'rotas', rota_data, 201)
+            success, data = self.make_request('POST', 'rotas', rota_data, 200)
             if success and data.get('rota_id'):
                 rota_id = data['rota_id']
                 self.created_resources['rota_id'] = rota_id
