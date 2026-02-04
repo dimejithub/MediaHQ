@@ -83,6 +83,8 @@ function App() {
             <Route path="/services" element={<Services />} />
             <Route path="/my-rotas" element={<MyRotas />} />
             <Route path="/equipment" element={<Equipment />} />
+            <Route path="/checklists" element={<ServiceChecklists />} />
+            <Route path="/reports" element={<ServiceReports />} />
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
