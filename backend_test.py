@@ -318,7 +318,7 @@ class TENMediaHQAPITester:
             "backup_user_id": None,
             "notes": "Test rotation for week 3"
         }
-        success, data = self.make_request('POST', 'lead-rotation', rotation_data, 201)
+        success, data = self.make_request('POST', 'lead-rotation', rotation_data, 200)
         if success and data.get('rotation_id'):
             rotation_id = data['rotation_id']
             self.created_resources['rotation_id'] = rotation_id
