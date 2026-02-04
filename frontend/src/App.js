@@ -88,7 +88,7 @@ function AppRouter() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      {/* <Route path="/team" element={<ProtectedRoute><TeamDirectory /></ProtectedRoute>} /> */}
+      <Route path="/team" element={<ProtectedRoute><TeamDirectory /></ProtectedRoute>} />
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="/my-rotas" element={<ProtectedRoute><MyRotas /></ProtectedRoute>} />
       <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
