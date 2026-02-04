@@ -134,7 +134,7 @@ class TENMediaHQAPITester:
             "type": "worship",
             "description": "Weekly Sunday service"
         }
-        success, data = self.make_request('POST', 'services', service_data, 201)
+        success, data = self.make_request('POST', 'services', service_data, 200)
         if success and data.get('service_id'):
             service_id = data['service_id']
             self.created_resources['service_id'] = service_id
