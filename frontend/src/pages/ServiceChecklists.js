@@ -115,18 +115,23 @@ export default function ServiceChecklists() {
           Create Checklist for Service
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {services.filter(s => !checklists.find(c => c.service_id === s.service_id)).map((service, idx) => (
-            <div key={idx} className="p-4 rounded-xl bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200">
-              <h3 className="font-bold text-lg text-slate-800">{service.title}</h3>
-              <p className="text-sm text-slate-600 mt-1">{service.date} at {service.time}</p>
-              <button
-                onClick={() => createChecklist(service.service_id)}
-                className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
-              >
-                ➕ Create Checklist
-              </button>
-            </div>
-          ))}
+          {services.map((service, idx) => {
+            const hasChecklist = checklists.find(c => c.service_id === service.service_id);
+            if (hasChecklist) return null;
+            
+            return (
+              <div key={idx} className="p-4 rounded-xl bg-gradient-to-r from-slate-50 to-blue-50 border border-slate-200">
+                <h3 className="font-bold text-lg text-slate-800">{service.title}</h3>
+                <p className="text-sm text-slate-600 mt-1">{service.date} at {service.time}</p>
+                <button
+                  onClick={() => createChecklist(service.service_id)}
+                  className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all"
+                >
+                  ➕ Create Checklist
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
 
