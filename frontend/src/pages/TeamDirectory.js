@@ -32,9 +32,10 @@ export default function TeamDirectory() {
             <div>
               <h4 className="text-sm font-semibold mb-2">Skills</h4>
               <div className="flex flex-wrap gap-2">
-                {member.skills && member.skills.length > 0 ? member.skills.map((skill, sidx) => (
+                {member.skills && member.skills.length > 0 && member.skills.map((skill, sidx) => (
                   <span key={sidx} className="px-2 py-1 text-xs bg-gray-100 rounded">{skill}</span>
-                )) : <span className="text-xs text-gray-500">No skills listed</span>}
+                ))}
+                {(!member.skills || member.skills.length === 0) && <span className="text-xs text-gray-500">No skills listed</span>}
               </div>
             </div>
           </div>
