@@ -1,0 +1,197 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "TEN MediaHQ",
+      "archetype": "The Soft Utility",
+      "vibe": "Professional, Organized, Community-Focused, Reliable",
+      "theme_strategy": "Light Mode Default (Clean & Crisp)",
+      "primary_font": "Manrope",
+      "secondary_font": "Inter"
+    },
+    "typography": {
+      "font_family": {
+        "heading": "Manrope, sans-serif",
+        "body": "Inter, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-4xl md:text-5xl font-bold tracking-tight leading-tight",
+        "h2": "text-3xl md:text-4xl font-semibold tracking-tight",
+        "h3": "text-2xl font-semibold tracking-normal",
+        "h4": "text-xl font-medium tracking-normal",
+        "body_lg": "text-lg leading-relaxed",
+        "body_base": "text-base leading-relaxed text-slate-600",
+        "body_sm": "text-sm leading-normal text-slate-500",
+        "caption": "text-xs font-medium uppercase tracking-wider text-slate-400"
+      },
+      "rules": [
+        "Headings must use Manrope.",
+        "Body text must use Inter.",
+        "Never use Inter for H1 or H2.",
+        "Use tight tracking for headings larger than 24px.",
+        "Use relaxed leading for body text to improve readability."
+      ]
+    },
+    "colors": {
+      "palette": {
+        "primary": {
+          "DEFAULT": "hsl(222.2 47.4% 11.2%)",
+          "foreground": "hsl(210 40% 98%)",
+          "description": "Deep Slate Blue - Used for primary actions, active states, and strong branding."
+        },
+        "secondary": {
+          "DEFAULT": "hsl(210 40% 96.1%)",
+          "foreground": "hsl(222.2 47.4% 11.2%)",
+          "description": "Soft Cool Gray - Used for secondary buttons, backgrounds of cards."
+        },
+        "accent": {
+          "DEFAULT": "hsl(217.2 91.2% 59.8%)",
+          "foreground": "hsl(0 0% 100%)",
+          "description": "Electric Blue - Used for CTAs, links, and focus states."
+        },
+        "background": "hsl(0 0% 100%)",
+        "foreground": "hsl(222.2 84% 4.9%)",
+        "muted": {
+          "DEFAULT": "hsl(210 40% 96.1%)",
+          "foreground": "hsl(215.4 16.3% 46.9%)"
+        },
+        "card": {
+          "DEFAULT": "hsl(0 0% 100%)",
+          "foreground": "hsl(222.2 84% 4.9%)"
+        },
+        "border": "hsl(214.3 31.8% 91.4%)",
+        "input": "hsl(214.3 31.8% 91.4%)",
+        "destructive": {
+          "DEFAULT": "hsl(0 84.2% 60.2%)",
+          "foreground": "hsl(210 40% 98%)"
+        },
+        "success": {
+          "DEFAULT": "hsl(142.1 76.2% 36.3%)",
+          "foreground": "hsl(355.7 100% 97.3%)"
+        },
+        "warning": {
+          "DEFAULT": "hsl(48 96% 89%)",
+          "foreground": "hsl(38 92% 50%)"
+        }
+      },
+      "usage_rules": [
+        "Do not use gradients for backgrounds. Use solid colors or subtle noise textures.",
+        "Use the 'accent' color sparingly for high-priority actions.",
+        "Ensure text contrast ratios meet WCAG AA standards.",
+        "Use 'muted-foreground' for secondary text to reduce visual noise."
+      ]
+    },
+    "visual_enhancers": {
+      "shadows": {
+        "card": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "hover": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)",
+        "dropdown": "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)"
+      },
+      "borders": {
+        "default": "1px solid hsl(var(--border))",
+        "active": "1px solid hsl(var(--accent))",
+        "radius": {
+          "sm": "0.375rem",
+          "md": "0.5rem",
+          "lg": "0.75rem",
+          "full": "9999px"
+        }
+      },
+      "textures": [
+        "Subtle noise overlay on the dashboard background to reduce digital flatness.",
+        "Glassmorphism for sticky headers: bg-white/80 backdrop-blur-md border-b."
+      ]
+    },
+    "layout_strategies": {
+      "dashboard_grid": {
+        "type": "Bento Grid",
+        "classes": "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+        "rules": [
+          "Summary cards span 1 column.",
+          "Main charts span 2 or 3 columns.",
+          "Lists (like 'Upcoming Rotas') span 1 column and 2 rows.",
+          "Always use 'gap-6' for dashboard grids to allow breathing room."
+        ]
+      },
+      "page_structure": {
+        "container": "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8",
+        "header": "flex justify-between items-center mb-8",
+        "section": "bg-card rounded-lg border shadow-sm p-6 mb-6"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 rounded-md font-medium transition-colors",
+        "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 h-10 px-4 py-2 rounded-md font-medium transition-colors",
+        "ghost": "hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-md font-medium transition-colors",
+        "destructive": "bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 px-4 py-2 rounded-md font-medium transition-colors"
+      },
+      "cards": {
+        "base": "rounded-lg border bg-card text-card-foreground shadow-sm",
+        "header": "flex flex-col space-y-1.5 p-6",
+        "content": "p-6 pt-0",
+        "footer": "flex items-center p-6 pt-0"
+      },
+      "inputs": {
+        "base": "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      },
+      "status_pills": {
+        "confirmed": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-green-100 text-green-800 hover:bg-green-200",
+        "pending": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+        "declined": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 border-transparent bg-red-100 text-red-800 hover:bg-red-200"
+      }
+    },
+    "media": {
+      "image_urls": {
+        "login_background": {
+          "url": "https://images.unsplash.com/photo-1589320843284-4b70884083a6?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDR8MHwxfHNlYXJjaHwzfHxjaHVyY2glMjBtZWRpYSUyMHRlYW0lMjBwcm9kdWN0aW9ufGVufDB8fHx8MTc3MDIzMjk0N3ww&ixlib=rb-4.1.0&q=85",
+          "description": "Live stream worship team context for login page background."
+        },
+        "equipment_header": {
+          "url": "https://images.unsplash.com/photo-1726731770351-6c23298bd0e0?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzN8MHwxfHNlYXJjaHwxfHxhdWRpbyUyMHZpc3VhbCUyMGVxdWlwbWVudCUyMG1peGluZyUyMGNvbnNvbGV8ZW58MHx8fHwxNzcwMjMyOTUwfDA&ixlib=rb-4.1.0&q=85",
+          "description": "Mixing console close-up for equipment inventory section."
+        },
+        "team_avatars": [
+          {
+            "url": "https://images.unsplash.com/photo-1602566356438-dd36d35e989c?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwdGVhbSUyMHBvcnRyYWl0cyUyMHByb2Zlc3Npb25hbHxlbnwwfHx8fDE3NzAyMzI5NTV8MA&ixlib=rb-4.1.0&q=85",
+            "description": "Professional woman with glasses"
+          },
+          {
+            "url": "https://images.unsplash.com/photo-1659100947220-48b5d5738148?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHwyfHxkaXZlcnNlJTIwdGVhbSUyMHBvcnRyYWl0cyUyMHByb2Zlc3Npb25hbHxlbnwwfHx8fDE3NzAyMzI5NTV8MA&ixlib=rb-4.1.0&q=85",
+            "description": "Man holding camera"
+          },
+          {
+            "url": "https://images.unsplash.com/photo-1720874129553-1d2e66076b16?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODB8MHwxfHNlYXJjaHw0fHxkaXZlcnNlJTIwdGVhbSUyMHBvcnRyYWl0cyUyMHByb2Zlc3Npb25hbHxlbnwwfHx8fDE3NzAyMzI5NTV8MA&ixlib=rb-4.1.0&q=85",
+            "description": "Woman against black background"
+          }
+        ]
+      },
+      "icons": "Use 'lucide-react' for all UI icons. Use 'Calendar', 'Users', 'Settings', 'CheckSquare', 'Video', 'BarChart' as primary navigation icons."
+    },
+    "accessibility": {
+      "rules": [
+        "All interactive elements must have a 'data-testid'.",
+        "Ensure color contrast is at least 4.5:1 for normal text.",
+        "Focus states must be clearly visible with a ring offset.",
+        "Use semantic HTML (main, nav, aside, section) for structure."
+      ]
+    },
+    "instructions_to_main_agent": [
+      "Implement the 'Soft Utility' theme using the provided color palette in tailwind.config.js.",
+      "Use 'Manrope' for all headings and 'Inter' for body text. Import these fonts via Google Fonts in index.css.",
+      "Build the Dashboard using the 'Bento Grid' layout strategy.",
+      "Use Shadcn/ui components for complex interactions but style them to match the 'Soft Utility' theme (rounded corners, subtle shadows).",
+      "Ensure the 'My Rotas' page is mobile-responsive and easy to use on small screens.",
+      "Use the provided image URLs for the Login page and Equipment section.",
+      "Do not use generic 'Lorem Ipsum'. Use realistic data related to church media (e.g., 'Sunday Service', 'Worship Night', 'Camera 1', 'Sound Board')."
+    ],
+    "universal_guidelines": [
+      "Avoid 'AI slop' aesthetic (generic centered layouts, uniform styling).",
+      "Create depth through layered design elements.",
+      "Use glass-morphism effects for sticky headers.",
+      "Every interaction needs micro-animations (hover, focus, active).",
+      "Use 2-3x more spacing than feels comfortable.",
+      "Never use AI assistant emojis for icons."
+    ]
+  }
+}
