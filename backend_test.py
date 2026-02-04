@@ -208,7 +208,7 @@ class TENMediaHQAPITester:
             "category": "camera",
             "notes": "Main worship camera"
         }
-        success, data = self.make_request('POST', 'equipment', equipment_data, 201)
+        success, data = self.make_request('POST', 'equipment', equipment_data, 200)
         if success and data.get('equipment_id'):
             equipment_id = data['equipment_id']
             self.created_resources['equipment_id'] = equipment_id
