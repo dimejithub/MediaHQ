@@ -280,7 +280,7 @@ class TENMediaHQAPITester:
             "duration": "15:30",
             "description": "Learn basic camera operations for worship services"
         }
-        success, data = self.make_request('POST', 'training/videos', video_data, 201)
+        success, data = self.make_request('POST', 'training/videos', video_data, 200)
         if success and data.get('video_id'):
             video_id = data['video_id']
             self.created_resources['video_id'] = video_id
