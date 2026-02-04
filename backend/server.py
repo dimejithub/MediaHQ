@@ -388,7 +388,10 @@ async def create_service(service: ServiceCreate, request: Request, session_token
 @api_router.get("/services")
 async def get_services(request: Request, session_token: Optional[str] = Cookie(None)):
     await get_user_from_session(request, session_token)
-    services = await db.services.find({}, {"_id": 0}).sort("date", -1).to_list(1000)
+    services = await db.services.find(
+        {},
+        {"_id": 0, "service_id": 1, "title": 1, "date": 1, "time": 1, "type": 1, "description": 1, "created_by": 1, "created_at": 1}
+    ).sort("date", -1).to_list(1000)
     for s in services:
         if isinstance(s['created_at'], str):
             s['created_at'] = datetime.fromisoformat(s['created_at'])
