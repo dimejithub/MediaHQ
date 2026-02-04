@@ -619,7 +619,7 @@ async def create_checklist(checklist: ChecklistCreate, request: Request, session
     return doc
 
 @api_router.get("/checklists")
-async def get_checklists(service_id: Optional[str] = None, request: Request = None, session_token: Optional[str] = Cookie(None)):
+async def get_checklists(request: Request, session_token: Optional[str] = Cookie(None), service_id: Optional[str] = None):
     await get_user_from_session(request, session_token)
     query = {"service_id": service_id} if service_id else {}
     checklists = await db.checklists.find(query, {"_id": 0}).to_list(1000)
