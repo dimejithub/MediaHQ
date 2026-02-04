@@ -321,7 +321,10 @@ async def get_dashboard_kpis(request: Request, session_token: Optional[str] = Co
 @api_router.get("/team/members")
 async def get_team_members(request: Request, session_token: Optional[str] = Cookie(None)):
     await get_user_from_session(request, session_token)
-    members = await db.users.find({}, {"_id": 0}).to_list(1000)
+    members = await db.users.find(
+        {},
+        {"_id": 0, "user_id": 1, "email": 1, "name": 1, "picture": 1, "role": 1, "skills": 1, "availability": 1, "phone": 1, "created_at": 1}
+    ).to_list(1000)
     for m in members:
         if isinstance(m['created_at'], str):
             m['created_at'] = datetime.fromisoformat(m['created_at'])
