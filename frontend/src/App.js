@@ -7,7 +7,7 @@ import TeamDirectory from '@/pages/TeamDirectory';
 import Services from '@/pages/Services';
 import MyRotas from '@/pages/MyRotas';
 import Equipment from '@/pages/Equipment';
-import Checklists from '@/pages/Checklists';
+// import Checklists from '@/pages/Checklists';
 import Training from '@/pages/Training';
 import LeadRotation from '@/pages/LeadRotation';
 import Performance from '@/pages/Performance';
