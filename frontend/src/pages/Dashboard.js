@@ -10,14 +10,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchKpis();
+    loadDashboardData();
   }, []);
 
-  const fetchKpis = async () => {
+  const loadDashboardData = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/dashboard/kpis`, {
-        credentials: 'include'
-      });
+      const response = await fetch(`${BACKEND_URL}/api/dashboard/kpis`, { credentials: 'include' });
       if (!response.ok) throw new Error('Failed to fetch KPIs');
       const data = await response.json();
       setKpis(data);
