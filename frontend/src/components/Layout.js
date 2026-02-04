@@ -1,8 +1,5 @@
-import { Users, Calendar, Package, BarChart3, LogOut, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
