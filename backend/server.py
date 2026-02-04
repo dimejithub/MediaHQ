@@ -460,11 +460,21 @@ async def get_my_rotas(request: Request, session_token: Optional[str] = Cookie(N
         {"_id": 0}
     ).to_list(1000)
     
+    # Batch fetch services to avoid N+1 query problem
+    service_ids = list(set([r["service_id"] for r in rotas]))
+    services = await db.services.find(
+        {"service_id": {"$in": service_ids}},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Create service lookup dict
+    service_dict = {s["service_id"]: s for s in services}
+    
     enriched_rotas = []
     for r in rotas:
         if isinstance(r['created_at'], str):
             r['created_at'] = datetime.fromisoformat(r['created_at'])
-        service = await db.services.find_one({"service_id": r["service_id"]}, {"_id": 0})
+        service = service_dict.get(r["service_id"])
         user_assignment = next((a for a in r["assignments"] if a["user_id"] == user.user_id), None)
         enriched_rotas.append({
             **r,
