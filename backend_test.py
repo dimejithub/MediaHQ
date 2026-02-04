@@ -245,7 +245,7 @@ class TENMediaHQAPITester:
                     {"text": "Verify livestream connection"}
                 ]
             }
-            success, data = self.make_request('POST', 'checklists', checklist_data, 201)
+            success, data = self.make_request('POST', 'checklists', checklist_data, 200)
             if success and data.get('checklist_id'):
                 checklist_id = data['checklist_id']
                 self.created_resources['checklist_id'] = checklist_id
