@@ -215,8 +215,9 @@ async def create_session(request: Request, response: Response):
     if not session_id:
         raise HTTPException(status_code=400, detail="Missing session ID")
     
+    auth_backend_url = os.environ.get('AUTH_BACKEND_URL', 'https://demobackend.emergentagent.com')
     ext_response = requests.get(
-        "https://demobackend.emergentagent.com/auth/v1/env/oauth/session-data",
+        f"{auth_backend_url}/auth/v1/env/oauth/session-data",
         headers={"X-Session-ID": session_id}
     )
     
