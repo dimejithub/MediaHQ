@@ -102,7 +102,7 @@ function AppRouter() {
       <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
       <Route path="/my-rotas" element={<ProtectedRoute><MyRotas /></ProtectedRoute>} />
       <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
-      <Route path="/checklists" element={<ProtectedRoute><Checklists /></ProtectedRoute>} />
+      {/* <Route path="/checklists" element={<ProtectedRoute><Checklists /></ProtectedRoute>} /> */}
       <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
       <Route path="/lead-rotation" element={<ProtectedRoute><LeadRotation /></ProtectedRoute>} />
       <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
