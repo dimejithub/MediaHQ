@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, useLocation, Navigate, useNavigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { Toaster } from '@/components/ui/sonner';
 import Login from '@/pages/Login';
@@ -9,14 +9,13 @@ import MyRotas from '@/pages/MyRotas';
 import Equipment from '@/pages/Equipment';
 import Training from '@/pages/Training';
 import Settings from '@/pages/Settings';
-import Layout from '@/components/Layout';
+// import Layout from '@/components/Layout';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 function AuthCallback() {
   const hasProcessed = useRef(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (hasProcessed.current) return;
@@ -41,13 +40,12 @@ function AuthCallback() {
       .catch(() => {
         window.location.href = '/login';
       });
-  }, [navigate]);
+  }, []);
 
   return <div className="flex items-center justify-center min-h-screen">Processing authentication...</div>;
 }
 
 function ProtectedRoute({ children }) {
-  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(null);
   const [user, setUser] = useState(null);
 
@@ -76,7 +74,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  return <Layout user={user}>{children}</Layout>;
+  return <>{children}</>;
 }
 
 function AppRouter() {
