@@ -21,16 +21,13 @@ export default function Layout({ children, user }) {
   };
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: BarChart3 },
-    { name: 'Team Directory', href: '/team', icon: Users },
-    { name: 'Services', href: '/services', icon: Calendar },
-    { name: 'My Rotas', href: '/my-rotas', icon: Calendar },
-    { name: 'Equipment', href: '/equipment', icon: Package },
-    { name: 'Checklists', href: '/checklists', icon: BarChart3 },
-    { name: 'Training', href: '/training', icon: BarChart3 },
-    { name: 'Lead Rotation', href: '/lead-rotation', icon: Calendar },
-    { name: 'Performance', href: '/performance', icon: BarChart3 },
-    { name: 'Settings', href: '/settings', icon: BarChart3 }
+    { name: 'Dashboard', href: '/dashboard' },
+    { name: 'Team', href: '/team' },
+    { name: 'Services', href: '/services' },
+    { name: 'My Rotas', href: '/my-rotas' },
+    { name: 'Equipment', href: '/equipment' },
+    { name: 'Training', href: '/training' },
+    { name: 'Settings', href: '/settings' }
   ];
 
   const adminNavigation = navigation;
