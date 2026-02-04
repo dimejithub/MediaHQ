@@ -12,6 +12,15 @@ export default function TeamDirectory() {
       .catch(err => console.error(err));
   }, []);
 
+  const renderSkills = (skills) => {
+    if (!skills || skills.length === 0) {
+      return <span className="text-xs text-gray-500">No skills listed</span>;
+    }
+    return skills.map((skill, idx) => (
+      <span key={idx} className="px-2 py-1 text-xs bg-gray-100 rounded">{skill}</span>
+    ));
+  };
+
   return (
     <div className="p-8">
       <h1 className="text-4xl font-bold mb-2">Team Directory</h1>
@@ -32,10 +41,7 @@ export default function TeamDirectory() {
             <div>
               <h4 className="text-sm font-semibold mb-2">Skills</h4>
               <div className="flex flex-wrap gap-2">
-                {member.skills && member.skills.length > 0 && member.skills.map((skill, sidx) => (
-                  <span key={sidx} className="px-2 py-1 text-xs bg-gray-100 rounded">{skill}</span>
-                ))}
-                {(!member.skills || member.skills.length === 0) && <span className="text-xs text-gray-500">No skills listed</span>}
+                {renderSkills(member.skills)}
               </div>
             </div>
           </div>
