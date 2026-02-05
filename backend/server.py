@@ -945,6 +945,683 @@ async def export_data(collection: str, request: Request, session_token: Optional
         headers={"Content-Disposition": f"attachment; filename={collection}.csv"}
     )
 
+# ========== IMPORT TEMPLATES ==========
+
+@api_router.get("/data/template/{collection}")
+async def get_import_template(collection: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get CSV template for data import"""
+    await get_user_from_session(request, session_token)
+    
+    templates = {
+        "users": {
+            "headers": ["name", "email", "role", "phone", "skills"],
+            "sample": [
+                {"name": "John Smith", "email": "john@church.org", "role": "member", "phone": "+1234567890", "skills": "Camera,Sound"},
+                {"name": "Sarah Johnson", "email": "sarah@church.org", "role": "team_lead", "phone": "+1234567891", "skills": "ProPresenter,Livestream,Graphics"},
+            ],
+            "notes": "role must be: admin, team_lead, or member. skills are comma-separated."
+        },
+        "services": {
+            "headers": ["title", "date", "time", "type", "description"],
+            "sample": [
+                {"title": "Sunday Morning Service", "date": "2026-02-15", "time": "10:00", "type": "sunday_service", "description": "Main worship service"},
+                {"title": "Youth Night", "date": "2026-02-18", "time": "19:00", "type": "youth_service", "description": "Youth ministry event"},
+            ],
+            "notes": "date format: YYYY-MM-DD. time format: HH:MM. type options: sunday_service, worship_night, youth_service, special_event, conference"
+        },
+        "equipment": {
+            "headers": ["name", "category", "status", "notes"],
+            "sample": [
+                {"name": "Sony PTZ Camera", "category": "camera", "status": "available", "notes": "Main pulpit camera"},
+                {"name": "Shure SM58 Mic", "category": "audio", "status": "available", "notes": "Handheld microphone"},
+            ],
+            "notes": "category options: camera, audio, lighting, computer, cable, video_switcher, other. status options: available, checked_out, maintenance"
+        }
+    }
+    
+    if collection not in templates:
+        raise HTTPException(status_code=400, detail="Invalid collection. Use: users, services, or equipment")
+    
+    template = templates[collection]
+    
+    # Generate CSV
+    output = io.StringIO()
+    writer = csv.DictWriter(output, fieldnames=template["headers"])
+    writer.writeheader()
+    writer.writerows(template["sample"])
+    output.seek(0)
+    
+    return StreamingResponse(
+        iter([output.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={collection}_template.csv"}
+    )
+
+@api_router.get("/data/template-info")
+async def get_template_info(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get information about all available import templates"""
+    await get_user_from_session(request, session_token)
+    
+    return {
+        "templates": [
+            {
+                "collection": "users",
+                "description": "Import team members",
+                "required_fields": ["name", "email"],
+                "optional_fields": ["role", "phone", "skills"],
+                "notes": "role must be: admin, team_lead, or member. skills are comma-separated."
+            },
+            {
+                "collection": "services",
+                "description": "Import church services",
+                "required_fields": ["title", "date", "time", "type"],
+                "optional_fields": ["description"],
+                "notes": "date format: YYYY-MM-DD. time format: HH:MM."
+            },
+            {
+                "collection": "equipment",
+                "description": "Import equipment inventory",
+                "required_fields": ["name", "category"],
+                "optional_fields": ["status", "notes"],
+                "notes": "category options: camera, audio, lighting, computer, cable, video_switcher, other"
+            }
+        ]
+    }
+
+@api_router.post("/data/import-csv")
+async def import_csv_data(collection: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Import data from CSV format"""
+    user = await get_user_from_session(request, session_token)
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Admin only")
+    
+    body = await request.json()
+    csv_data = body.get("data", [])
+    
+    if collection not in ["users", "services", "equipment"]:
+        raise HTTPException(status_code=400, detail="Invalid collection")
+    
+    imported = 0
+    errors = []
+    
+    for idx, row in enumerate(csv_data):
+        try:
+            if collection == "users":
+                # Check if user already exists
+                existing = await db.users.find_one({"email": row.get("email")})
+                if existing:
+                    errors.append(f"Row {idx+1}: User with email {row.get('email')} already exists")
+                    continue
+                
+                new_user = {
+                    "user_id": f"user_{uuid.uuid4().hex[:12]}",
+                    "email": row.get("email"),
+                    "name": row.get("name"),
+                    "role": row.get("role", "member"),
+                    "phone": row.get("phone"),
+                    "skills": row.get("skills", "").split(",") if row.get("skills") else [],
+                    "availability": "available",
+                    "picture": None,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.users.insert_one(new_user)
+                imported += 1
+                
+            elif collection == "services":
+                new_service = {
+                    "service_id": f"service_{uuid.uuid4().hex[:12]}",
+                    "title": row.get("title"),
+                    "date": row.get("date"),
+                    "time": row.get("time"),
+                    "type": row.get("type"),
+                    "description": row.get("description"),
+                    "created_by": user.user_id,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.services.insert_one(new_service)
+                imported += 1
+                
+            elif collection == "equipment":
+                new_equipment = {
+                    "equipment_id": f"equip_{uuid.uuid4().hex[:12]}",
+                    "name": row.get("name"),
+                    "category": row.get("category"),
+                    "status": row.get("status", "available"),
+                    "notes": row.get("notes"),
+                    "checked_out_by": None,
+                    "checked_out_at": None,
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                }
+                await db.equipment.insert_one(new_equipment)
+                imported += 1
+                
+        except Exception as e:
+            errors.append(f"Row {idx+1}: {str(e)}")
+    
+    return {
+        "imported": imported,
+        "total": len(csv_data),
+        "errors": errors
+    }
+
+# ========== TRAINING MATERIALS (PDF/PPT/DOC) ==========
+
+@api_router.post("/training/materials")
+async def create_training_material(material: TrainingMaterialCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    material_id = f"material_{uuid.uuid4().hex[:12]}"
+    new_material = {
+        "material_id": material_id,
+        **material.model_dump(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.training_materials.insert_one(new_material)
+    
+    doc = await db.training_materials.find_one({"material_id": material_id}, {"_id": 0})
+    doc['created_at'] = datetime.fromisoformat(doc['created_at'])
+    return doc
+
+@api_router.get("/training/materials")
+async def get_training_materials(request: Request, session_token: Optional[str] = Cookie(None), category: Optional[str] = None):
+    await get_user_from_session(request, session_token)
+    query = {"category": category} if category else {}
+    materials = await db.training_materials.find(query, {"_id": 0}).to_list(1000)
+    for m in materials:
+        if isinstance(m['created_at'], str):
+            m['created_at'] = datetime.fromisoformat(m['created_at'])
+    return materials
+
+@api_router.delete("/training/materials/{material_id}")
+async def delete_training_material(material_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    result = await db.training_materials.delete_one({"material_id": material_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Material not found")
+    return {"message": "Material deleted"}
+
+# ========== SERVICE REPORTS ==========
+
+@api_router.post("/reports")
+async def create_service_report(report: ServiceReportCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    
+    report_id = f"report_{uuid.uuid4().hex[:12]}"
+    new_report = {
+        "report_id": report_id,
+        **report.model_dump(),
+        "submitted_by": user.user_id,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.service_reports.insert_one(new_report)
+    
+    doc = await db.service_reports.find_one({"report_id": report_id}, {"_id": 0})
+    doc['created_at'] = datetime.fromisoformat(doc['created_at'])
+    return doc
+
+@api_router.get("/reports")
+async def get_service_reports(request: Request, session_token: Optional[str] = Cookie(None), service_id: Optional[str] = None):
+    await get_user_from_session(request, session_token)
+    query = {"service_id": service_id} if service_id else {}
+    reports = await db.service_reports.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for r in reports:
+        if isinstance(r['created_at'], str):
+            r['created_at'] = datetime.fromisoformat(r['created_at'])
+    return reports
+
+@api_router.get("/reports/{report_id}")
+async def get_service_report(report_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    await get_user_from_session(request, session_token)
+    report = await db.service_reports.find_one({"report_id": report_id}, {"_id": 0})
+    if not report:
+        raise HTTPException(status_code=404, detail="Report not found")
+    if isinstance(report['created_at'], str):
+        report['created_at'] = datetime.fromisoformat(report['created_at'])
+    return report
+
+# ========== MEMBER AVAILABILITY ==========
+
+@api_router.post("/availability")
+async def set_availability(availability: MemberAvailabilityCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    
+    # Upsert - update if exists for this date, create if not
+    existing = await db.member_availability.find_one(
+        {"user_id": user.user_id, "date": availability.date}
+    )
+    
+    if existing:
+        await db.member_availability.update_one(
+            {"user_id": user.user_id, "date": availability.date},
+            {"$set": {"status": availability.status, "notes": availability.notes}}
+        )
+        doc = await db.member_availability.find_one(
+            {"user_id": user.user_id, "date": availability.date},
+            {"_id": 0}
+        )
+    else:
+        availability_id = f"avail_{uuid.uuid4().hex[:12]}"
+        new_availability = {
+            "availability_id": availability_id,
+            "user_id": user.user_id,
+            **availability.model_dump()
+        }
+        await db.member_availability.insert_one(new_availability)
+        doc = await db.member_availability.find_one({"availability_id": availability_id}, {"_id": 0})
+    
+    return doc
+
+@api_router.get("/availability")
+async def get_availability(request: Request, session_token: Optional[str] = Cookie(None), user_id: Optional[str] = None, start_date: Optional[str] = None, end_date: Optional[str] = None):
+    await get_user_from_session(request, session_token)
+    
+    query = {}
+    if user_id:
+        query["user_id"] = user_id
+    if start_date and end_date:
+        query["date"] = {"$gte": start_date, "$lte": end_date}
+    elif start_date:
+        query["date"] = {"$gte": start_date}
+    
+    availability = await db.member_availability.find(query, {"_id": 0}).to_list(10000)
+    return availability
+
+@api_router.get("/availability/my")
+async def get_my_availability(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    availability = await db.member_availability.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).to_list(1000)
+    return availability
+
+# ========== IN-APP NOTIFICATIONS ==========
+
+@api_router.get("/notifications")
+async def get_notifications(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    notifications = await db.notifications.find(
+        {"user_id": user.user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(50).to_list(50)
+    
+    for n in notifications:
+        if isinstance(n['created_at'], str):
+            n['created_at'] = datetime.fromisoformat(n['created_at'])
+    return notifications
+
+@api_router.get("/notifications/unread-count")
+async def get_unread_count(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    count = await db.notifications.count_documents({"user_id": user.user_id, "read": False})
+    return {"unread_count": count}
+
+@api_router.put("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    
+    await db.notifications.update_one(
+        {"notification_id": notification_id, "user_id": user.user_id},
+        {"$set": {"read": True}}
+    )
+    return {"message": "Marked as read"}
+
+@api_router.put("/notifications/read-all")
+async def mark_all_read(request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    await db.notifications.update_many(
+        {"user_id": user.user_id, "read": False},
+        {"$set": {"read": True}}
+    )
+    return {"message": "All notifications marked as read"}
+
+# Helper function to create notifications
+async def create_notification(user_id: str, title: str, message: str, notification_type: str):
+    notification_id = f"notif_{uuid.uuid4().hex[:12]}"
+    notification = {
+        "notification_id": notification_id,
+        "user_id": user_id,
+        "title": title,
+        "message": message,
+        "type": notification_type,
+        "read": False,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.notifications.insert_one(notification)
+    return notification
+
+# ========== WHATSAPP NOTIFICATIONS (TWILIO) ==========
+
+@api_router.post("/whatsapp/send")
+async def send_whatsapp_notification(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Send WhatsApp notification to a team member"""
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    if not twilio_client:
+        raise HTTPException(status_code=503, detail="WhatsApp notifications not configured. Please add Twilio credentials.")
+    
+    body = await request.json()
+    to_phone = body.get("phone")
+    message_text = body.get("message")
+    
+    if not to_phone or not message_text:
+        raise HTTPException(status_code=400, detail="Phone and message required")
+    
+    try:
+        message = twilio_client.messages.create(
+            from_=f"whatsapp:{TWILIO_WHATSAPP_NUMBER}",
+            body=message_text,
+            to=f"whatsapp:{to_phone}"
+        )
+        
+        # Log the message
+        await db.whatsapp_messages.insert_one({
+            "message_sid": message.sid,
+            "to_phone": to_phone,
+            "message": message_text,
+            "sent_by": user.user_id,
+            "status": "sent",
+            "created_at": datetime.now(timezone.utc).isoformat()
+        })
+        
+        return {"status": "sent", "message_sid": message.sid}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send: {str(e)}")
+
+@api_router.post("/whatsapp/notify-rota")
+async def notify_rota_assignment(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Send WhatsApp notification for rota assignment"""
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    body = await request.json()
+    user_ids = body.get("user_ids", [])
+    service_title = body.get("service_title")
+    service_date = body.get("service_date")
+    service_time = body.get("service_time")
+    
+    if not user_ids or not service_title:
+        raise HTTPException(status_code=400, detail="user_ids and service_title required")
+    
+    results = {"sent": 0, "failed": 0, "no_phone": 0, "errors": []}
+    
+    for user_id in user_ids:
+        member = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+        if not member:
+            results["errors"].append(f"User {user_id} not found")
+            results["failed"] += 1
+            continue
+        
+        phone = member.get("phone")
+        if not phone:
+            results["no_phone"] += 1
+            continue
+        
+        # Create in-app notification
+        await create_notification(
+            user_id=user_id,
+            title="New Rota Assignment",
+            message=f"You've been assigned to {service_title} on {service_date} at {service_time}. Please confirm your availability.",
+            notification_type="rota_assignment"
+        )
+        
+        # Send WhatsApp if configured
+        if twilio_client and TWILIO_WHATSAPP_NUMBER:
+            try:
+                message_text = f"📋 *TEN MediaHQ Rota Assignment*\n\nHi {member.get('name', 'Team Member')}!\n\nYou've been assigned to:\n📌 {service_title}\n📅 {service_date}\n🕐 {service_time}\n\nPlease log in to confirm your availability."
+                
+                message = twilio_client.messages.create(
+                    from_=f"whatsapp:{TWILIO_WHATSAPP_NUMBER}",
+                    body=message_text,
+                    to=f"whatsapp:{phone}"
+                )
+                
+                await db.whatsapp_messages.insert_one({
+                    "message_sid": message.sid,
+                    "to_phone": phone,
+                    "message": message_text,
+                    "sent_by": user.user_id,
+                    "type": "rota_assignment",
+                    "status": "sent",
+                    "created_at": datetime.now(timezone.utc).isoformat()
+                })
+                
+                results["sent"] += 1
+            except Exception as e:
+                results["errors"].append(f"WhatsApp to {phone}: {str(e)}")
+                results["failed"] += 1
+        else:
+            results["sent"] += 1  # Count in-app notification as sent
+    
+    return results
+
+@api_router.get("/whatsapp/status")
+async def get_whatsapp_status(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Check if WhatsApp notifications are configured"""
+    await get_user_from_session(request, session_token)
+    return {
+        "configured": twilio_client is not None,
+        "whatsapp_number": TWILIO_WHATSAPP_NUMBER if twilio_client else None
+    }
+
+# ========== 52-WEEK LEAD ROTATION PLANNER ==========
+
+@api_router.get("/lead-rotation/year/{year}")
+async def get_year_rotation(year: int, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get full year rotation plan"""
+    await get_user_from_session(request, session_token)
+    
+    rotations = await db.lead_rotation.find({"year": year}, {"_id": 0}).sort("week_number", 1).to_list(52)
+    
+    # Get all team leads for reference
+    leads = await db.users.find(
+        {"role": {"$in": ["admin", "team_lead"]}},
+        {"_id": 0, "user_id": 1, "name": 1}
+    ).to_list(100)
+    
+    # Create a map for easy lookup
+    lead_map = {l["user_id"]: l["name"] for l in leads}
+    
+    # Enrich rotations with lead names
+    for r in rotations:
+        r["lead_name"] = lead_map.get(r.get("lead_user_id"), "Unassigned")
+        if r.get("backup_user_id"):
+            r["backup_name"] = lead_map.get(r["backup_user_id"], "None")
+    
+    return {
+        "year": year,
+        "rotations": rotations,
+        "available_leads": leads,
+        "total_weeks": 52,
+        "assigned_weeks": len(rotations)
+    }
+
+@api_router.post("/lead-rotation/bulk")
+async def bulk_create_rotation(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Bulk create/update rotations for a year"""
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    body = await request.json()
+    year = body.get("year")
+    rotations = body.get("rotations", [])
+    
+    if not year or not rotations:
+        raise HTTPException(status_code=400, detail="year and rotations required")
+    
+    created = 0
+    updated = 0
+    
+    for rotation in rotations:
+        week_number = rotation.get("week_number")
+        existing = await db.lead_rotation.find_one({"year": year, "week_number": week_number})
+        
+        if existing:
+            await db.lead_rotation.update_one(
+                {"year": year, "week_number": week_number},
+                {"$set": {
+                    "lead_user_id": rotation.get("lead_user_id"),
+                    "backup_user_id": rotation.get("backup_user_id"),
+                    "notes": rotation.get("notes")
+                }}
+            )
+            updated += 1
+        else:
+            await db.lead_rotation.insert_one({
+                "rotation_id": f"rotation_{uuid.uuid4().hex[:12]}",
+                "week_number": week_number,
+                "year": year,
+                "lead_user_id": rotation.get("lead_user_id"),
+                "backup_user_id": rotation.get("backup_user_id"),
+                "notes": rotation.get("notes")
+            })
+            created += 1
+    
+    return {"created": created, "updated": updated}
+
+@api_router.delete("/lead-rotation/{rotation_id}")
+async def delete_rotation(rotation_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    result = await db.lead_rotation.delete_one({"rotation_id": rotation_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Rotation not found")
+    return {"message": "Rotation deleted"}
+
+# ========== ENHANCED PERFORMANCE METRICS ==========
+
+@api_router.get("/performance/detailed")
+async def get_detailed_metrics(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get detailed performance metrics including reliability scores"""
+    user = await get_user_from_session(request, session_token)
+    
+    members = await db.users.find({}, {"_id": 0}).to_list(1000)
+    rotas = await db.rotas.find({}, {"_id": 0}).to_list(1000)
+    reports = await db.service_reports.find({}, {"_id": 0}).to_list(1000)
+    
+    metrics = []
+    for member in members:
+        user_id = member["user_id"]
+        
+        # Assignment stats
+        total_assignments = 0
+        confirmed = 0
+        declined = 0
+        
+        for rota in rotas:
+            for assignment in rota["assignments"]:
+                if assignment["user_id"] == user_id:
+                    total_assignments += 1
+                    if assignment["status"] == "confirmed":
+                        confirmed += 1
+                    elif assignment["status"] == "declined":
+                        declined += 1
+        
+        # Attendance from reports
+        attended_services = sum(1 for r in reports if user_id in r.get("attendees", []))
+        
+        # Calculate scores
+        confirmation_rate = (confirmed / total_assignments * 100) if total_assignments > 0 else 0
+        attendance_rate = (attended_services / len(reports) * 100) if len(reports) > 0 else 0
+        reliability_score = (confirmation_rate * 0.6 + attendance_rate * 0.4) if total_assignments > 0 else 0
+        
+        metrics.append({
+            "user_id": user_id,
+            "name": member["name"],
+            "role": member["role"],
+            "total_assignments": total_assignments,
+            "confirmed": confirmed,
+            "declined": declined,
+            "pending": total_assignments - confirmed - declined,
+            "attended_services": attended_services,
+            "confirmation_rate": round(confirmation_rate, 2),
+            "attendance_rate": round(attendance_rate, 2),
+            "reliability_score": round(reliability_score, 2)
+        })
+    
+    return {
+        "metrics": sorted(metrics, key=lambda x: x["reliability_score"], reverse=True),
+        "summary": {
+            "total_members": len(members),
+            "total_rotas": len(rotas),
+            "total_reports": len(reports),
+            "avg_reliability": round(sum(m["reliability_score"] for m in metrics) / len(metrics), 2) if metrics else 0
+        }
+    }
+
+@api_router.get("/performance/dashboard")
+async def get_performance_dashboard(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get performance dashboard stats"""
+    await get_user_from_session(request, session_token)
+    
+    # Get counts
+    total_services = await db.services.count_documents({})
+    total_rotas = await db.rotas.count_documents({})
+    total_reports = await db.service_reports.count_documents({})
+    
+    # Get confirmation stats
+    rotas = await db.rotas.find({}, {"_id": 0, "assignments": 1}).to_list(1000)
+    total_assignments = 0
+    confirmed = 0
+    declined = 0
+    pending = 0
+    
+    for rota in rotas:
+        for a in rota.get("assignments", []):
+            total_assignments += 1
+            if a["status"] == "confirmed":
+                confirmed += 1
+            elif a["status"] == "declined":
+                declined += 1
+            else:
+                pending += 1
+    
+    return {
+        "services": total_services,
+        "rotas": total_rotas,
+        "reports": total_reports,
+        "assignments": {
+            "total": total_assignments,
+            "confirmed": confirmed,
+            "declined": declined,
+            "pending": pending,
+            "confirmation_rate": round((confirmed / total_assignments * 100), 2) if total_assignments > 0 else 0
+        }
+    }
+
+# ========== SERVICE UPDATE ENDPOINT ==========
+
+@api_router.put("/services/{service_id}")
+async def update_service(service_id: str, service: ServiceCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "team_lead"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    existing = await db.services.find_one({"service_id": service_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Service not found")
+    
+    await db.services.update_one(
+        {"service_id": service_id},
+        {"$set": service.model_dump()}
+    )
+    
+    doc = await db.services.find_one({"service_id": service_id}, {"_id": 0})
+    if isinstance(doc['created_at'], str):
+        doc['created_at'] = datetime.fromisoformat(doc['created_at'])
+    return doc
+
 app.include_router(api_router)
 
 app.add_middleware(
