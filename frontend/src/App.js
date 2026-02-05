@@ -172,9 +172,9 @@ function Layout({ children }) {
   return (
     <div className="flex h-screen bg-slate-950">
       {/* Sidebar */}
-      <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl">
-        {/* Logo */}
-        <div className="p-5 border-b border-slate-800">
+      <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl h-screen">
+        {/* Logo - Fixed */}
+        <div className="flex-shrink-0 p-5 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold text-lg text-slate-900">TEN</div>
             <div>
@@ -184,8 +184,8 @@ function Layout({ children }) {
           </div>
         </div>
 
-        {/* Team Selector & Notifications */}
-        <div className="px-4 pt-4 space-y-2">
+        {/* Team Selector & Notifications - Fixed */}
+        <div className="flex-shrink-0 px-4 pt-4 space-y-2">
           {/* Team Selector */}
           <select
             value={selectedTeam}
@@ -240,8 +240,8 @@ function Layout({ children }) {
           )}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+        {/* Navigation - Scrollable */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto min-h-0">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path || (location.pathname === '/' && item.path === '/dashboard');
             return (
@@ -249,23 +249,23 @@ function Layout({ children }) {
                 key={item.path}
                 to={item.path}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-white text-slate-900 shadow-lg'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <span className="text-lg">{item.icon}</span>
+                <span className="text-base">{item.icon}</span>
                 <span className="font-medium text-sm">{item.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* User Info & Logout */}
-        <div className="p-4 border-t border-slate-800">
+        {/* User Info & Logout - Fixed */}
+        <div className="flex-shrink-0 p-4 border-t border-slate-800">
           {user && (
-            <div className="mb-3">
+            <div className="mb-2">
               <p className="text-sm font-medium text-white truncate">{user.name}</p>
               <p className="text-xs text-slate-400 capitalize">{user.role}</p>
             </div>
@@ -273,11 +273,11 @@ function Layout({ children }) {
           <button
             onClick={logout}
             data-testid="logout-btn"
-            className="w-full px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all text-left"
+            className="w-full px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all text-left"
           >
             Logout
           </button>
-          <div className="mt-3 text-xs text-slate-600 text-center">
+          <div className="mt-2 text-xs text-slate-600 text-center">
             © 2026 TEN MediaHQ
           </div>
         </div>
