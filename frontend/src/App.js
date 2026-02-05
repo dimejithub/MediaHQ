@@ -290,9 +290,11 @@ function App() {
             <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
             <Route path="/assign-rotas" element={<ProtectedRoute><AssignRotas /></ProtectedRoute>} />
             <Route path="/my-rotas" element={<ProtectedRoute><MyRotas /></ProtectedRoute>} />
+            <Route path="/lead-rotation" element={<ProtectedRoute><LeadRotation /></ProtectedRoute>} />
             <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
             <Route path="/checklists" element={<ProtectedRoute><Checklists /></ProtectedRoute>} />
             <Route path="/reports" element={<ProtectedRoute><ServiceReports /></ProtectedRoute>} />
+            <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
             <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           </Routes>
