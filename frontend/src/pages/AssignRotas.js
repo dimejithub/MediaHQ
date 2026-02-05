@@ -107,7 +107,8 @@ export default function AssignRotas() {
     }
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/rotas`, {
+      // Create the rota
+      const rotaResponse = await fetch(`${BACKEND_URL}/api/rotas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -118,9 +119,68 @@ export default function AssignRotas() {
         })
       });
 
-      if (!response.ok) throw new Error('Failed to create rota');
+      if (!rotaResponse.ok) {
+        const errorData = await rotaResponse.json().catch(() => ({}));
+        console.error('Rota creation failed:', errorData);
+        throw new Error(errorData.detail || 'Failed to create rota');
+      }
       
-      toast.success('Rota created successfully!');
+      // Automatically create checklist for the weekly lead
+      const checklistResponse = await fetch(`${BACKEND_URL}/api/checklists`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          service_id: selectedService.service_id,
+          title: `Service Checklist - ${selectedService.title}`,
+          items: [
+            { text: 'Ensure all team members are present' },
+            { text: 'Check the rota to ensure all unit members officiating are present' },
+            { text: 'Assign specific roles and responsibilities' },
+            { text: 'Turn on all sockets, media appliances, screens including LED screen' },
+            { text: 'Inspect that all equipment are properly connected' },
+            { text: 'Verify cameras, switchers, and monitors' },
+            { text: 'Confirm HDMI cables are working' },
+            { text: 'Check battery levels and replace if needed' },
+            { text: 'Ensure proper camera angles and framing' },
+            { text: 'Confirm pulpit camera is properly placed' },
+            { text: 'Test camera switching and transitions' },
+            { text: 'Check communication headsets for clear audio' },
+            { text: 'Ensure livestream feed audio is clear' },
+            { text: 'Set up laptop/system for projection and livestream' },
+            { text: 'Download images/videos/lyrics from WhatsApp or Drive' },
+            { text: 'Verify slides, lyrics, and video cues' },
+            { text: 'Run short cue test for smooth transitions' },
+            { text: 'Start streaming 5 mins before service start time' },
+            { text: 'Confirm overlays/lower-thirds are working' },
+            { text: 'Ensure smooth camera switching and transitions' },
+            { text: 'Monitor video quality and adjust as needed' },
+            { text: 'Stay in sync with presentation and sound teams' },
+            { text: 'Be ready to troubleshoot issues quickly' },
+            { text: 'Document conflicts/challenges faced during service' },
+            { text: 'Discuss what went well and issues faced' },
+            { text: 'Note any equipment needing maintenance' },
+            { text: 'Plan improvements for the next service' },
+            { text: 'Turn off all equipment properly' },
+            { text: 'Complete service report form' }
+          ]
+        })
+      });
+
+      if (checklistResponse.ok) {
+        toast.success(`Rota created! Checklist automatically assigned to ${members.find(m => m.user_id === weeklyLead)?.name}`);
+      } else {
+        toast.success('Rota created successfully!');
+      }
+      
+      setSelectedService(null);
+      setWeeklyLead('');
+      setAssignments([]);
+    } catch (err) {
+      toast.error(err.message || 'Failed to create rota');
+      console.error('Submit error:', err);
+    }
+  };
       setSelectedService(null);
       setWeeklyLead('');
       setAssignments([]);
