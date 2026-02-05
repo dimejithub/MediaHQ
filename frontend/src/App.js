@@ -36,15 +36,43 @@ function AuthProvider({ children }) {
   const [demoMode, setDemoMode] = useState(() => {
     return localStorage.getItem('demoMode') === 'true';
   });
+  const [demoRole, setDemoRole] = useState(() => {
+    return localStorage.getItem('demoRole') || 'director';
+  });
+
+  // Role-based access configuration
+  const roleAccess = {
+    director: ['all'], // Access to everything
+    team_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
+    assistant_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
+    unit_head: ['dashboard', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
+    weekly_lead: ['dashboard', 'my-rotas', 'checklists', 'training'],
+    member: ['dashboard', 'team', 'my-rotas', 'training', 'performance', 'reports']
+  };
+
+  const hasAccess = (path) => {
+    const userRole = user?.role || 'member';
+    const access = roleAccess[userRole] || roleAccess.member;
+    if (access.includes('all')) return true;
+    const cleanPath = path.replace('/', '').replace('/','');
+    return access.includes(cleanPath) || cleanPath === '' || cleanPath === 'login';
+  };
 
   useEffect(() => {
     // Check if demo mode was enabled
     if (demoMode) {
+      const roleNames = {
+        director: 'Dr. Adebowale Owoseni',
+        team_lead: 'Adeola Hilton',
+        assistant_lead: 'Oladimeji Tiamiyu',
+        unit_head: 'Michel Adimula',
+        member: 'Jasper Eromon'
+      };
       setUser({ 
-        user_id: 'demo_admin', 
-        name: 'Demo Admin', 
+        user_id: `demo_${demoRole}`, 
+        name: roleNames[demoRole] || 'Demo User', 
         email: 'demo@mediahq.com', 
-        role: 'admin',
+        role: demoRole,
         teams: ['envoy_nation', 'e_nation'],
         primary_team: 'envoy_nation',
         skills: ['Camera', 'Sound', 'Lighting']
@@ -53,7 +81,7 @@ function AuthProvider({ children }) {
     } else {
       checkAuth();
     }
-  }, []);
+  }, [demoRole]);
 
   const checkAuth = async () => {
     try {
@@ -71,6 +99,7 @@ function AuthProvider({ children }) {
 
   const logout = async () => {
     localStorage.removeItem('demoMode');
+    localStorage.removeItem('demoRole');
     setDemoMode(false);
     try {
       await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
@@ -81,14 +110,23 @@ function AuthProvider({ children }) {
     window.location.href = '/login';
   };
 
-  const enableDemoMode = () => {
+  const enableDemoMode = (role = 'director') => {
     localStorage.setItem('demoMode', 'true');
+    localStorage.setItem('demoRole', role);
     setDemoMode(true);
+    setDemoRole(role);
+    const roleNames = {
+      director: 'Dr. Adebowale Owoseni',
+      team_lead: 'Adeola Hilton',
+      assistant_lead: 'Oladimeji Tiamiyu',
+      unit_head: 'Michel Adimula',
+      member: 'Jasper Eromon'
+    };
     setUser({ 
-      user_id: 'demo_admin', 
-      name: 'Demo Admin', 
+      user_id: `demo_${role}`, 
+      name: roleNames[role] || 'Demo User', 
       email: 'demo@mediahq.com', 
-      role: 'admin',
+      role: role,
       teams: ['envoy_nation', 'e_nation'],
       primary_team: 'envoy_nation',
       skills: ['Camera', 'Sound', 'Lighting']
@@ -97,9 +135,15 @@ function AuthProvider({ children }) {
     setNotifications([
       { notification_id: 'demo_n1', title: 'New Rota Assignment', message: 'You have been assigned to Sunday Morning Service', type: 'rota_assignment', read: false },
       { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Worship Night starts in 24 hours', type: 'service_reminder', read: true },
-      { notification_id: 'demo_n3', title: 'Equipment Handover', message: 'Sony PTZ Camera handed over to E-Nation team', type: 'equipment_handover', read: true }
+      { notification_id: 'demo_n3', title: 'Training Update', message: 'New training material available: Camera Basics', type: 'training', read: true }
     ]);
     setUnreadCount(1);
+  };
+
+  const switchDemoRole = (role) => {
+    localStorage.setItem('demoRole', role);
+    setDemoRole(role);
+    enableDemoMode(role);
   };
 
   const switchTeam = (teamId) => {
