@@ -139,7 +139,7 @@ function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth, notifications, unreadCount, fetchNotifications, markAllRead }}>
+    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth, notifications, unreadCount, fetchNotifications, markAllRead, selectedTeam, switchTeam }}>
       {children}
     </AuthContext.Provider>
   );
@@ -147,7 +147,7 @@ function AuthProvider({ children }) {
 
 function Layout({ children }) {
   const location = useLocation();
-  const { user, logout, demoMode, notifications, unreadCount, markAllRead } = useAuth();
+  const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
 
   const navItems = [
