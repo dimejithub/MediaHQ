@@ -109,41 +109,41 @@ export default function DirectorDashboard() {
 
   return (
     <div className="p-8" data-testid="director-dashboard">
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-white mb-2">Director Dashboard</h1>
+      <div className="mb-8 animate-fadeIn">
+        <h1 className="text-4xl font-bold text-white mb-2 gradient-text">Director Dashboard</h1>
         <p className="text-slate-400">Overview of all teams and activities</p>
       </div>
 
       {/* Team Summaries */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {data?.team_summaries?.map(summary => (
-          <TeamCard key={summary.team} summary={summary} />
+        {data?.team_summaries?.map((summary, idx) => (
+          <TeamCard key={summary.team} summary={summary} index={idx} />
         ))}
       </div>
 
       {/* Overall Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-3">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-pink-500/10 flex items-center justify-center text-2xl">🤝</div>
+            <div className="w-12 h-12 rounded-lg bg-pink-500/10 flex items-center justify-center text-2xl animate-float">🤝</div>
             <div>
               <p className="text-sm text-slate-400">Combined Events</p>
               <p className="text-2xl font-bold text-white">{data?.combined_events || 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-4">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-2xl">🎥</div>
+            <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-2xl animate-float">🎥</div>
             <div>
               <p className="text-sm text-slate-400">Total Equipment</p>
               <p className="text-2xl font-bold text-white">{data?.total_equipment || 0}</p>
             </div>
           </div>
         </div>
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-5">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center text-2xl">📊</div>
+            <div className="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center text-2xl animate-float">📊</div>
             <div>
               <p className="text-sm text-slate-400">Total Members</p>
               <p className="text-2xl font-bold text-white">
@@ -157,12 +157,12 @@ export default function DirectorDashboard() {
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Reports */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4">📄 Recent Service Reports</h2>
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInLeft glass">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">📄 Recent Service Reports</h2>
           {data?.recent_reports && data.recent_reports.length > 0 ? (
             <div className="space-y-3">
-              {data.recent_reports.slice(0, 5).map(report => (
-                <div key={report.report_id} className="p-3 rounded-lg bg-slate-800 border border-slate-700">
+              {data.recent_reports.slice(0, 5).map((report, idx) => (
+                <div key={report.report_id} className="p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all hover-scale">
                   <p className="text-sm text-white">Service Report</p>
                   <p className="text-xs text-slate-400">{report.attendees?.length || 0} attendees</p>
                   <p className="text-xs text-slate-500">{new Date(report.created_at).toLocaleDateString()}</p>
@@ -172,16 +172,16 @@ export default function DirectorDashboard() {
           ) : (
             <p className="text-slate-500 text-sm text-center py-4">No recent reports</p>
           )}
-          <Link to="/reports" className="block mt-4 text-center text-sm text-blue-400 hover:text-blue-300">View All Reports →</Link>
+          <Link to="/reports" className="block mt-4 text-center text-sm text-blue-400 hover:text-blue-300 transition-colors">View All Reports →</Link>
         </div>
 
         {/* Recent Handovers */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4">🔄 Recent Equipment Handovers</h2>
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInRight glass">
+          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">🔄 Recent Equipment Handovers</h2>
           {data?.recent_handovers && data.recent_handovers.length > 0 ? (
             <div className="space-y-3">
-              {data.recent_handovers.slice(0, 5).map(handover => (
-                <div key={handover.handover_id} className="p-3 rounded-lg bg-slate-800 border border-slate-700">
+              {data.recent_handovers.slice(0, 5).map((handover, idx) => (
+                <div key={handover.handover_id} className="p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all hover-scale">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm text-white">{handover.from_team} → {handover.to_team}</p>
@@ -195,24 +195,24 @@ export default function DirectorDashboard() {
           ) : (
             <p className="text-slate-500 text-sm text-center py-4">No recent handovers</p>
           )}
-          <Link to="/equipment" className="block mt-4 text-center text-sm text-blue-400 hover:text-blue-300">View Equipment →</Link>
+          <Link to="/equipment" className="block mt-4 text-center text-sm text-blue-400 hover:text-blue-300 transition-colors">View Equipment →</Link>
         </div>
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 bg-slate-900 rounded-xl p-6 border border-slate-800">
-        <h2 className="text-lg font-bold text-white mb-4">⚡ Quick Actions</h2>
+      <div className="mt-8 bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInUp glass">
+        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">⚡ Quick Actions</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/calendar" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700">
+          <Link to="/calendar" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
             📅 View Calendar
           </Link>
-          <Link to="/performance" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700">
+          <Link to="/performance" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
             📈 Performance
           </Link>
-          <Link to="/team" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700">
+          <Link to="/team" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
             👥 All Members
           </Link>
-          <Link to="/lead-rotation" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700">
+          <Link to="/lead-rotation" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
             🔄 Lead Rotation
           </Link>
         </div>
