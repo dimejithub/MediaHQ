@@ -24,8 +24,22 @@ Build "TEN MediaHQ," a platform for church media teams to manage people, equipme
 ## Tech Stack
 - **Frontend:** React.js, Tailwind CSS, Shadcn/UI
 - **Backend:** FastAPI (Python)
-- **Database:** MongoDB
+- **Database:** MongoDB Atlas (configured)
 - **Authentication:** JWT with Google OAuth option, Demo Mode
+
+---
+
+## Configuration (Updated Feb 5, 2026)
+
+### MongoDB Atlas
+- **URL:** `mongodb+srv://DimejitHub:***@mediahq-db.itsmjk9.mongodb.net/`
+- **Database:** `mediahq`
+- **Status:** ✅ Configured in `/app/backend/.env`
+
+### Twilio WhatsApp (Pending)
+- **Account SID:** AC82a07bd9fad004ebc7cdf022f660ef60
+- **Auth Token:** Provided
+- **WhatsApp Number:** Not yet available
 
 ---
 
@@ -33,7 +47,7 @@ Build "TEN MediaHQ," a platform for church media teams to manage people, equipme
 
 ### Core Features ✅
 - [x] Authentication system with Demo Mode
-- [x] Dashboard with team-filtered KPIs
+- [x] Dashboard with team-filtered KPIs + animations
 - [x] Team Directory (per-team members)
 - [x] Services management (per-team)
 - [x] Equipment inventory (per-team)
@@ -46,6 +60,7 @@ Build "TEN MediaHQ," a platform for church media teams to manage people, equipme
 - [x] Calendar view for historical data
 - [x] In-app notifications system
 - [x] Settings page with CSV import/export templates
+- [x] Director Dashboard with aggregated stats
 
 ### Multi-Team System ✅
 - [x] Team selector dropdown in sidebar
@@ -60,24 +75,25 @@ Build "TEN MediaHQ," a platform for church media teams to manage people, equipme
 - [x] Monochrome black gradient theme
 - [x] Scrollable sidebar navigation
 - [x] Responsive layout
+- [x] Animations (fadeIn, fadeInUp, hover effects, glass morphism)
+- [x] Floating icons, staggered animations, hover lift effects
 
 ---
 
 ## Pending / Future Tasks
 
 ### P1 - High Priority
-- [ ] Equipment Handover frontend (backend ready at `/api/equipment/handover`)
-- [ ] Director Dashboard aggregation (page exists, needs real data integration)
-- [ ] End-to-end Google OAuth testing with real credentials
+- [ ] Equipment Handover frontend UI
+- [ ] Google OAuth end-to-end testing
+- [ ] Twilio WhatsApp setup (need WhatsApp-enabled number)
 
 ### P2 - Medium Priority
-- [ ] Twilio WhatsApp notifications testing (backend code present, needs credentials)
-- [ ] MongoDB configuration for user's own database on deployment
+- [ ] Real data population via CSV import
+- [ ] Production deployment configuration
 
 ### P3 - Backlog
-- [ ] Full end-to-end testing with real authentication
-- [ ] Performance optimization
 - [ ] Mobile responsiveness improvements
+- [ ] Advanced reporting/analytics
 
 ---
 
@@ -89,13 +105,3 @@ Build "TEN MediaHQ," a platform for church media teams to manage people, equipme
 - `/api/dashboard/kpis?team={team_id}` - Dashboard KPIs by team
 - `/api/calendar/month/{year}/{month}` - Calendar events
 - `/api/director/dashboard` - Aggregated director view
-
----
-
-## Database Schema
-- `users`: {email, password, name, roles, skills, team_id}
-- `teams`: {name, description}
-- `services`: {name, date, team_id}
-- `rotas`: {service_id, user_id, role, team_id}
-- `equipment`: {name, status, team_id}
-- `notifications`: {user_id, message, read, team_id}
