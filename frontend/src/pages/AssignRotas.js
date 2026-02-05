@@ -33,12 +33,49 @@ export default function AssignRotas() {
         fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' }),
         fetch(`${BACKEND_URL}/api/team/members`, { credentials: 'include' })
       ]);
-      const servicesData = await servicesRes.json();
-      const membersData = await membersRes.json();
-      setServices(servicesData);
-      setMembers(membersData);
+      
+      if (!servicesRes.ok) {
+        console.error('Services API error:', servicesRes.status);
+        toast.error('Unable to load services. Using demo data.');
+        // Set demo data for testing
+        setServices([
+          { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service' },
+          { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night' }
+        ]);
+      } else {
+        const servicesData = await servicesRes.json();
+        console.log('Services loaded:', servicesData.length);
+        setServices(servicesData.length > 0 ? servicesData : [
+          { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service' }
+        ]);
+      }
+      
+      if (!membersRes.ok) {
+        console.error('Members API error:', membersRes.status);
+        toast.error('Unable to load team members. Using demo data.');
+        setMembers([
+          { user_id: 'demo_admin', name: 'Admin User', role: 'admin' },
+          { user_id: 'demo_lead', name: 'Team Lead', role: 'team_lead' },
+          { user_id: 'demo_member', name: 'Member User', role: 'member' }
+        ]);
+      } else {
+        const membersData = await membersRes.json();
+        console.log('Members loaded:', membersData.length);
+        setMembers(membersData.length > 0 ? membersData : [
+          { user_id: 'demo_admin', name: 'Admin User', role: 'admin' }
+        ]);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Load data error:', err);
+      toast.error('Error loading data. Using demo mode.');
+      // Set demo data
+      setServices([
+        { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service' }
+      ]);
+      setMembers([
+        { user_id: 'demo_admin', name: 'Admin User', role: 'admin' },
+        { user_id: 'demo_member', name: 'Member User', role: 'member' }
+      ]);
     }
   };
 
