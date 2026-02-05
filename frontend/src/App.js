@@ -294,10 +294,29 @@ function Layout({ children }) {
             )}
           </div>
 
-          {/* Demo Mode Banner */}
+          {/* Demo Mode Banner with Role Selector */}
           {demoMode && (
-            <div className="px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg">
-              <p className="text-xs text-amber-400 font-medium text-center">Demo Mode Active</p>
+            <div className="relative">
+              <button 
+                onClick={() => setShowRoleSelector(!showRoleSelector)}
+                className="w-full px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg hover:bg-amber-500/30 transition-all"
+              >
+                <p className="text-xs text-amber-400 font-medium text-center">Demo: {roleLabels[user?.role] || 'Director'} ▼</p>
+              </button>
+              {showRoleSelector && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-50">
+                  <p className="px-3 py-2 text-xs text-slate-400 border-b border-slate-700">Switch Demo Role:</p>
+                  {Object.entries(roleLabels).map(([role, label]) => (
+                    <button
+                      key={role}
+                      onClick={() => { switchDemoRole(role); setShowRoleSelector(false); }}
+                      className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-700 transition-all ${user?.role === role ? 'bg-slate-700 text-white' : 'text-slate-300'}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
