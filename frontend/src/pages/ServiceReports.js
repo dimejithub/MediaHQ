@@ -5,9 +5,10 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function ServiceReports() {
   const [services, setServices] = useState([]);
+  const [members, setMembers] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
+  const [attendees, setAttendees] = useState([]);
   const [report, setReport] = useState({
-    attendance: '',
     issues: '',
     equipment_status: '',
     improvements: '',
@@ -15,16 +16,50 @@ export default function ServiceReports() {
   });
 
   useEffect(() => {
-    loadServices();
+    loadData();
   }, []);
 
-  const loadServices = async () => {
+  const loadData = async () => {
     try {
-      const response = await fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' });
-      const data = await response.json();
-      setServices(data);
+      const [servicesRes, membersRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/api/team/members`, { credentials: 'include' })
+      ]);
+      
+      if (servicesRes.ok) {
+        const servicesData = await servicesRes.json();
+        setServices(servicesData.length > 0 ? servicesData : [
+          { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' }
+        ]);
+      } else {
+        setServices([{ service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' }]);
+      }
+
+      if (membersRes.ok) {
+        const membersData = await membersRes.json();
+        setMembers(membersData.length > 0 ? membersData : [
+          { user_id: 'demo_1', name: 'Admin User' },
+          { user_id: 'demo_2', name: 'Team Lead' },
+          { user_id: 'demo_3', name: 'Member 1' }
+        ]);
+      } else {
+        setMembers([
+          { user_id: 'demo_1', name: 'Admin User' },
+          { user_id: 'demo_2', name: 'Team Lead' }
+        ]);
+      }
     } catch (err) {
       console.error(err);
+      setServices([{ service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' }]);
+      setMembers([{ user_id: 'demo_1', name: 'Admin User' }]);
+    }
+  };
+
+  const toggleAttendee = (userId) => {
+    if (attendees.includes(userId)) {
+      setAttendees(attendees.filter(id => id !== userId));
+    } else {
+      setAttendees([...attendees, userId]);
     }
   };
 
