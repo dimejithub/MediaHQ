@@ -191,27 +191,45 @@ function AuthProvider({ children }) {
 
 function Layout({ children }) {
   const location = useLocation();
-  const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam } = useAuth();
+  const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showRoleSelector, setShowRoleSelector] = useState(false);
 
   const isDirector = user?.role === 'director' || user?.role === 'admin';
 
-  const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: '📊' },
-    ...(isDirector ? [{ name: 'Director View', path: '/director', icon: '👁️' }] : []),
-    { name: 'Calendar', path: '/calendar', icon: '📅' },
-    { name: 'Team', path: '/team', icon: '👥' },
-    { name: 'Services', path: '/services', icon: '🗓️' },
-    { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝' },
-    { name: 'My Rotas', path: '/my-rotas', icon: '✅' },
-    { name: 'Lead Rotation', path: '/lead-rotation', icon: '🔄' },
-    { name: 'Equipment', path: '/equipment', icon: '🎥' },
-    { name: 'Checklists', path: '/checklists', icon: '📋' },
-    { name: 'Reports', path: '/reports', icon: '📄' },
-    { name: 'Performance', path: '/performance', icon: '📈' },
-    { name: 'Training', path: '/training', icon: '🎓' },
-    { name: 'Settings', path: '/settings', icon: '⚙️' }
+  // Role labels for display
+  const roleLabels = {
+    director: 'Director',
+    team_lead: 'Team Lead',
+    assistant_lead: 'Assistant Lead',
+    unit_head: 'Unit Head',
+    weekly_lead: 'Weekly Lead',
+    member: 'Member'
+  };
+
+  // All possible nav items with access requirements
+  const allNavItems = [
+    { name: 'Dashboard', path: '/dashboard', icon: '📊', access: 'dashboard' },
+    { name: 'Director View', path: '/director', icon: '👁️', access: 'director', directorOnly: true },
+    { name: 'Calendar', path: '/calendar', icon: '📅', access: 'calendar' },
+    { name: 'Team', path: '/team', icon: '👥', access: 'team' },
+    { name: 'Services', path: '/services', icon: '🗓️', access: 'services' },
+    { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝', access: 'assign-rotas' },
+    { name: 'My Rotas', path: '/my-rotas', icon: '✅', access: 'my-rotas' },
+    { name: 'Lead Rotation', path: '/lead-rotation', icon: '🔄', access: 'lead-rotation' },
+    { name: 'Equipment', path: '/equipment', icon: '🎥', access: 'equipment' },
+    { name: 'Checklists', path: '/checklists', icon: '📋', access: 'checklists' },
+    { name: 'Reports', path: '/reports', icon: '📄', access: 'reports' },
+    { name: 'Performance', path: '/performance', icon: '📈', access: 'performance' },
+    { name: 'Training', path: '/training', icon: '🎓', access: 'training' },
+    { name: 'Settings', path: '/settings', icon: '⚙️', access: 'settings' }
   ];
+
+  // Filter nav items based on role
+  const navItems = allNavItems.filter(item => {
+    if (item.directorOnly && !isDirector) return false;
+    return hasAccess(item.access);
+  });
 
   return (
     <div className="flex h-screen bg-slate-950">
