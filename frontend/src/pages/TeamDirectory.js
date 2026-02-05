@@ -56,33 +56,43 @@ function SkillsList({ skills }) {
     return <span className="text-xs text-slate-500">No skills listed</span>;
   }
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex flex-wrap gap-1">
       {skills.map((skill, idx) => <SkillBadge key={idx} skill={skill} />)}
     </div>
   );
 }
 
-function MemberCard({ member }) {
-  const getRoleClass = (role) => {
-    if (role === 'admin') return 'bg-purple-500/20 text-purple-400';
-    if (role === 'team_lead') return 'bg-blue-500/20 text-blue-400';
-    return 'bg-slate-700 text-slate-300';
-  };
+function MemberCard({ member, onEdit, onDelete, canEdit }) {
+  const roleInfo = ROLE_LABELS[member.role] || ROLE_LABELS.member;
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all">
-      <div className="flex items-center gap-4 mb-4">
-        <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl font-bold text-white">
-          {member.name?.charAt(0) || '?'}
+    <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all card-animate hover-lift">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-4">
+          <div className="w-14 h-14 rounded-full bg-slate-800 flex items-center justify-center text-2xl font-bold text-white">
+            {member.name?.charAt(0) || '?'}
+          </div>
+          <div>
+            <h3 className="font-bold text-white">{member.name}</h3>
+            <p className="text-sm text-slate-400">{member.email}</p>
+            <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${roleInfo.color}`}>
+              {roleInfo.label}
+            </span>
+          </div>
         </div>
-        <div>
-          <h3 className="font-bold text-white">{member.name}</h3>
-          <p className="text-sm text-slate-400">{member.email}</p>
-          <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full capitalize ${getRoleClass(member.role)}`}>
-            {member.role?.replace('_', ' ')}
-          </span>
-        </div>
+        {canEdit && (
+          <div className="flex gap-2">
+            <button onClick={() => onEdit(member)} className="text-blue-400 hover:text-blue-300 text-sm">✏️</button>
+            <button onClick={() => onDelete(member.user_id)} className="text-red-400 hover:text-red-300 text-sm">🗑️</button>
+          </div>
+        )}
       </div>
+      {member.unit && (
+        <div className="mb-3">
+          <span className="text-xs text-slate-500">Unit:</span>
+          <span className="ml-2 text-sm text-slate-300">{member.unit}</span>
+        </div>
+      )}
       <div>
         <h4 className="text-sm font-medium text-slate-400 mb-2">Skills</h4>
         <SkillsList skills={member.skills} />
@@ -91,10 +101,93 @@ function MemberCard({ member }) {
   );
 }
 
-function MembersList({ members }) {
+function MembersList({ members, onEdit, onDelete, canEdit }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {members.map((member) => <MemberCard key={member.user_id} member={member} />)}
+      {members.map((member) => (
+        <MemberCard key={member.user_id} member={member} onEdit={onEdit} onDelete={onDelete} canEdit={canEdit} />
+      ))}
+    </div>
+  );
+}
+
+function AddEditMemberModal({ member, onSave, onClose }) {
+  const [formData, setFormData] = useState(member || {
+    name: '', email: '', role: 'member', skills: [], unit: '', function: ''
+  });
+  const [skillInput, setSkillInput] = useState('');
+
+  const roles = ['director', 'team_lead', 'assistant_lead', 'unit_head', 'member'];
+  const units = ['Head', 'Lead', 'Production', 'Photography', 'Projection & Livestream', 'Post-Production'];
+
+  const addSkill = () => {
+    if (skillInput.trim() && !formData.skills.includes(skillInput.trim())) {
+      setFormData({ ...formData, skills: [...formData.skills, skillInput.trim()] });
+      setSkillInput('');
+    }
+  };
+
+  const removeSkill = (skill) => {
+    setFormData({ ...formData, skills: formData.skills.filter(s => s !== skill) });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 animate-fadeIn">
+      <div className="bg-slate-900 rounded-xl p-6 w-full max-w-md border border-slate-700 animate-scaleIn">
+        <h2 className="text-xl font-bold text-white mb-4">{member ? 'Edit Member' : 'Add New Member'}</h2>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Name *</label>
+            <input type="text" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white" placeholder="Full name" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <input type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white" placeholder="email@example.com" />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Role</label>
+              <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white">
+                {roles.map(r => <option key={r} value={r}>{ROLE_LABELS[r]?.label || r}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Unit</label>
+              <select value={formData.unit} onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white">
+                <option value="">Select unit...</option>
+                {units.map(u => <option key={u} value={u}>{u}</option>)}
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Skills</label>
+            <div className="flex gap-2">
+              <input type="text" value={skillInput} onChange={(e) => setSkillInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
+                className="flex-1 p-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm" placeholder="Add skill..." />
+              <button onClick={addSkill} className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm">Add</button>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.skills.map((skill, idx) => (
+                <span key={idx} className="px-2 py-1 bg-slate-700 text-slate-300 rounded text-xs flex items-center gap-1">
+                  {skill}
+                  <button onClick={() => removeSkill(skill)} className="text-red-400 hover:text-red-300">×</button>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all">Cancel</button>
+          <button onClick={() => onSave(formData)} className="flex-1 px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all">
+            {member ? 'Save Changes' : 'Add Member'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
