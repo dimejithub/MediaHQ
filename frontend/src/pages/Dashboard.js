@@ -160,10 +160,10 @@ export default function Dashboard() {
             <Link to="/assign-rotas" data-testid="quick-action-rotas" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 btn-animate hover-lift">
               Assign Rotas
             </Link>
-            <Link to="/equipment" data-testid="quick-action-equipment" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700">
+            <Link to="/equipment" data-testid="quick-action-equipment" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 btn-animate hover-lift">
               Manage Equipment
             </Link>
-            <Link to="/checklists" data-testid="quick-action-checklists" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700">
+            <Link to="/checklists" data-testid="quick-action-checklists" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 btn-animate hover-lift">
               View Checklists
             </Link>
           </div>
