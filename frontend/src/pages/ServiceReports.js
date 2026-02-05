@@ -4,63 +4,109 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+const DEMO_SERVICES = [
+  { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' },
+  { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00' }
+];
+
+const DEMO_MEMBERS = [
+  { user_id: 'demo_admin', name: 'John Smith' },
+  { user_id: 'demo_lead', name: 'Sarah Johnson' },
+  { user_id: 'demo_member1', name: 'Mike Wilson' },
+  { user_id: 'demo_member2', name: 'Emily Brown' }
+];
+
 export default function ServiceReports() {
   const { demoMode } = useAuth();
   const [services, setServices] = useState([]);
   const [members, setMembers] = useState([]);
+  const [savedReports, setSavedReports] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   const [attendees, setAttendees] = useState([]);
-  const [report, setReport] = useState({ issues: '', equipment_status: '', improvements: '', next_steps: '' });
+  const [report, setReport] = useState({ issues: '', equipment_status: '', improvements: '' });
   const [loading, setLoading] = useState(true);
-
-  const demoServices = [
-    { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' },
-    { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00' }
-  ];
-
-  const demoMembers = [
-    { user_id: 'demo_admin', name: 'John Smith' },
-    { user_id: 'demo_lead', name: 'Sarah Johnson' },
-    { user_id: 'demo_member1', name: 'Mike Wilson' },
-    { user_id: 'demo_member2', name: 'Emily Brown' },
-    { user_id: 'demo_member3', name: 'David Lee' }
-  ];
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    loadData();
+  }, [demoMode]);
+
+  const loadData = async () => {
     if (demoMode) {
-      setServices(demoServices);
-      setMembers(demoMembers);
+      setServices(DEMO_SERVICES);
+      setMembers(DEMO_MEMBERS);
+      setSavedReports([]);
       setLoading(false);
       return;
     }
 
-    Promise.all([
-      fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' }),
-      fetch(`${BACKEND_URL}/api/team/members`, { credentials: 'include' })
-    ]).then(async ([servicesRes, membersRes]) => {
-      setServices(servicesRes.ok ? await servicesRes.json() : demoServices);
-      setMembers(membersRes.ok ? await membersRes.json() : demoMembers);
+    try {
+      const [servicesRes, membersRes, reportsRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/api/team/members`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/api/reports`, { credentials: 'include' })
+      ]);
+      
+      setServices(servicesRes.ok ? await servicesRes.json() : DEMO_SERVICES);
+      setMembers(membersRes.ok ? await membersRes.json() : DEMO_MEMBERS);
+      setSavedReports(reportsRes.ok ? await reportsRes.json() : []);
+    } catch (err) {
+      console.error(err);
+      setServices(DEMO_SERVICES);
+      setMembers(DEMO_MEMBERS);
+    } finally {
       setLoading(false);
-    }).catch(() => {
-      setServices(demoServices);
-      setMembers(demoMembers);
-      setLoading(false);
-    });
-  }, [demoMode]);
+    }
+  };
 
   const toggleAttendee = (userId) => {
     setAttendees(prev => prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]);
   };
 
-  const submitReport = () => {
+  const submitReport = async () => {
     if (!selectedService) return toast.error('Please select a service');
     if (attendees.length === 0) return toast.error('Please select at least one attendee');
     
-    const names = attendees.map(id => members.find(m => m.user_id === id)?.name).filter(Boolean);
-    toast.success(`Report submitted for ${selectedService.title}! (${names.length} attendees)`);
-    setReport({ issues: '', equipment_status: '', improvements: '', next_steps: '' });
-    setSelectedService(null);
-    setAttendees([]);
+    setSubmitting(true);
+
+    if (demoMode) {
+      const names = attendees.map(id => members.find(m => m.user_id === id)?.name).filter(Boolean);
+      toast.success(`Report submitted for ${selectedService.title}! (${names.length} attendees)`);
+      setReport({ issues: '', equipment_status: '', improvements: '' });
+      setSelectedService(null);
+      setAttendees([]);
+      setSubmitting(false);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          service_id: selectedService.service_id,
+          attendees: attendees,
+          issues: report.issues,
+          equipment_status: report.equipment_status,
+          improvements: report.improvements
+        })
+      });
+
+      if (res.ok) {
+        toast.success('Report submitted successfully!');
+        setReport({ issues: '', equipment_status: '', improvements: '' });
+        setSelectedService(null);
+        setAttendees([]);
+        loadData();
+      } else {
+        toast.error('Failed to submit report');
+      }
+    } catch (err) {
+      toast.error('Failed to submit report');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return <div className="flex items-center justify-center h-full"><div className="text-xl text-slate-400 animate-pulse">Loading...</div></div>;
@@ -126,8 +172,8 @@ export default function ServiceReports() {
                   className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white" rows={2} placeholder="Wins and improvements..." />
               </div>
 
-              <button onClick={submitReport} className="w-full px-6 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all">
-                📤 Submit Report
+              <button onClick={submitReport} disabled={submitting} className="w-full px-6 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all disabled:opacity-50">
+                {submitting ? '⏳ Submitting...' : '📤 Submit Report'}
               </button>
             </div>
           ) : (
@@ -138,6 +184,30 @@ export default function ServiceReports() {
           )}
         </div>
       </div>
+
+      {/* Saved Reports */}
+      {savedReports.length > 0 && (
+        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+          <h2 className="text-lg font-bold text-white mb-4">📊 Previous Reports ({savedReports.length})</h2>
+          <div className="space-y-3">
+            {savedReports.slice(0, 5).map((r) => {
+              const service = services.find(s => s.service_id === r.service_id);
+              return (
+                <div key={r.report_id} className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium text-white">{service?.title || 'Unknown Service'}</p>
+                      <p className="text-sm text-slate-400">{r.attendees?.length || 0} attendees</p>
+                    </div>
+                    <span className="text-xs text-slate-500">{new Date(r.created_at).toLocaleDateString()}</span>
+                  </div>
+                  {r.issues && <p className="text-sm text-slate-400 mt-2">Issues: {r.issues}</p>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
