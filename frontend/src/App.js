@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route, Link, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
+import { createContext, useContext, useState, useEffect } from 'react';
 import Dashboard from '@/pages/Dashboard';
 import TeamDirectory from '@/pages/TeamDirectory';
 import Services from '@/pages/Services';
@@ -10,10 +11,70 @@ import Checklists from '@/pages/Checklists';
 import ServiceReports from '@/pages/ServiceReports';
 import Training from '@/pages/Training';
 import Settings from '@/pages/Settings';
+import Login from '@/pages/Login';
 import '@/App.css';
+
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+
+// Auth Context
+const AuthContext = createContext(null);
+
+export const useAuth = () => useContext(AuthContext);
+
+function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [demoMode, setDemoMode] = useState(false);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' });
+      if (res.ok) {
+        const userData = await res.json();
+        setUser(userData);
+      }
+    } catch (err) {
+      console.log('Not authenticated');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+    } catch (err) {
+      console.error('Logout error');
+    }
+    setUser(null);
+    window.location.href = '/login';
+  };
+
+  const enableDemoMode = () => {
+    setDemoMode(true);
+    setUser({ 
+      user_id: 'demo_admin', 
+      name: 'Demo Admin', 
+      email: 'demo@mediahq.com', 
+      role: 'admin',
+      skills: ['Camera', 'Sound', 'Lighting']
+    });
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
 
 function Layout({ children }) {
   const location = useLocation();
+  const { user, logout, demoMode } = useAuth();
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
@@ -31,42 +92,63 @@ function Layout({ children }) {
   return (
     <div className="flex h-screen bg-slate-950">
       {/* Sidebar */}
-      <div className="w-72 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl">
+      <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl">
         {/* Logo */}
-        <div className="p-6 border-b border-slate-800">
+        <div className="p-5 border-b border-slate-800">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center font-bold text-xl text-slate-900">TEN</div>
+            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold text-lg text-slate-900">TEN</div>
             <div>
-              <h1 className="font-bold text-xl text-white">MediaHQ</h1>
+              <h1 className="font-bold text-lg text-white">MediaHQ</h1>
               <p className="text-xs text-slate-400">Church Media System</p>
             </div>
           </div>
         </div>
 
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="mx-4 mt-4 px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+            <p className="text-xs text-amber-400 font-medium text-center">Demo Mode Active</p>
+          </div>
+        )}
+
         {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname === item.path || (location.pathname === '/' && item.path === '/dashboard');
             return (
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 group ${
+                data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-white text-slate-900 shadow-lg'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <span className="text-xl">{item.icon}</span>
+                <span className="text-lg">{item.icon}</span>
                 <span className="font-medium text-sm">{item.name}</span>
               </Link>
             );
           })}
         </nav>
 
-        {/* Footer */}
+        {/* User Info & Logout */}
         <div className="p-4 border-t border-slate-800">
-          <div className="text-xs text-slate-500 text-center">
+          {user && (
+            <div className="mb-3">
+              <p className="text-sm font-medium text-white truncate">{user.name}</p>
+              <p className="text-xs text-slate-400 capitalize">{user.role}</p>
+            </div>
+          )}
+          <button
+            onClick={logout}
+            data-testid="logout-btn"
+            className="w-full px-3 py-2 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all text-left"
+          >
+            Logout
+          </button>
+          <div className="mt-3 text-xs text-slate-600 text-center">
             © 2026 TEN MediaHQ
           </div>
         </div>
@@ -76,6 +158,24 @@ function Layout({ children }) {
       <main className="flex-1 overflow-auto bg-slate-950">{children}</main>
     </div>
   );
+}
+
+function ProtectedRoute({ children }) {
+  const { user, loading, demoMode } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-white text-xl animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+  
+  if (!user && !demoMode) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <Layout>{children}</Layout>;
 }
 
 function App() {
