@@ -4,12 +4,29 @@ import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+function TemplateButton({ label, icon, fields, onClick }) {
+  return (
+    <button onClick={onClick} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700 flex items-center justify-between">
+      <span>{icon} {label}</span>
+      <span className="text-sm text-slate-400">{fields}</span>
+    </button>
+  );
+}
+
+function ExportButton({ label, icon, onClick }) {
+  return (
+    <button onClick={onClick} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700">
+      {icon} {label}
+    </button>
+  );
+}
+
 export default function Settings() {
   const { user, demoMode } = useAuth();
   const isAdmin = user?.role === 'admin';
-  const [importData, setImportData] = useState({ collection: 'users', data: [] });
+  const [importCollection, setImportCollection] = useState('users');
+  const [csvData, setCsvData] = useState([]);
   const [importing, setImporting] = useState(false);
-  const [csvPreview, setCsvPreview] = useState(null);
 
   const handleExport = (collection) => {
     if (demoMode) {
@@ -38,7 +55,7 @@ export default function Settings() {
       const lines = text.split('\n').filter(line => line.trim());
       
       if (lines.length < 2) {
-        toast.error('CSV file is empty or has no data rows');
+        toast.error('CSV file is empty');
         return;
       }
 
@@ -54,9 +71,8 @@ export default function Settings() {
         data.push(row);
       }
 
-      setCsvPreview({ headers, data: data.slice(0, 5), totalRows: data.length });
-      setImportData({ ...importData, data });
-      toast.success(`Loaded ${data.length} rows from CSV`);
+      setCsvData(data);
+      toast.success(`Loaded ${data.length} rows`);
     };
     reader.readAsText(file);
   };
@@ -66,32 +82,26 @@ export default function Settings() {
       toast.info('Import not available in demo mode');
       return;
     }
-
-    if (importData.data.length === 0) {
+    if (csvData.length === 0) {
       toast.error('Please upload a CSV file first');
       return;
     }
 
     setImporting(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/data/import-csv?collection=${importData.collection}`, {
+      const res = await fetch(`${BACKEND_URL}/api/data/import-csv?collection=${importCollection}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ data: importData.data })
+        body: JSON.stringify({ data: csvData })
       });
 
       if (res.ok) {
         const result = await res.json();
         toast.success(`Imported ${result.imported} of ${result.total} records`);
-        if (result.errors?.length > 0) {
-          result.errors.forEach(err => toast.error(err));
-        }
-        setCsvPreview(null);
-        setImportData({ collection: 'users', data: [] });
+        setCsvData([]);
       } else {
-        const error = await res.json();
-        toast.error(error.detail || 'Import failed');
+        toast.error('Import failed');
       }
     } catch (err) {
       toast.error('Import failed');
@@ -106,56 +116,36 @@ export default function Settings() {
       <p className="text-slate-400 mb-8">Manage data import and export</p>
       
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Download Templates */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-4">📋 Download Templates</h2>
-          <p className="text-sm text-slate-400 mb-4">Download CSV templates with the correct format for data import</p>
+          <p className="text-sm text-slate-400 mb-4">Download CSV templates for data import</p>
           <div className="space-y-3">
-            <button onClick={() => handleDownloadTemplate('users')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700 flex items-center justify-between">
-              <span>👥 Team Members Template</span>
-              <span className="text-sm text-slate-400">name, email, role, phone, skills</span>
-            </button>
-            <button onClick={() => handleDownloadTemplate('services')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700 flex items-center justify-between">
-              <span>🗓️ Services Template</span>
-              <span className="text-sm text-slate-400">title, date, time, type</span>
-            </button>
-            <button onClick={() => handleDownloadTemplate('equipment')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700 flex items-center justify-between">
-              <span>🎥 Equipment Template</span>
-              <span className="text-sm text-slate-400">name, category, status, notes</span>
-            </button>
+            <TemplateButton label="Team Members" icon="👥" fields="name, email, role, phone, skills" onClick={() => handleDownloadTemplate('users')} />
+            <TemplateButton label="Services" icon="🗓️" fields="title, date, time, type" onClick={() => handleDownloadTemplate('services')} />
+            <TemplateButton label="Equipment" icon="🎥" fields="name, category, status, notes" onClick={() => handleDownloadTemplate('equipment')} />
           </div>
         </div>
 
-        {/* Export Data */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-4">📤 Export Data</h2>
           <p className="text-sm text-slate-400 mb-4">Download your data as CSV files</p>
           <div className="space-y-3">
-            <button onClick={() => handleExport('users')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700">
-              👥 Export Team Members
-            </button>
-            <button onClick={() => handleExport('services')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700">
-              🗓️ Export Services
-            </button>
-            <button onClick={() => handleExport('equipment')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700">
-              🎥 Export Equipment
-            </button>
-            <button onClick={() => handleExport('rotas')} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700">
-              📝 Export Rotas
-            </button>
+            <ExportButton label="Export Team Members" icon="👥" onClick={() => handleExport('users')} />
+            <ExportButton label="Export Services" icon="🗓️" onClick={() => handleExport('services')} />
+            <ExportButton label="Export Equipment" icon="🎥" onClick={() => handleExport('equipment')} />
+            <ExportButton label="Export Rotas" icon="📝" onClick={() => handleExport('rotas')} />
           </div>
         </div>
         
-        {/* Import Data */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
           <h2 className="text-xl font-bold text-white mb-4">📥 Import Data</h2>
-          <p className="text-sm text-slate-400 mb-4">Upload CSV files matching the template format. Download a template first to see the required columns.</p>
+          <p className="text-sm text-slate-400 mb-4">Upload CSV files matching the template format</p>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">Select Data Type</label>
-                <select value={importData.collection} onChange={(e) => setImportData({ ...importData, collection: e.target.value })}
+                <select value={importCollection} onChange={(e) => setImportCollection(e.target.value)}
                   className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white">
                   <option value="users">Team Members</option>
                   <option value="services">Services</option>
@@ -171,59 +161,33 @@ export default function Settings() {
                 </div>
               </div>
 
-              <button onClick={handleImport} disabled={importing || importData.data.length === 0}
+              <button onClick={handleImport} disabled={importing || csvData.length === 0}
                 className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                {importing ? '⏳ Importing...' : `📤 Import ${importData.data.length} Records`}
+                {importing ? '⏳ Importing...' : `📤 Import ${csvData.length} Records`}
               </button>
             </div>
 
-            {/* Preview */}
-            <div>
-              {csvPreview ? (
-                <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
-                  <h3 className="text-sm font-bold text-white mb-2">Preview ({csvPreview.totalRows} rows total)</h3>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-xs">
-                      <thead>
-                        <tr>
-                          {csvPreview.headers.map((h, i) => (
-                            <th key={i} className="text-left p-1 text-slate-400 border-b border-slate-700">{h}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {csvPreview.data.map((row, i) => (
-                          <tr key={i}>
-                            {csvPreview.headers.map((h, j) => (
-                              <td key={j} className="p-1 text-slate-300 truncate max-w-[100px]">{row[h]}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  {csvPreview.totalRows > 5 && (
-                    <p className="text-xs text-slate-500 mt-2">Showing 5 of {csvPreview.totalRows} rows</p>
-                  )}
+            <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+              {csvData.length > 0 ? (
+                <div>
+                  <h3 className="text-sm font-bold text-white mb-2">Preview ({csvData.length} rows)</h3>
+                  <p className="text-xs text-slate-400">Ready to import</p>
                 </div>
               ) : (
-                <div className="p-4 rounded-lg bg-slate-800 border border-slate-700 h-full flex items-center justify-center">
-                  <p className="text-slate-500 text-sm">Upload a CSV to preview data</p>
-                </div>
+                <p className="text-slate-500 text-sm text-center py-8">Upload a CSV to preview</p>
               )}
             </div>
           </div>
           
           {!isAdmin && (
-            <p className="mt-4 text-sm text-amber-400">⚠️ Admin privileges required for data import</p>
+            <p className="mt-4 text-sm text-amber-400">⚠️ Admin privileges required for import</p>
           )}
         </div>
       </div>
 
-      {/* App Info */}
       <div className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4">ℹ️ App Information</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <h2 className="text-xl font-bold text-white mb-4">ℹ️ App Info</h2>
+        <div className="grid grid-cols-4 gap-4 text-sm">
           <div>
             <p className="text-slate-400">Version</p>
             <p className="text-white font-medium">2.0.0</p>
