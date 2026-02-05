@@ -193,11 +193,19 @@ function AddEditMemberModal({ member, onSave, onClose }) {
 }
 
 export default function TeamDirectory() {
-  const { demoMode, selectedTeam } = useAuth();
+  const { demoMode, selectedTeam, user } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editingMember, setEditingMember] = useState(null);
+  const [filterUnit, setFilterUnit] = useState('all');
 
   const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
+  
+  // Check if user can edit (Director, Team Lead, Assistant Lead)
+  const canEdit = ['director', 'admin', 'team_lead', 'assistant_lead'].includes(user?.role);
+
+  const units = ['all', 'Head', 'Lead', 'Production', 'Photography', 'Projection & Livestream', 'Post-Production'];
 
   useEffect(() => {
     const demoData = DEMO_MEMBERS[selectedTeam] || DEMO_MEMBERS.envoy_nation;
@@ -220,6 +228,41 @@ export default function TeamDirectory() {
       });
   }, [demoMode, selectedTeam]);
 
+  const handleSaveMember = (memberData) => {
+    if (editingMember) {
+      // Update existing member
+      setMembers(members.map(m => m.user_id === editingMember.user_id ? { ...m, ...memberData } : m));
+      toast.success('Member updated successfully');
+    } else {
+      // Add new member
+      const newMember = {
+        ...memberData,
+        user_id: `new_${Date.now()}`,
+        team: selectedTeam
+      };
+      setMembers([...members, newMember]);
+      toast.success('Member added successfully');
+    }
+    setShowModal(false);
+    setEditingMember(null);
+  };
+
+  const handleDeleteMember = (userId) => {
+    if (window.confirm('Are you sure you want to remove this member?')) {
+      setMembers(members.filter(m => m.user_id !== userId));
+      toast.success('Member removed');
+    }
+  };
+
+  const handleEditMember = (member) => {
+    setEditingMember(member);
+    setShowModal(true);
+  };
+
+  const filteredMembers = filterUnit === 'all' 
+    ? members 
+    : members.filter(m => m.unit === filterUnit);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -230,9 +273,45 @@ export default function TeamDirectory() {
 
   return (
     <div className="p-8" data-testid="team-directory">
-      <h1 className="text-4xl font-bold text-white mb-2">Team Directory</h1>
-      <p className="text-slate-400 mb-8">Manage {teamDisplayName} team members</p>
-      <MembersList members={members} />
+      <div className="flex items-center justify-between mb-6 animate-fadeIn">
+        <div>
+          <h1 className="text-4xl font-bold text-white mb-2 gradient-text">Team Directory</h1>
+          <p className="text-slate-400">Manage {teamDisplayName} team members ({members.length} members)</p>
+        </div>
+        {canEdit && (
+          <button onClick={() => { setEditingMember(null); setShowModal(true); }}
+            className="px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all btn-animate">
+            ➕ Add Member
+          </button>
+        )}
+      </div>
+
+      {/* Filter by Unit */}
+      <div className="mb-6 flex items-center gap-4 animate-fadeInUp">
+        <span className="text-slate-400 text-sm">Filter by Unit:</span>
+        <div className="flex flex-wrap gap-2">
+          {units.map(unit => (
+            <button key={unit} onClick={() => setFilterUnit(unit)}
+              className={`px-3 py-1.5 rounded-lg text-sm transition-all ${
+                filterUnit === unit 
+                  ? 'bg-white text-slate-900 font-medium' 
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}>
+              {unit === 'all' ? 'All Units' : unit}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <MembersList members={filteredMembers} onEdit={handleEditMember} onDelete={handleDeleteMember} canEdit={canEdit} />
+
+      {showModal && (
+        <AddEditMemberModal 
+          member={editingMember} 
+          onSave={handleSaveMember} 
+          onClose={() => { setShowModal(false); setEditingMember(null); }} 
+        />
+      )}
     </div>
   );
 }
