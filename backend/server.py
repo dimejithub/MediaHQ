@@ -1666,6 +1666,347 @@ async def update_service(service_id: str, service: ServiceCreate, request: Reque
         doc['created_at'] = datetime.fromisoformat(doc['created_at'])
     return doc
 
+# ========== MULTI-TEAM ENDPOINTS ==========
+
+@api_router.get("/teams")
+async def get_teams(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get list of teams"""
+    await get_user_from_session(request, session_token)
+    return {
+        "teams": [
+            {"id": "envoy_nation", "name": "Envoy Nation", "description": "Main service team (Sunday 11am-1pm, Thursday midweek)"},
+            {"id": "e_nation", "name": "E-Nation", "description": "Commissioned Envoy team (Sunday service, Wednesday midweek)"},
+            {"id": "combined", "name": "Combined", "description": "Combined workforce for special events"}
+        ],
+        "service_types": [
+            {"id": "sunday_service", "name": "Sunday Service"},
+            {"id": "midweek_service", "name": "Midweek Service"},
+            {"id": "special_event", "name": "Special Event"},
+            {"id": "conference", "name": "Conference"},
+            {"id": "seminar", "name": "Seminar"},
+            {"id": "bootcamp", "name": "Bootcamp"},
+            {"id": "meeting", "name": "Meeting"}
+        ]
+    }
+
+@api_router.get("/teams/{team_id}/members")
+async def get_team_members(team_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get members of a specific team"""
+    await get_user_from_session(request, session_token)
+    
+    query = {"$or": [{"teams": team_id}, {"primary_team": team_id}]}
+    members = await db.users.find(query, {"_id": 0}).to_list(1000)
+    return members
+
+@api_router.get("/teams/{team_id}/services")
+async def get_team_services(team_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get services for a specific team"""
+    await get_user_from_session(request, session_token)
+    
+    if team_id == "combined":
+        query = {"is_combined": True}
+    else:
+        query = {"$or": [{"team": team_id}, {"is_combined": True}]}
+    
+    services = await db.services.find(query, {"_id": 0}).sort("date", -1).to_list(1000)
+    return services
+
+@api_router.put("/users/{user_id}/teams")
+async def update_user_teams(user_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Update user's team assignments"""
+    current_user = await get_user_from_session(request, session_token)
+    if current_user.role not in ["admin", "director"]:
+        raise HTTPException(status_code=403, detail="Insufficient permissions")
+    
+    body = await request.json()
+    teams = body.get("teams", [])
+    primary_team = body.get("primary_team")
+    
+    await db.users.update_one(
+        {"user_id": user_id},
+        {"$set": {"teams": teams, "primary_team": primary_team}}
+    )
+    
+    doc = await db.users.find_one({"user_id": user_id}, {"_id": 0})
+    return doc
+
+# ========== DIRECTOR DASHBOARD ==========
+
+@api_router.get("/director/dashboard")
+async def get_director_dashboard(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get comprehensive overview for directors"""
+    user = await get_user_from_session(request, session_token)
+    if user.role not in ["admin", "director"]:
+        raise HTTPException(status_code=403, detail="Director access required")
+    
+    # Get team summaries
+    team_summaries = []
+    
+    for team_id in ["envoy_nation", "e_nation"]:
+        # Count members
+        member_count = await db.users.count_documents({"$or": [{"teams": team_id}, {"primary_team": team_id}]})
+        
+        # Count services
+        service_count = await db.services.count_documents({"team": team_id})
+        
+        # Count rotas
+        rota_count = await db.rotas.count_documents({"team": team_id})
+        
+        # Count reports
+        team_services = await db.services.find({"team": team_id}, {"service_id": 1}).to_list(1000)
+        service_ids = [s["service_id"] for s in team_services]
+        report_count = await db.service_reports.count_documents({"service_id": {"$in": service_ids}})
+        
+        # Upcoming services
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        upcoming_count = await db.services.count_documents({"team": team_id, "date": {"$gte": today}})
+        
+        team_summaries.append({
+            "team": team_id,
+            "team_name": "Envoy Nation" if team_id == "envoy_nation" else "E-Nation",
+            "total_members": member_count,
+            "total_services": service_count,
+            "total_rotas": rota_count,
+            "total_reports": report_count,
+            "upcoming_services": upcoming_count
+        })
+    
+    # Combined events
+    combined_services = await db.services.count_documents({"is_combined": True})
+    
+    # Recent activity
+    recent_reports = await db.service_reports.find({}, {"_id": 0}).sort("created_at", -1).limit(5).to_list(5)
+    recent_handovers = await db.equipment_handovers.find({}, {"_id": 0}).sort("created_at", -1).limit(5).to_list(5)
+    
+    return {
+        "team_summaries": team_summaries,
+        "combined_events": combined_services,
+        "recent_reports": recent_reports,
+        "recent_handovers": recent_handovers,
+        "total_equipment": await db.equipment.count_documents({})
+    }
+
+# ========== EQUIPMENT HANDOVER ==========
+
+@api_router.post("/equipment/handover")
+async def create_handover(handover: EquipmentHandoverCreate, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Create equipment handover record"""
+    user = await get_user_from_session(request, session_token)
+    
+    # Get equipment info
+    equipment = await db.equipment.find_one({"equipment_id": handover.equipment_id})
+    if not equipment:
+        raise HTTPException(status_code=404, detail="Equipment not found")
+    
+    # Get from_team from equipment's last known location
+    from_team = equipment.get("current_team", "envoy_nation")
+    
+    handover_id = f"handover_{uuid.uuid4().hex[:12]}"
+    new_handover = {
+        "handover_id": handover_id,
+        "equipment_id": handover.equipment_id,
+        "from_team": from_team,
+        "to_team": handover.to_team,
+        "from_user_id": user.user_id,
+        "to_user_id": handover.to_user_id,
+        "condition_before": handover.condition_before,
+        "condition_notes": handover.condition_notes,
+        "photo_urls": handover.photo_urls,
+        "handover_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.equipment_handovers.insert_one(new_handover)
+    
+    # Update equipment's current team
+    await db.equipment.update_one(
+        {"equipment_id": handover.equipment_id},
+        {"$set": {"current_team": handover.to_team, "last_handover": handover_id}}
+    )
+    
+    # Create notification for receiving user
+    await create_notification(
+        user_id=handover.to_user_id,
+        title="Equipment Handover",
+        message=f"You've received {equipment.get('name')} from {user.name}. Condition: {handover.condition_before}",
+        notification_type="equipment_handover"
+    )
+    
+    doc = await db.equipment_handovers.find_one({"handover_id": handover_id}, {"_id": 0})
+    return doc
+
+@api_router.get("/equipment/handovers")
+async def get_handovers(request: Request, session_token: Optional[str] = Cookie(None), equipment_id: Optional[str] = None, team: Optional[str] = None):
+    """Get equipment handover history"""
+    await get_user_from_session(request, session_token)
+    
+    query = {}
+    if equipment_id:
+        query["equipment_id"] = equipment_id
+    if team:
+        query["$or"] = [{"from_team": team}, {"to_team": team}]
+    
+    handovers = await db.equipment_handovers.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    
+    # Enrich with equipment and user names
+    for h in handovers:
+        equipment = await db.equipment.find_one({"equipment_id": h["equipment_id"]}, {"_id": 0, "name": 1})
+        from_user = await db.users.find_one({"user_id": h["from_user_id"]}, {"_id": 0, "name": 1})
+        to_user = await db.users.find_one({"user_id": h["to_user_id"]}, {"_id": 0, "name": 1})
+        
+        h["equipment_name"] = equipment.get("name") if equipment else "Unknown"
+        h["from_user_name"] = from_user.get("name") if from_user else "Unknown"
+        h["to_user_name"] = to_user.get("name") if to_user else "Unknown"
+    
+    return handovers
+
+@api_router.get("/equipment/{equipment_id}/handover-history")
+async def get_equipment_handover_history(equipment_id: str, request: Request, session_token: Optional[str] = Cookie(None)):
+    """Get handover history for specific equipment"""
+    await get_user_from_session(request, session_token)
+    
+    handovers = await db.equipment_handovers.find(
+        {"equipment_id": equipment_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return handovers
+
+# ========== CALENDAR ENDPOINTS ==========
+
+@api_router.get("/calendar")
+async def get_calendar_data(request: Request, session_token: Optional[str] = Cookie(None), start_date: Optional[str] = None, end_date: Optional[str] = None, team: Optional[str] = None):
+    """Get calendar data including services, reports, checklists, handovers"""
+    await get_user_from_session(request, session_token)
+    
+    # Build date query
+    date_query = {}
+    if start_date and end_date:
+        date_query = {"$gte": start_date, "$lte": end_date}
+    elif start_date:
+        date_query = {"$gte": start_date}
+    elif end_date:
+        date_query = {"$lte": end_date}
+    
+    # Services
+    service_query = {}
+    if date_query:
+        service_query["date"] = date_query
+    if team and team != "all":
+        service_query["$or"] = [{"team": team}, {"is_combined": True}]
+    
+    services = await db.services.find(service_query, {"_id": 0}).sort("date", 1).to_list(1000)
+    
+    # Get service IDs for reports query
+    service_ids = [s["service_id"] for s in services]
+    
+    # Service Reports
+    reports = await db.service_reports.find(
+        {"service_id": {"$in": service_ids}} if service_ids else {},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Checklists
+    checklists = await db.checklists.find(
+        {"service_id": {"$in": service_ids}} if service_ids else {},
+        {"_id": 0}
+    ).to_list(1000)
+    
+    # Equipment Handovers
+    handover_query = {}
+    if date_query:
+        handover_query["handover_date"] = date_query
+    if team and team != "all":
+        handover_query["$or"] = [{"from_team": team}, {"to_team": team}]
+    
+    handovers = await db.equipment_handovers.find(handover_query, {"_id": 0}).to_list(1000)
+    
+    # Build calendar events
+    events = []
+    
+    for service in services:
+        events.append({
+            "id": service["service_id"],
+            "type": "service",
+            "title": service["title"],
+            "date": service["date"],
+            "time": service.get("time"),
+            "team": service.get("team"),
+            "is_combined": service.get("is_combined", False),
+            "service_type": service.get("type")
+        })
+    
+    for report in reports:
+        # Find service date
+        service = next((s for s in services if s["service_id"] == report["service_id"]), None)
+        if service:
+            events.append({
+                "id": report["report_id"],
+                "type": "report",
+                "title": f"Report: {service['title']}",
+                "date": service["date"],
+                "service_id": report["service_id"],
+                "attendees_count": len(report.get("attendees", []))
+            })
+    
+    for checklist in checklists:
+        service = next((s for s in services if s["service_id"] == checklist["service_id"]), None)
+        if service:
+            items = checklist.get("items", [])
+            completed = sum(1 for i in items if i.get("completed", False))
+            events.append({
+                "id": checklist["checklist_id"],
+                "type": "checklist",
+                "title": checklist.get("title", f"Checklist: {service['title']}"),
+                "date": service["date"],
+                "service_id": checklist["service_id"],
+                "progress": f"{completed}/{len(items)}"
+            })
+    
+    for handover in handovers:
+        events.append({
+            "id": handover["handover_id"],
+            "type": "handover",
+            "title": f"Equipment Handover",
+            "date": handover["handover_date"],
+            "equipment_id": handover["equipment_id"],
+            "from_team": handover["from_team"],
+            "to_team": handover["to_team"],
+            "condition": handover.get("condition_before")
+        })
+    
+    # Sort all events by date
+    events.sort(key=lambda x: x["date"], reverse=True)
+    
+    return {
+        "events": events,
+        "services_count": len(services),
+        "reports_count": len(reports),
+        "checklists_count": len(checklists),
+        "handovers_count": len(handovers)
+    }
+
+@api_router.get("/calendar/month/{year}/{month}")
+async def get_month_calendar(year: int, month: int, request: Request, session_token: Optional[str] = Cookie(None), team: Optional[str] = None):
+    """Get calendar data for a specific month"""
+    await get_user_from_session(request, session_token)
+    
+    # Calculate start and end dates for the month
+    start_date = f"{year}-{month:02d}-01"
+    if month == 12:
+        end_date = f"{year + 1}-01-01"
+    else:
+        end_date = f"{year}-{month + 1:02d}-01"
+    
+    # Reuse calendar endpoint logic
+    return await get_calendar_data(
+        request=request,
+        session_token=session_token,
+        start_date=start_date,
+        end_date=end_date,
+        team=team
+    )
+
 app.include_router(api_router)
 
 app.add_middleware(
