@@ -266,28 +266,28 @@ export default function TeamDirectory() {
   };
 
   return (
-    <div className="p-8" data-testid="team-directory">
-      <div className="flex items-center justify-between mb-6">
+    <div className="p-4 sm:p-6 lg:p-8" data-testid="team-directory">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Team Directory</h1>
-          <p className="text-slate-400">Manage {teamDisplayName} team members ({members.length} members)</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1">Team Directory</h1>
+          <p className="text-sm sm:text-base text-slate-400">Manage {teamDisplayName} team ({members.length} members)</p>
         </div>
         {canEdit && (
           <button onClick={() => { setEditingMember(null); setShowModal(true); }}
-            className="px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100">
+            className="w-full sm:w-auto px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 text-sm sm:text-base">
             + Add Member
           </button>
         )}
       </div>
 
-      <div className="mb-6 flex items-center gap-4">
-        <span className="text-slate-400 text-sm">Filter by Unit:</span>
+      <div className="mb-6">
+        <p className="text-slate-400 text-sm mb-2">Filter by Unit:</p>
         <div className="flex flex-wrap gap-2">
           {renderFilterButtons()}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {renderMemberCards()}
       </div>
 
