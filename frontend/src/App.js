@@ -30,6 +30,9 @@ function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedTeam, setSelectedTeam] = useState(() => {
+    return localStorage.getItem('selectedTeam') || 'envoy_nation';
+  });
   const [demoMode, setDemoMode] = useState(() => {
     return localStorage.getItem('demoMode') === 'true';
   });
@@ -42,6 +45,8 @@ function AuthProvider({ children }) {
         name: 'Demo Admin', 
         email: 'demo@mediahq.com', 
         role: 'admin',
+        teams: ['envoy_nation', 'e_nation'],
+        primary_team: 'envoy_nation',
         skills: ['Camera', 'Sound', 'Lighting']
       });
       setLoading(false);
