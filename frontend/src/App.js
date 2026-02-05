@@ -205,7 +205,7 @@ function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth, notifications, unreadCount, fetchNotifications, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole }}>
+    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth, notifications, unreadCount, fetchNotifications, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole, isWeeklyLead }}>
       {children}
     </AuthContext.Provider>
   );
