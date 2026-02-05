@@ -200,6 +200,25 @@ export default function AssignRotas() {
       } else {
         toast.success('Rota created successfully!');
       }
+
+      // Send WhatsApp/In-app notifications to assigned members
+      const assignedUserIds = [...new Set([weeklyLead, ...assignments.map(a => a.user_id)])];
+      try {
+        await fetch(`${BACKEND_URL}/api/whatsapp/notify-rota`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            user_ids: assignedUserIds,
+            service_title: selectedService.title,
+            service_date: selectedService.date,
+            service_time: selectedService.time
+          })
+        });
+        toast.info('Notifications sent to team members!');
+      } catch (notifErr) {
+        console.log('Notification sending skipped:', notifErr);
+      }
       
       setSelectedService(null);
       setWeeklyLead('');
