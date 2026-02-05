@@ -150,8 +150,12 @@ function Layout({ children }) {
   const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
 
+  const isDirector = user?.role === 'director' || user?.role === 'admin';
+
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
+    ...(isDirector ? [{ name: 'Director View', path: '/director', icon: '👁️' }] : []),
+    { name: 'Calendar', path: '/calendar', icon: '📅' },
     { name: 'Team', path: '/team', icon: '👥' },
     { name: 'Services', path: '/services', icon: '🗓️' },
     { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝' },
