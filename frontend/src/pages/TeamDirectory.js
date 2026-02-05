@@ -63,7 +63,7 @@ function getRoleColor(role) {
 
 function MemberCard({ member, onEdit, onDelete, canEdit }) {
   const [showMenu, setShowMenu] = useState(false);
-  const initial = member.name ? member.name.charAt(0) : '?';
+  const initial = member.name ? member.name.charAt(0).toUpperCase() : '?';
   const skillsDisplay = member.skills && member.skills.length > 0 
     ? member.skills.join(', ') 
     : 'No skills listed';
@@ -78,50 +78,37 @@ function MemberCard({ member, onEdit, onDelete, canEdit }) {
     onDelete(member.user_id);
   };
 
+  // Generate a consistent color based on name
+  const colors = ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-pink-600', 'bg-amber-600', 'bg-cyan-600', 'bg-red-600', 'bg-indigo-600'];
+  const colorIndex = member.name ? member.name.charCodeAt(0) % colors.length : 0;
+  const avatarColor = colors[colorIndex];
+
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 sm:p-6 hover:border-slate-700 transition-all">
-      <div className="flex items-start justify-between mb-4">
-        <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-slate-800 flex items-center justify-center text-xl sm:text-2xl font-bold text-white">
-            {initial}
-          </div>
-          <div>
-            <h3 className="font-bold text-white text-sm sm:text-base">{member.name}</h3>
-            <p className="text-xs sm:text-sm text-slate-400">{member.email}</p>
-            <span className={`inline-block mt-1 px-2 py-0.5 text-xs rounded-full ${getRoleColor(member.role)}`}>
-              {getRoleLabel(member.role)}
-            </span>
-          </div>
-        </div>
+    <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden hover:border-slate-700 transition-all">
+      {/* Header with gradient */}
+      <div className="h-16 bg-gradient-to-r from-slate-800 to-slate-900 relative">
         {canEdit && (
-          <div className="relative">
+          <div className="absolute top-2 right-2">
             <button 
               onClick={() => setShowMenu(!showMenu)} 
-              className="p-2 hover:bg-slate-800 rounded-lg transition-all"
-              aria-label="More options"
+              className="p-1.5 bg-slate-700/50 hover:bg-slate-700 rounded-lg transition-all"
               data-testid={`member-menu-${member.user_id}`}
             >
-              <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-4 h-4 text-slate-300" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
               </svg>
             </button>
             {showMenu && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
-                <div className="absolute right-0 mt-1 w-36 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 overflow-hidden">
-                  <button 
-                    onClick={handleEdit}
-                    className="w-full px-4 py-2.5 text-left text-sm text-white hover:bg-slate-700 flex items-center gap-2 transition-all"
-                  >
+                <div className="absolute right-0 mt-1 w-32 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-20 overflow-hidden">
+                  <button onClick={handleEdit} className="w-full px-3 py-2 text-left text-sm text-white hover:bg-slate-700 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                     </svg>
                     Edit
                   </button>
-                  <button 
-                    onClick={handleDelete}
-                    className="w-full px-4 py-2.5 text-left text-sm text-red-400 hover:bg-slate-700 flex items-center gap-2 transition-all"
-                  >
+                  <button onClick={handleDelete} className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-slate-700 flex items-center gap-2">
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
@@ -133,15 +120,42 @@ function MemberCard({ member, onEdit, onDelete, canEdit }) {
           </div>
         )}
       </div>
-      {member.unit && (
-        <div className="mb-3">
-          <span className="text-xs text-slate-500">Unit:</span>
-          <span className="ml-2 text-sm text-slate-300">{member.unit}</span>
+
+      {/* Profile Section */}
+      <div className="px-4 pb-4 -mt-8">
+        {/* Avatar */}
+        <div className="flex justify-center mb-3">
+          {member.avatar ? (
+            <img src={member.avatar} alt={member.name} className="w-16 h-16 rounded-full border-4 border-slate-900 object-cover" />
+          ) : (
+            <div className={`w-16 h-16 rounded-full border-4 border-slate-900 ${avatarColor} flex items-center justify-center text-white text-xl font-bold shadow-lg`}>
+              {initial}
+            </div>
+          )}
         </div>
-      )}
-      <div>
-        <h4 className="text-sm font-medium text-slate-400 mb-2">Skills</h4>
-        <p className="text-xs sm:text-sm text-slate-300">{skillsDisplay}</p>
+
+        {/* Name & Role */}
+        <div className="text-center mb-3">
+          <h3 className="font-bold text-white text-base">{member.name}</h3>
+          <p className="text-xs text-slate-400 mb-1.5">{member.email}</p>
+          <span className={`inline-block px-2.5 py-0.5 text-xs rounded-full ${getRoleColor(member.role)}`}>
+            {getRoleLabel(member.role)}
+          </span>
+        </div>
+
+        {/* Details */}
+        <div className="space-y-2 pt-3 border-t border-slate-800">
+          {member.unit && (
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-slate-500">Unit</span>
+              <span className="text-slate-300">{member.unit}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-slate-500">Skills</span>
+            <span className="text-slate-300 text-right text-xs max-w-[60%] truncate" title={skillsDisplay}>{skillsDisplay}</span>
+          </div>
+        </div>
       </div>
     </div>
   );
