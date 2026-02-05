@@ -89,14 +89,22 @@ function AuthProvider({ children }) {
       name: 'Demo Admin', 
       email: 'demo@mediahq.com', 
       role: 'admin',
+      teams: ['envoy_nation', 'e_nation'],
+      primary_team: 'envoy_nation',
       skills: ['Camera', 'Sound', 'Lighting']
     });
     // Set demo notifications
     setNotifications([
       { notification_id: 'demo_n1', title: 'New Rota Assignment', message: 'You have been assigned to Sunday Morning Service', type: 'rota_assignment', read: false },
-      { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Worship Night starts in 24 hours', type: 'service_reminder', read: true }
+      { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Worship Night starts in 24 hours', type: 'service_reminder', read: true },
+      { notification_id: 'demo_n3', title: 'Equipment Handover', message: 'Sony PTZ Camera handed over to E-Nation team', type: 'equipment_handover', read: true }
     ]);
     setUnreadCount(1);
+  };
+
+  const switchTeam = (teamId) => {
+    localStorage.setItem('selectedTeam', teamId);
+    setSelectedTeam(teamId);
   };
 
   const fetchNotifications = async () => {
