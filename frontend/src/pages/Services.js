@@ -4,43 +4,52 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+const DEMO_SERVICES = {
+  envoy_nation: [
+    { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Envoy Nation worship service', team: 'envoy_nation' },
+    { service_id: 'demo_en_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night', description: 'Evening worship and prayer', team: 'envoy_nation' },
+    { service_id: 'demo_en_3', title: 'Midweek Service', date: '2026-02-11', time: '18:00', type: 'midweek_service', description: 'Midweek gathering', team: 'envoy_nation' }
+  ],
+  e_nation: [
+    { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service', description: 'E-Nation worship service', team: 'e_nation' },
+    { service_id: 'demo_e_2', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service', description: 'Youth ministry gathering', team: 'e_nation' }
+  ]
+};
+
 export default function Services() {
-  const { demoMode, user } = useAuth();
+  const { demoMode, user, selectedTeam } = useAuth();
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newService, setNewService] = useState({ title: '', date: '', time: '', type: 'sunday_service', description: '' });
 
-  const serviceTypes = ['sunday_service', 'worship_night', 'youth_service', 'special_event', 'conference'];
-
-  const demoServices = [
-    { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Main weekly worship service' },
-    { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night', description: 'Evening worship and prayer' },
-    { service_id: 'demo_3', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service', description: 'Youth ministry gathering' }
-  ];
+  const serviceTypes = ['sunday_service', 'worship_night', 'youth_service', 'special_event', 'conference', 'midweek_service'];
+  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
 
   useEffect(() => {
+    const demoData = DEMO_SERVICES[selectedTeam] || DEMO_SERVICES.envoy_nation;
+    
     if (demoMode) {
-      setServices(demoServices);
+      setServices(demoData);
       setLoading(false);
       return;
     }
 
-    fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' })
+    fetch(`${BACKEND_URL}/api/services?team=${selectedTeam}`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load');
         return res.json();
       })
       .then(data => {
-        setServices(data.length > 0 ? data : demoServices);
+        setServices(data.length > 0 ? data : demoData);
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
-        setServices(demoServices);
+        setServices(demoData);
         setLoading(false);
       });
-  }, [demoMode]);
+  }, [demoMode, selectedTeam]);
 
   const handleAddService = async () => {
     if (!newService.title || !newService.date || !newService.time) {
@@ -51,12 +60,13 @@ export default function Services() {
     if (demoMode) {
       const newItem = {
         service_id: `demo_${Date.now()}`,
-        ...newService
+        ...newService,
+        team: selectedTeam
       };
       setServices([newItem, ...services]);
       setNewService({ title: '', date: '', time: '', type: 'sunday_service', description: '' });
       setShowAddModal(false);
-      toast.success('Service scheduled');
+      toast.success(`Service scheduled for ${teamDisplayName}`);
       return;
     }
 
@@ -65,7 +75,7 @@ export default function Services() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(newService)
+        body: JSON.stringify({ ...newService, team_id: selectedTeam })
       });
       
       if (res.ok) {
@@ -96,8 +106,8 @@ export default function Services() {
     <div className="p-8" data-testid="services-page">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Services</h1>
-          <p className="text-slate-400">Schedule and manage church services</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{teamDisplayName} Services</h1>
+          <p className="text-slate-400">Schedule and manage services for {teamDisplayName}</p>
         </div>
         {isAdmin && (
           <button
