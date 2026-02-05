@@ -67,37 +67,37 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8 space-y-8" data-testid="dashboard">
+    <div className="p-4 sm:p-6 lg:p-8 space-y-6" data-testid="dashboard">
       {/* Header */}
-      <div className="mb-8 animate-fadeIn">
-        <h1 className="text-4xl font-bold text-white mb-2 gradient-text">Dashboard</h1>
-        <p className="text-slate-400">Overview of your media operations</p>
+      <div className="mb-4 sm:mb-8 animate-fadeIn">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2 gradient-text">Dashboard</h1>
+        <p className="text-sm sm:text-base text-slate-400">Overview of your media operations</p>
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-1" data-testid="kpi-members">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-2xl animate-float">👥</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-1" data-testid="kpi-members">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-blue-500/10 flex items-center justify-center text-xl sm:text-2xl">👥</div>
             <div>
-              <p className="text-sm text-slate-400">Team Members</p>
-              <p className="text-2xl font-bold text-white">{kpis?.total_members || 0}</p>
+              <p className="text-xs sm:text-sm text-slate-400">Members</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{kpis?.total_members || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-2" data-testid="kpi-services">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-green-500/10 flex items-center justify-center text-2xl animate-float">🗓️</div>
+        <div className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-2" data-testid="kpi-services">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-green-500/10 flex items-center justify-center text-xl sm:text-2xl">🗓️</div>
             <div>
-              <p className="text-sm text-slate-400">Services</p>
-              <p className="text-2xl font-bold text-white">{kpis?.total_services || 0}</p>
+              <p className="text-xs sm:text-sm text-slate-400">Services</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{kpis?.total_services || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-3" data-testid="kpi-equipment">
-          <div className="flex items-center gap-4">
+        <div className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-3" data-testid="kpi-equipment">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-2xl animate-float">🎥</div>
             <div>
               <p className="text-sm text-slate-400">Equipment</p>
