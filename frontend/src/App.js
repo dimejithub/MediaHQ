@@ -94,8 +94,11 @@ function AuthProvider({ children }) {
         role: demoRole,
         teams: ['envoy_nation', 'e_nation'],
         primary_team: 'envoy_nation',
-        skills: ['Camera', 'Sound', 'Lighting']
+        skills: ['Camera', 'Sound', 'Lighting'],
+        isWeeklyLead: demoRole === 'member' // Demo: member is weekly lead
       });
+      // In demo, if role is member, they're the weekly lead
+      setIsWeeklyLead(demoRole === 'member');
       setLoading(false);
     } else {
       checkAuth();
