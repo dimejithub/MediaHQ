@@ -7,6 +7,7 @@ import Services from '@/pages/Services';
 import AssignRotas from '@/pages/AssignRotas';
 import MyRotas from '@/pages/MyRotas';
 import Equipment from '@/pages/Equipment';
+import Checklists from '@/pages/Checklists';
 import ServiceReports from '@/pages/ServiceReports';
 import Training from '@/pages/Training';
 import Settings from '@/pages/Settings';
@@ -23,7 +24,8 @@ function Layout({ children }) {
     { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝' },
     { name: 'My Rotas', path: '/my-rotas', icon: '✅' },
     { name: 'Equipment', path: '/equipment', icon: '🎥' },
-    { name: 'Reports', path: '/reports', icon: '📋' },
+    { name: 'Checklists', path: '/checklists', icon: '📋' },
+    { name: 'Reports', path: '/reports', icon: '📄' },
     { name: 'Training', path: '/training', icon: '🎓' },
     { name: 'Settings', path: '/settings', icon: '⚙️' }
   ];
