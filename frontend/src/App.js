@@ -31,13 +31,13 @@ function Layout({ children }) {
   ];
 
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-black">
       {/* Sidebar */}
-      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-white border-r border-slate-200 flex flex-col transition-all duration-300 shadow-lg`}>
-        <div className="p-6 border-b border-slate-200">
+      <div className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-black/40 backdrop-blur-xl border-r border-white/10 flex flex-col transition-all duration-300 shadow-2xl`}>
+        <div className="p-6 border-b border-white/10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">TEN</div>
-            {sidebarOpen && <span className="font-bold text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">MediaHQ</span>}
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-black flex items-center justify-center text-white font-bold text-lg shadow-lg ring-2 ring-white/20">TEN</div>
+            {sidebarOpen && <span className="font-bold text-xl text-white">MediaHQ</span>}
           </div>
         </div>
         <nav className="flex-1 p-4 space-y-2">
@@ -49,8 +49,8 @@ function Layout({ children }) {
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                   isActive
-                    ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg transform scale-105'
-                    : 'text-slate-600 hover:bg-slate-100'
+                    ? 'bg-white text-black shadow-lg transform scale-105'
+                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
                 <span className="text-2xl">{item.icon}</span>
@@ -61,7 +61,7 @@ function Layout({ children }) {
         </nav>
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="p-4 text-slate-600 hover:bg-slate-100 border-t border-slate-200"
+          className="p-4 text-slate-400 hover:bg-white/10 hover:text-white border-t border-white/10 transition-colors"
         >
           {sidebarOpen ? '◀' : '▶'}
         </button>
