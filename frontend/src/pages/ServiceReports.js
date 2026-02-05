@@ -127,15 +127,23 @@ export default function ServiceReports() {
                 <p className="text-sm text-slate-600">{selectedService.date} at {selectedService.time}</p>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">👥 Team Attendance</label>
-                <textarea
-                  value={report.attendance}
-                  onChange={(e) => setReport({ ...report, attendance: e.target.value })}
-                  placeholder="List team members present and any absences..."
-                  className="w-full p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  rows={3}
-                />
+              {/* Team Attendance with Checkboxes */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
+                <label className="block text-sm font-bold text-slate-800 mb-3">👥 Team Attendance (Select all who attended)</label>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto">
+                  {members.map((member) => (
+                    <label key={member.user_id} className="flex items-center gap-2 p-2 rounded-lg hover:bg-white cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={attendees.includes(member.user_id)}
+                        onChange={() => toggleAttendee(member.user_id)}
+                        className="w-4 h-4 text-black rounded"
+                      />
+                      <span className="text-sm text-slate-700">{member.name}</span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-600 mt-2">Selected: {attendees.length} members</p>
               </div>
 
               <div>
