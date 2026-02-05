@@ -86,6 +86,7 @@ function App() {
             <Route path="/assign-rotas" element={<AssignRotas />} />
             <Route path="/my-rotas" element={<MyRotas />} />
             <Route path="/equipment" element={<Equipment />} />
+            <Route path="/checklists" element={<Checklists />} />
             <Route path="/reports" element={<ServiceReports />} />
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<Settings />} />
