@@ -12,6 +12,8 @@ import ServiceReports from '@/pages/ServiceReports';
 import Training from '@/pages/Training';
 import Settings from '@/pages/Settings';
 import Login from '@/pages/Login';
+import LeadRotation from '@/pages/LeadRotation';
+import Performance from '@/pages/Performance';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
@@ -24,6 +26,8 @@ export const useAuth = () => useContext(AuthContext);
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [demoMode, setDemoMode] = useState(() => {
     return localStorage.getItem('demoMode') === 'true';
   });
