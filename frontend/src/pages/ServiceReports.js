@@ -68,10 +68,17 @@ export default function ServiceReports() {
       toast.error('Please select a service');
       return;
     }
-    // Save report logic would go here
-    toast.success('Service report submitted successfully!');
-    setReport({ attendance: '', issues: '', equipment_status: '', improvements: '', next_steps: '' });
+    if (attendees.length === 0) {
+      toast.error('Please select at least one attendee');
+      return;
+    }
+    
+    const attendeeNames = attendees.map(id => members.find(m => m.user_id === id)?.name).filter(Boolean);
+    toast.success(`Service report submitted for ${selectedService.title}! Attendees: ${attendeeNames.join(', ')}`);
+    
+    setReport({ issues: '', equipment_status: '', improvements: '', next_steps: '' });
     setSelectedService(null);
+    setAttendees([]);
   };
 
   return (
