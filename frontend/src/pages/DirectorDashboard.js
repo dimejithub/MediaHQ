@@ -4,34 +4,39 @@ import { Link } from 'react-router-dom';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-function TeamCard({ summary }) {
+function TeamCard({ summary, index }) {
   const teamName = summary.team === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
-  const teamColor = summary.team === 'envoy_nation' ? 'blue' : 'green';
+  const isEnvoy = summary.team === 'envoy_nation';
   
   return (
-    <div className={`bg-slate-900 rounded-xl p-6 border border-${teamColor}-500/30`}>
-      <h3 className={`text-xl font-bold text-${teamColor}-400 mb-4`}>{teamName}</h3>
+    <div className={`bg-slate-900 rounded-xl p-6 border ${isEnvoy ? 'border-blue-500/30 hover:border-blue-500/50' : 'border-green-500/30 hover:border-green-500/50'} card-animate hover-lift animate-fadeInUp ${index === 0 ? 'stagger-1' : 'stagger-2'}`}>
+      <div className="flex items-center gap-3 mb-4">
+        <div className={`w-3 h-3 rounded-full ${isEnvoy ? 'bg-blue-500' : 'bg-green-500'} animate-pulse`}></div>
+        <h3 className={`text-xl font-bold ${isEnvoy ? 'text-blue-400' : 'text-green-400'}`}>{teamName}</h3>
+      </div>
       <div className="grid grid-cols-2 gap-4">
-        <div>
+        <div className="p-3 bg-slate-800/50 rounded-lg">
           <p className="text-sm text-slate-400">Members</p>
           <p className="text-2xl font-bold text-white">{summary.total_members}</p>
         </div>
-        <div>
+        <div className="p-3 bg-slate-800/50 rounded-lg">
           <p className="text-sm text-slate-400">Services</p>
           <p className="text-2xl font-bold text-white">{summary.total_services}</p>
         </div>
-        <div>
+        <div className="p-3 bg-slate-800/50 rounded-lg">
           <p className="text-sm text-slate-400">Rotas</p>
           <p className="text-2xl font-bold text-white">{summary.total_rotas}</p>
         </div>
-        <div>
+        <div className="p-3 bg-slate-800/50 rounded-lg">
           <p className="text-sm text-slate-400">Reports</p>
           <p className="text-2xl font-bold text-white">{summary.total_reports}</p>
         </div>
       </div>
       <div className="mt-4 pt-4 border-t border-slate-800">
-        <p className="text-sm text-slate-400">Upcoming Services</p>
-        <p className="text-lg font-bold text-amber-400">{summary.upcoming_services}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-slate-400">Upcoming Services</p>
+          <p className="text-lg font-bold text-amber-400 animate-pulse">{summary.upcoming_services}</p>
+        </div>
       </div>
     </div>
   );
