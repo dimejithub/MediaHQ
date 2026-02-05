@@ -84,10 +84,47 @@ function AuthProvider({ children }) {
       role: 'admin',
       skills: ['Camera', 'Sound', 'Lighting']
     });
+    // Set demo notifications
+    setNotifications([
+      { notification_id: 'demo_n1', title: 'New Rota Assignment', message: 'You have been assigned to Sunday Morning Service', type: 'rota_assignment', read: false },
+      { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Worship Night starts in 24 hours', type: 'service_reminder', read: true }
+    ]);
+    setUnreadCount(1);
+  };
+
+  const fetchNotifications = async () => {
+    if (demoMode || !user) return;
+    try {
+      const [notifRes, countRes] = await Promise.all([
+        fetch(`${BACKEND_URL}/api/notifications`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/api/notifications/unread-count`, { credentials: 'include' })
+      ]);
+      if (notifRes.ok) setNotifications(await notifRes.json());
+      if (countRes.ok) {
+        const data = await countRes.json();
+        setUnreadCount(data.unread_count);
+      }
+    } catch (err) {
+      console.error('Failed to fetch notifications');
+    }
+  };
+
+  const markAllRead = async () => {
+    if (demoMode) {
+      setNotifications(notifications.map(n => ({ ...n, read: true })));
+      setUnreadCount(0);
+      return;
+    }
+    try {
+      await fetch(`${BACKEND_URL}/api/notifications/read-all`, { method: 'PUT', credentials: 'include' });
+      fetchNotifications();
+    } catch (err) {
+      console.error('Failed to mark as read');
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth }}>
+    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth, notifications, unreadCount, fetchNotifications, markAllRead }}>
       {children}
     </AuthContext.Provider>
   );
