@@ -167,60 +167,113 @@ function AddMemberModal({ member, onSave, onClose }) {
   const [role, setRole] = useState(member ? member.role : 'member');
   const [unit, setUnit] = useState(member ? member.unit : '');
   const [skillsText, setSkillsText] = useState(member && member.skills ? member.skills.join(', ') : '');
+  const [avatar, setAvatar] = useState(member ? member.avatar : '');
 
   const handleSave = () => {
     const skills = skillsText.split(',').map(s => s.trim()).filter(s => s);
-    onSave({ name, email, role, unit, skills });
+    onSave({ name, email, role, unit, skills, avatar });
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatar(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Generate initial for preview
+  const initial = name ? name.charAt(0).toUpperCase() : '?';
+  const colors = ['bg-blue-600', 'bg-purple-600', 'bg-green-600', 'bg-pink-600', 'bg-amber-600'];
+  const avatarColor = colors[name ? name.charCodeAt(0) % colors.length : 0];
+
   return (
-    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-      <div className="bg-slate-900 rounded-xl p-6 w-full max-w-md border border-slate-700">
-        <h2 className="text-xl font-bold text-white mb-4">{member ? 'Edit Member' : 'Add New Member'}</h2>
-        <div className="space-y-4">
+    <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+      <div className="bg-slate-900 rounded-xl w-full max-w-md border border-slate-700 max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="p-6 border-b border-slate-800">
+          <h2 className="text-xl font-bold text-white">{member ? 'Edit Member' : 'Add New Member'}</h2>
+        </div>
+
+        <div className="p-6 space-y-5">
+          {/* Profile Picture */}
+          <div className="flex flex-col items-center">
+            <div className="relative">
+              {avatar ? (
+                <img src={avatar} alt="Profile" className="w-20 h-20 rounded-full object-cover border-4 border-slate-800" />
+              ) : (
+                <div className={`w-20 h-20 rounded-full ${avatarColor} flex items-center justify-center text-white text-2xl font-bold border-4 border-slate-800`}>
+                  {initial}
+                </div>
+              )}
+              <label className="absolute bottom-0 right-0 w-8 h-8 bg-white rounded-full flex items-center justify-center cursor-pointer hover:bg-slate-100 transition-all shadow-lg">
+                <svg className="w-4 h-4 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+              </label>
+            </div>
+            <p className="text-xs text-slate-500 mt-2">Click camera to upload photo</p>
+          </div>
+
+          {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Name</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Full Name *</label>
             <input type="text" value={name} onChange={(e) => setName(e.target.value)}
-              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white" placeholder="Full name" />
+              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Enter full name" />
           </div>
+
+          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Email</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white" placeholder="email@example.com" />
+              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="email@example.com" />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Role</label>
-            <select value={role} onChange={(e) => setRole(e.target.value)}
-              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white">
-              <option value="director">Director</option>
-              <option value="team_lead">Team Lead</option>
-              <option value="assistant_lead">Assistant Lead</option>
-              <option value="unit_head">Unit Head</option>
-              <option value="member">Member</option>
-            </select>
+
+          {/* Role & Unit */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Role</label>
+              <select value={role} onChange={(e) => setRole(e.target.value)}
+                className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-blue-500 outline-none">
+                <option value="director">Director</option>
+                <option value="team_lead">Team Lead</option>
+                <option value="assistant_lead">Assistant Lead</option>
+                <option value="unit_head">Unit Head</option>
+                <option value="member">Member</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-300 mb-1.5">Unit</label>
+              <select value={unit} onChange={(e) => setUnit(e.target.value)}
+                className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-blue-500 outline-none">
+                <option value="">Select unit...</option>
+                <option value="Head">Head</option>
+                <option value="Lead">Lead</option>
+                <option value="Production">Production</option>
+                <option value="Photography">Photography</option>
+                <option value="Projection & Livestream">Projection & Livestream</option>
+                <option value="Post-Production">Post-Production</option>
+              </select>
+            </div>
           </div>
+
+          {/* Skills */}
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Unit</label>
-            <select value={unit} onChange={(e) => setUnit(e.target.value)}
-              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white">
-              <option value="">Select unit...</option>
-              <option value="Head">Head</option>
-              <option value="Lead">Lead</option>
-              <option value="Production">Production</option>
-              <option value="Photography">Photography</option>
-              <option value="Projection & Livestream">Projection & Livestream</option>
-              <option value="Post-Production">Post-Production</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">Skills (comma separated)</label>
+            <label className="block text-sm font-medium text-slate-300 mb-1.5">Skills (comma separated)</label>
             <input type="text" value={skillsText} onChange={(e) => setSkillsText(e.target.value)}
-              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white" placeholder="Camera, Sound, Editing" />
+              className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none" placeholder="Camera, Sound, Editing" />
           </div>
         </div>
-        <div className="flex gap-3 mt-6">
-          <button onClick={onClose} className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">Cancel</button>
-          <button onClick={handleSave} className="flex-1 px-4 py-2 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100">
+
+        {/* Footer */}
+        <div className="p-6 border-t border-slate-800 flex gap-3">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all">Cancel</button>
+          <button onClick={handleSave} className="flex-1 px-4 py-2.5 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all">
             {member ? 'Save Changes' : 'Add Member'}
           </button>
         </div>
