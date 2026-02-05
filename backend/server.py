@@ -159,6 +159,76 @@ class TrainingVideoCreate(BaseModel):
     duration: Optional[str] = None
     description: Optional[str] = None
 
+# New: Training Material for PDF/PPT/DOC
+class TrainingMaterial(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    material_id: str
+    title: str
+    url: str  # External URL (Google Drive, etc.)
+    type: str  # pdf, ppt, doc, other
+    category: str
+    description: Optional[str] = None
+    created_at: datetime
+
+class TrainingMaterialCreate(BaseModel):
+    title: str
+    url: str
+    type: str
+    category: str
+    description: Optional[str] = None
+
+# New: Service Report
+class ServiceReport(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    report_id: str
+    service_id: str
+    attendees: List[str]  # user_ids
+    issues: Optional[str] = None
+    equipment_status: Optional[str] = None
+    improvements: Optional[str] = None
+    next_steps: Optional[str] = None
+    submitted_by: str
+    created_at: datetime
+
+class ServiceReportCreate(BaseModel):
+    service_id: str
+    attendees: List[str]
+    issues: Optional[str] = None
+    equipment_status: Optional[str] = None
+    improvements: Optional[str] = None
+    next_steps: Optional[str] = None
+
+# New: Member Availability
+class MemberAvailability(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    availability_id: str
+    user_id: str
+    date: str
+    status: str  # available, unavailable, tentative
+    notes: Optional[str] = None
+
+class MemberAvailabilityCreate(BaseModel):
+    date: str
+    status: str
+    notes: Optional[str] = None
+
+# New: In-App Notification
+class InAppNotification(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    notification_id: str
+    user_id: str
+    title: str
+    message: str
+    type: str  # rota_assignment, service_reminder, general
+    read: bool = False
+    created_at: datetime
+
+class NotificationCreate(BaseModel):
+    user_id: str
+    title: str
+    message: str
+    type: str
+
 class TrainingProgress(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
