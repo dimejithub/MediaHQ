@@ -4,9 +4,9 @@ import { Toaster } from '@/components/ui/sonner';
 import Dashboard from '@/pages/Dashboard';
 import TeamDirectory from '@/pages/TeamDirectory';
 import Services from '@/pages/Services';
+import AssignRotas from '@/pages/AssignRotas';
 import MyRotas from '@/pages/MyRotas';
 import Equipment from '@/pages/Equipment';
-// import ServiceChecklists from '@/pages/ServiceChecklists';
 import ServiceReports from '@/pages/ServiceReports';
 import Training from '@/pages/Training';
 import Settings from '@/pages/Settings';
@@ -20,10 +20,10 @@ function Layout({ children }) {
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
     { name: 'Team', path: '/team', icon: '👥' },
     { name: 'Services', path: '/services', icon: '🗓️' },
+    { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝' },
     { name: 'My Rotas', path: '/my-rotas', icon: '✅' },
     { name: 'Equipment', path: '/equipment', icon: '🎥' },
-    // { name: 'Checklists', path: '/checklists', icon: '📋' },
-    { name: 'Reports', path: '/reports', icon: '📝' },
+    { name: 'Reports', path: '/reports', icon: '📋' },
     { name: 'Training', path: '/training', icon: '🎓' },
     { name: 'Settings', path: '/settings', icon: '⚙️' }
   ];
