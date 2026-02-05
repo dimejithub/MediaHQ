@@ -32,48 +32,48 @@ export default function Dashboard() {
     <div className="p-8 space-y-8 animate-fadeIn">
       {/* Header */}
       <div>
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-2">Dashboard</h1>
-        <p className="text-slate-600 text-lg">Welcome to TEN MediaHQ - Your media operations command center</p>
+        <h1 className="text-5xl font-bold text-white mb-2">Dashboard</h1>
+        <p className="text-slate-400 text-lg">Welcome to TEN MediaHQ - Your media operations command center</p>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-slate-100 hover:scale-105 transition-transform cursor-pointer">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all border border-white/10 hover:scale-105 transition-transform cursor-pointer">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-2xl shadow-md">👥</div>
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-black flex items-center justify-center text-white text-2xl shadow-md ring-2 ring-white/20">👥</div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Team Members</p>
-              <p className="text-3xl font-bold text-slate-800">{kpis?.total_members || 0}</p>
+              <p className="text-sm text-slate-400 font-medium">Team Members</p>
+              <p className="text-3xl font-bold text-white">{kpis?.total_members || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-slate-100 hover:scale-105 transition-transform cursor-pointer">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all border border-white/10 hover:scale-105 transition-transform cursor-pointer">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-white text-2xl shadow-md">🗓️</div>
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-black flex items-center justify-center text-white text-2xl shadow-md ring-2 ring-white/20">🗓️</div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Services</p>
-              <p className="text-3xl font-bold text-slate-800">{kpis?.total_services || 0}</p>
+              <p className="text-sm text-slate-400 font-medium">Services</p>
+              <p className="text-3xl font-bold text-white">{kpis?.total_services || 0}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-slate-100 hover:scale-105 transition-transform cursor-pointer">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all border border-white/10 hover:scale-105 transition-transform cursor-pointer">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white text-2xl shadow-md">🎥</div>
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-black flex items-center justify-center text-white text-2xl shadow-md ring-2 ring-white/20">🎥</div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Equipment</p>
-              <p className="text-3xl font-bold text-slate-800">{kpis?.available_equipment || 0}<span className="text-lg text-slate-400">/{kpis?.total_equipment || 0}</span></p>
+              <p className="text-sm text-slate-400 font-medium">Equipment</p>
+              <p className="text-3xl font-bold text-white">{kpis?.available_equipment || 0}<span className="text-lg text-slate-500">/{kpis?.total_equipment || 0}</span></p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow border border-slate-100 hover:scale-105 transition-transform cursor-pointer">
+        <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 shadow-xl hover:shadow-2xl transition-all border border-white/10 hover:scale-105 transition-transform cursor-pointer">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-orange-500 to-orange-600 flex items-center justify-center text-white text-2xl shadow-md">⏳</div>
+            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-slate-700 to-black flex items-center justify-center text-white text-2xl shadow-md ring-2 ring-white/20">⏳</div>
             <div>
-              <p className="text-sm text-slate-500 font-medium">Pending Rotas</p>
-              <p className="text-3xl font-bold text-slate-800">{kpis?.pending_rotas || 0}</p>
+              <p className="text-sm text-slate-400 font-medium">Pending Rotas</p>
+              <p className="text-3xl font-bold text-white">{kpis?.pending_rotas || 0}</p>
             </div>
           </div>
         </div>
