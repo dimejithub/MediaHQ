@@ -182,21 +182,22 @@ function App() {
   return (
     <div className="App">
       <BrowserRouter>
-        <Layout>
+        <AuthProvider>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/team" element={<TeamDirectory />} />
-            <Route path="/services" element={<Services />} />
-            <Route path="/assign-rotas" element={<AssignRotas />} />
-            <Route path="/my-rotas" element={<MyRotas />} />
-            <Route path="/equipment" element={<Equipment />} />
-            <Route path="/checklists" element={<Checklists />} />
-            <Route path="/reports" element={<ServiceReports />} />
-            <Route path="/training" element={<Training />} />
-            <Route path="/settings" element={<Settings />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/team" element={<ProtectedRoute><TeamDirectory /></ProtectedRoute>} />
+            <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+            <Route path="/assign-rotas" element={<ProtectedRoute><AssignRotas /></ProtectedRoute>} />
+            <Route path="/my-rotas" element={<ProtectedRoute><MyRotas /></ProtectedRoute>} />
+            <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+            <Route path="/checklists" element={<ProtectedRoute><Checklists /></ProtectedRoute>} />
+            <Route path="/reports" element={<ProtectedRoute><ServiceReports /></ProtectedRoute>} />
+            <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
+            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           </Routes>
-        </Layout>
+        </AuthProvider>
       </BrowserRouter>
       <Toaster position="top-right" />
     </div>
@@ -204,3 +205,4 @@ function App() {
 }
 
 export default App;
+export { AuthContext };
