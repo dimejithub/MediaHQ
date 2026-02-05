@@ -184,8 +184,19 @@ function Layout({ children }) {
           </div>
         </div>
 
-        {/* Notification & Demo Banner */}
+        {/* Team Selector & Notifications */}
         <div className="px-4 pt-4 space-y-2">
+          {/* Team Selector */}
+          <select
+            value={selectedTeam}
+            onChange={(e) => switchTeam(e.target.value)}
+            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500"
+            data-testid="team-selector"
+          >
+            <option value="envoy_nation">🔵 Envoy Nation</option>
+            <option value="e_nation">🟢 E-Nation</option>
+          </select>
+
           {/* Notification Bell */}
           <div className="relative">
             <button
