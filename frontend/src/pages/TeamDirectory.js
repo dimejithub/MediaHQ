@@ -1,20 +1,50 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/App';
+import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// Real Envoy Nation Team Members
 const DEMO_MEMBERS = {
   envoy_nation: [
-    { user_id: 'demo_en_admin', name: 'John Smith', email: 'john@mediahq.com', role: 'admin', skills: ['Camera', 'Sound'], availability: 'available', team: 'envoy_nation' },
-    { user_id: 'demo_en_lead', name: 'Sarah Johnson', email: 'sarah@mediahq.com', role: 'team_lead', skills: ['ProPresenter'], availability: 'available', team: 'envoy_nation' },
-    { user_id: 'demo_en_member1', name: 'Mike Wilson', email: 'mike@mediahq.com', role: 'member', skills: ['Camera'], availability: 'available', team: 'envoy_nation' },
-    { user_id: 'demo_en_member2', name: 'Emily Brown', email: 'emily@mediahq.com', role: 'member', skills: ['Sound'], availability: 'busy', team: 'envoy_nation' }
+    { user_id: 'en_1', name: 'Dr. Adebowale Owoseni', email: 'adebowale@mediahq.com', role: 'director', skills: ['Leadership', 'Strategy'], unit: 'Head', function: 'Lead', availability: 'Available', team: 'envoy_nation' },
+    { user_id: 'en_2', name: 'Adeola Hilton', email: 'adeola@mediahq.com', role: 'team_lead', skills: ['Leadership', 'Production'], unit: 'Lead', function: 'Lead', team: 'envoy_nation' },
+    { user_id: 'en_3', name: 'Oladimeji Tiamiyu', email: 'oladimeji@mediahq.com', role: 'assistant_lead', skills: ['Leadership', 'Coordination'], unit: 'Lead', function: 'Lead', team: 'envoy_nation' },
+    { user_id: 'en_4', name: 'Michel Adimula', email: 'michel@mediahq.com', role: 'unit_head', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_5', name: 'Bro Oluseye', email: 'oluseye@mediahq.com', role: 'unit_head', skills: ['ProPresenter', 'Livestream'], unit: 'Projection & Livestream', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_6', name: 'Oladipupo Hilton', email: 'oladipupo@mediahq.com', role: 'unit_head', skills: ['Photography', 'Editing'], unit: 'Photography', function: 'Photographer', team: 'envoy_nation' },
+    { user_id: 'en_7', name: 'Peter Ndiparya', email: 'peter@mediahq.com', role: 'member', skills: ['ProPresenter', 'Livestream'], unit: 'Projection & Livestream', function: 'Support', team: 'envoy_nation' },
+    { user_id: 'en_8', name: 'Jemima Eromon', email: 'jemima@mediahq.com', role: 'member', skills: ['ProPresenter'], unit: 'Projection & Livestream', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_9', name: 'Jasper Eromon', email: 'jasper@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_10', name: 'Seun Morenikeji', email: 'seun@mediahq.com', role: 'member', skills: ['Photography'], unit: 'Photography', function: 'Photographer', team: 'envoy_nation' },
+    { user_id: 'en_11', name: 'Chase Hadley', email: 'chase@mediahq.com', role: 'member', skills: ['Photography'], unit: 'Photography', function: 'Photographer', team: 'envoy_nation' },
+    { user_id: 'en_12', name: 'Olukunle Ogunniran', email: 'olukunle@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_13', name: 'Wade Osunmakinde', email: 'wade@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_14', name: 'Bro Tobi', email: 'tobi@mediahq.com', role: 'member', skills: ['ProPresenter', 'Livestream'], unit: 'Projection & Livestream', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_15', name: 'Onose Thompson', email: 'onose@mediahq.com', role: 'member', skills: ['Photography'], unit: 'Photography', function: 'Photographer', team: 'envoy_nation' },
+    { user_id: 'en_16', name: 'Precious Achudume', email: 'precious@mediahq.com', role: 'member', skills: ['Photography'], unit: 'Photography', function: 'Support', team: 'envoy_nation' },
+    { user_id: 'en_17', name: 'Oladeinde Omidiji', email: 'oladeinde@mediahq.com', role: 'member', skills: ['Photography'], unit: 'Photography', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_18', name: 'Abiodun Durojaiye', email: 'abiodun@mediahq.com', role: 'member', skills: ['Production'], unit: 'Production', function: 'Support', team: 'envoy_nation' },
+    { user_id: 'en_19', name: 'Temidayo Peters', email: 'temidayo@mediahq.com', role: 'member', skills: ['Editing', 'Post-Production'], unit: 'Post-Production', function: 'Editor', team: 'envoy_nation' },
+    { user_id: 'en_20', name: 'Favour Olusanya', email: 'favour.o@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_21', name: 'Favour Anwo', email: 'favour.a@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_22', name: 'Damilare Akeredolu', email: 'damilare@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' },
+    { user_id: 'en_23', name: 'Adeleke Matanmi', email: 'adeleke@mediahq.com', role: 'member', skills: ['Camera', 'Production'], unit: 'Production', function: 'Operator', team: 'envoy_nation' }
   ],
   e_nation: [
-    { user_id: 'demo_e_admin', name: 'David Lee', email: 'david@mediahq.com', role: 'admin', skills: ['Lighting', 'Camera'], availability: 'available', team: 'e_nation' },
-    { user_id: 'demo_e_lead', name: 'Lisa Chen', email: 'lisa@mediahq.com', role: 'team_lead', skills: ['Sound'], availability: 'available', team: 'e_nation' },
-    { user_id: 'demo_e_member1', name: 'James Park', email: 'james@mediahq.com', role: 'member', skills: ['ProPresenter'], availability: 'available', team: 'e_nation' }
+    { user_id: 'e_1', name: 'David Lee', email: 'david@mediahq.com', role: 'team_lead', skills: ['Lighting', 'Camera'], unit: 'Lead', team: 'e_nation' },
+    { user_id: 'e_2', name: 'Lisa Chen', email: 'lisa@mediahq.com', role: 'assistant_lead', skills: ['Sound'], unit: 'Lead', team: 'e_nation' },
+    { user_id: 'e_3', name: 'James Park', email: 'james@mediahq.com', role: 'member', skills: ['ProPresenter'], unit: 'Projection', team: 'e_nation' }
   ]
+};
+
+const ROLE_LABELS = {
+  director: { label: 'Director', color: 'bg-purple-500/20 text-purple-400' },
+  team_lead: { label: 'Team Lead', color: 'bg-blue-500/20 text-blue-400' },
+  assistant_lead: { label: 'Assistant Lead', color: 'bg-cyan-500/20 text-cyan-400' },
+  unit_head: { label: 'Unit Head', color: 'bg-green-500/20 text-green-400' },
+  weekly_lead: { label: 'Weekly Lead', color: 'bg-amber-500/20 text-amber-400' },
+  member: { label: 'Member', color: 'bg-slate-700 text-slate-300' }
 };
 
 function SkillBadge({ skill }) {
