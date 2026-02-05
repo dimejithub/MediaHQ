@@ -24,10 +24,24 @@ export const useAuth = () => useContext(AuthContext);
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [demoMode, setDemoMode] = useState(false);
+  const [demoMode, setDemoMode] = useState(() => {
+    return localStorage.getItem('demoMode') === 'true';
+  });
 
   useEffect(() => {
-    checkAuth();
+    // Check if demo mode was enabled
+    if (demoMode) {
+      setUser({ 
+        user_id: 'demo_admin', 
+        name: 'Demo Admin', 
+        email: 'demo@mediahq.com', 
+        role: 'admin',
+        skills: ['Camera', 'Sound', 'Lighting']
+      });
+      setLoading(false);
+    } else {
+      checkAuth();
+    }
   }, []);
 
   const checkAuth = async () => {
@@ -45,6 +59,8 @@ function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    localStorage.removeItem('demoMode');
+    setDemoMode(false);
     try {
       await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
     } catch (err) {
@@ -55,6 +71,7 @@ function AuthProvider({ children }) {
   };
 
   const enableDemoMode = () => {
+    localStorage.setItem('demoMode', 'true');
     setDemoMode(true);
     setUser({ 
       user_id: 'demo_admin', 
