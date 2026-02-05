@@ -41,21 +41,40 @@ function AuthProvider({ children }) {
   });
 
   // Role-based access configuration
+  // Weekly lead is dynamic - members get checklist access when assigned as lead
   const roleAccess = {
     director: ['all'], // Access to everything
+    admin: ['all'],
     team_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
     assistant_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
     unit_head: ['dashboard', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
-    weekly_lead: ['dashboard', 'my-rotas', 'checklists', 'training'],
     member: ['dashboard', 'team', 'my-rotas', 'training', 'performance', 'reports']
   };
 
+  // Check if member is assigned as weekly lead (gives them checklist access)
+  const [isWeeklyLead, setIsWeeklyLead] = useState(false);
+
   const hasAccess = (path) => {
     const userRole = user?.role || 'member';
-    const access = roleAccess[userRole] || roleAccess.member;
+    let access = roleAccess[userRole] || roleAccess.member;
+    
+    // If member is assigned as weekly lead, add checklists access
+    if (userRole === 'member' && isWeeklyLead) {
+      access = [...access, 'checklists'];
+    }
+    
     if (access.includes('all')) return true;
     const cleanPath = path.replace('/', '').replace('/','');
     return access.includes(cleanPath) || cleanPath === '' || cleanPath === 'login';
+  };
+
+  // Check weekly lead status for demo mode
+  const checkWeeklyLeadStatus = () => {
+    // In demo mode, simulate that Jasper Eromon is this week's lead
+    if (demoMode && demoRole === 'member') {
+      // Demo: member is weekly lead this week
+      setIsWeeklyLead(true);
+    }
   };
 
   useEffect(() => {
