@@ -4,46 +4,54 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+const DEMO_EQUIPMENT = {
+  envoy_nation: [
+    { equipment_id: 'demo_en_1', name: 'Sony PTZ Camera', category: 'camera', status: 'available', notes: 'Main pulpit camera', team: 'envoy_nation' },
+    { equipment_id: 'demo_en_2', name: 'Blackmagic ATEM Mini', category: 'video_switcher', status: 'available', notes: 'Live switching', team: 'envoy_nation' },
+    { equipment_id: 'demo_en_3', name: 'Shure SM58 Mic', category: 'audio', status: 'checked_out', notes: 'Handheld microphone', team: 'envoy_nation' },
+    { equipment_id: 'demo_en_4', name: 'Dell Laptop', category: 'computer', status: 'available', notes: 'For ProPresenter', team: 'envoy_nation' }
+  ],
+  e_nation: [
+    { equipment_id: 'demo_e_1', name: 'Canon XA50 Camera', category: 'camera', status: 'available', notes: 'Main camera', team: 'e_nation' },
+    { equipment_id: 'demo_e_2', name: 'Yamaha MG10XU Mixer', category: 'audio', status: 'available', notes: 'Audio mixer', team: 'e_nation' },
+    { equipment_id: 'demo_e_3', name: 'LED Panel Light', category: 'lighting', status: 'maintenance', notes: 'Needs repair', team: 'e_nation' }
+  ]
+};
+
 export default function Equipment() {
-  const { demoMode, user } = useAuth();
+  const { demoMode, user, selectedTeam } = useAuth();
   const [equipment, setEquipment] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [newEquipment, setNewEquipment] = useState({ name: '', category: 'camera', notes: '' });
 
-  const categories = ['camera', 'audio', 'lighting', 'computer', 'cable', 'other'];
-
-  const demoEquipment = [
-    { equipment_id: 'demo_1', name: 'Sony PTZ Camera', category: 'camera', status: 'available', notes: 'Main pulpit camera' },
-    { equipment_id: 'demo_2', name: 'Blackmagic ATEM Mini', category: 'video_switcher', status: 'available', notes: 'Live switching' },
-    { equipment_id: 'demo_3', name: 'Shure SM58 Mic', category: 'audio', status: 'checked_out', notes: 'Handheld microphone' },
-    { equipment_id: 'demo_4', name: 'Dell Laptop', category: 'computer', status: 'available', notes: 'For ProPresenter' },
-    { equipment_id: 'demo_5', name: 'HDMI Cable 10m', category: 'cable', status: 'available', notes: 'For main display' },
-    { equipment_id: 'demo_6', name: 'LED Panel Light', category: 'lighting', status: 'maintenance', notes: 'Needs repair' }
-  ];
+  const categories = ['camera', 'audio', 'lighting', 'computer', 'cable', 'video_switcher', 'other'];
+  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
 
   useEffect(() => {
+    const demoData = DEMO_EQUIPMENT[selectedTeam] || DEMO_EQUIPMENT.envoy_nation;
+    
     if (demoMode) {
-      setEquipment(demoEquipment);
+      setEquipment(demoData);
       setLoading(false);
       return;
     }
 
-    fetch(`${BACKEND_URL}/api/equipment`, { credentials: 'include' })
+    fetch(`${BACKEND_URL}/api/equipment?team=${selectedTeam}`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load');
         return res.json();
       })
       .then(data => {
-        setEquipment(data.length > 0 ? data : demoEquipment);
+        setEquipment(data.length > 0 ? data : demoData);
         setLoading(false);
       })
       .catch(err => {
         console.error(err);
-        setEquipment(demoEquipment);
+        setEquipment(demoData);
         setLoading(false);
       });
-  }, [demoMode]);
+  }, [demoMode, selectedTeam]);
 
   const handleCheckout = async (id) => {
     if (demoMode) {
@@ -91,12 +99,13 @@ export default function Equipment() {
       const newItem = {
         equipment_id: `demo_${Date.now()}`,
         ...newEquipment,
-        status: 'available'
+        status: 'available',
+        team: selectedTeam
       };
       setEquipment([...equipment, newItem]);
       setNewEquipment({ name: '', category: 'camera', notes: '' });
       setShowAddModal(false);
-      toast.success('Equipment added');
+      toast.success(`Equipment added to ${teamDisplayName}`);
       return;
     }
 
@@ -105,7 +114,7 @@ export default function Equipment() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(newEquipment)
+        body: JSON.stringify({ ...newEquipment, team_id: selectedTeam })
       });
       
       if (res.ok) {
@@ -154,8 +163,8 @@ export default function Equipment() {
     <div className="p-8" data-testid="equipment-page">
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Equipment Inventory</h1>
-          <p className="text-slate-400">Track and manage media equipment</p>
+          <h1 className="text-4xl font-bold text-white mb-2">{teamDisplayName} Equipment</h1>
+          <p className="text-slate-400">Track and manage {teamDisplayName} media equipment</p>
         </div>
         {isAdmin && (
           <button
