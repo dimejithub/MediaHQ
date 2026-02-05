@@ -6,10 +6,10 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const DEMO_DATA = {
   envoy_nation: {
-    total_members: 8,
+    total_members: 23,
     total_services: 5,
-    total_equipment: 15,
-    available_equipment: 12,
+    total_equipment: 6,
+    available_equipment: 4,
     pending_rotas: 2,
     upcoming_services: [
       { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Envoy Nation worship service' },
@@ -17,10 +17,10 @@ const DEMO_DATA = {
     ]
   },
   e_nation: {
-    total_members: 6,
+    total_members: 3,
     total_services: 4,
-    total_equipment: 10,
-    available_equipment: 8,
+    total_equipment: 3,
+    available_equipment: 3,
     pending_rotas: 1,
     upcoming_services: [
       { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service', description: 'E-Nation worship service' },
