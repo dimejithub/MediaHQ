@@ -27,13 +27,20 @@ The app is fully responsive and optimized for mobile devices:
 | **Director** | All modules including Director View | Full admin access |
 | **Team Lead** | All modules except Director View | Can manage team |
 | **Assistant Lead** | All modules except Director View | Can manage team |
-| **Unit Head** | Limited modules | Can input rotas, reports |
-| **Member** | View-only + Checklists if Weekly Lead | Gets checklist access when assigned as lead |
+| **Unit Head** | Limited modules + Calendar | Can input rotas, reports |
+| **Member** | View-only + Calendar + Checklists if Weekly Lead | Gets checklist access when assigned as lead |
 
 ### Weekly Lead System
 - Members automatically get **Checklists** access when assigned as the weekly lead
 - This is dynamic based on rota assignment, not a permanent role
-- When their lead week ends, checklist access is removed
+
+### Availability Calendar ✅
+- **All team members** can access the calendar to plan availability
+- Q1 (Jan-Mar) and Q2 (Apr-Jun) 2026 are available for planning
+- Click once = Available (green), Click twice = Unavailable (red), Click three times = Clear
+- "Mark All Sundays" button to quickly mark all Sundays as available
+- Sundays are highlighted with blue rings
+- Events (services) shown as blue dots on dates
 
 ---
 
