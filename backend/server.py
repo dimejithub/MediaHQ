@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request
+from fastapi import FastAPI, APIRouter, HTTPException, Cookie, Response, Request, UploadFile, File
 from fastapi.responses import StreamingResponse
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -13,6 +13,7 @@ from datetime import datetime, timezone, timedelta
 import requests
 import io
 import json
+import csv
 from collections import defaultdict
 
 ROOT_DIR = Path(__file__).parent
@@ -21,6 +22,20 @@ load_dotenv(ROOT_DIR / '.env')
 mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
+
+# Twilio settings (optional - only loaded if configured)
+TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
+TWILIO_AUTH_TOKEN = os.environ.get('TWILIO_AUTH_TOKEN')
+TWILIO_WHATSAPP_NUMBER = os.environ.get('TWILIO_WHATSAPP_NUMBER')
+
+twilio_client = None
+if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
+    try:
+        from twilio.rest import Client
+        twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
+        logging.info("Twilio client initialized")
+    except ImportError:
+        logging.warning("Twilio package not installed. WhatsApp notifications disabled.")
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
