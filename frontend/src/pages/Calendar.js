@@ -5,6 +5,17 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
+const DEMO_EVENTS = [
+  { id: 'demo_s1', type: 'service', title: 'Sunday Morning Service', date: '2026-02-08', time: '11:00', team: 'envoy_nation', service_type: 'sunday_service' },
+  { id: 'demo_s2', type: 'service', title: 'E-Nation Sunday Service', date: '2026-02-08', time: '09:00', team: 'e_nation', service_type: 'sunday_service' },
+  { id: 'demo_s3', type: 'service', title: 'Midweek Service', date: '2026-02-12', time: '18:00', team: 'envoy_nation', service_type: 'midweek_service' },
+  { id: 'demo_s4', type: 'service', title: 'E-Nation Midweek', date: '2026-02-11', time: '18:00', team: 'e_nation', service_type: 'midweek_service' },
+  { id: 'demo_r1', type: 'report', title: 'Report: Sunday Morning Service', date: '2026-02-08', attendees_count: 8 },
+  { id: 'demo_c1', type: 'checklist', title: 'Service Checklist', date: '2026-02-08', progress: '25/29' },
+  { id: 'demo_h1', type: 'handover', title: 'Equipment Handover', date: '2026-02-10', from_team: 'envoy_nation', to_team: 'e_nation', condition: 'good' },
+  { id: 'demo_e1', type: 'service', title: 'Annual Conference', date: '2026-02-22', time: '09:00', is_combined: true, service_type: 'conference' }
+];
+
 function EventBadge({ type }) {
   const colors = {
     service: 'bg-blue-500/20 text-blue-400',
@@ -22,6 +33,65 @@ function TeamBadge({ team, isCombined }) {
   return null;
 }
 
+function EventCard({ event }) {
+  return (
+    <div className="p-4 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="flex items-center gap-2 mb-1">
+            <EventBadge type={event.type} />
+            <TeamBadge team={event.team} isCombined={event.is_combined} />
+            {event.time && <span className="text-xs text-slate-500">{event.time}</span>}
+          </div>
+          <h3 className="font-medium text-white">{event.title}</h3>
+          {event.type === 'report' && <p className="text-sm text-slate-400">Attendees: {event.attendees_count}</p>}
+          {event.type === 'checklist' && <p className="text-sm text-slate-400">Progress: {event.progress}</p>}
+          {event.type === 'handover' && (
+            <p className="text-sm text-slate-400">
+              {event.from_team} → {event.to_team} | Condition: {event.condition}
+            </p>
+          )}
+          {event.service_type && <span className="text-xs text-slate-500 capitalize">{event.service_type?.replace('_', ' ')}</span>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function DateGroup({ date, events }) {
+  const formattedDate = new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+  
+  return (
+    <div className="border-b border-slate-800 last:border-0">
+      <div className="px-6 py-3 bg-slate-800/50">
+        <span className="font-bold text-white">{formattedDate}</span>
+      </div>
+      <div className="p-4 space-y-3">
+        {events.map(event => <EventCard key={event.id} event={event} />)}
+      </div>
+    </div>
+  );
+}
+
+function EventsList({ eventsByDate, sortedDates }) {
+  if (sortedDates.length === 0) {
+    return (
+      <div className="text-center py-12 text-slate-500">
+        <p className="text-5xl mb-4">📅</p>
+        <p>No events for this month</p>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      {sortedDates.map(date => (
+        <DateGroup key={date} date={date} events={eventsByDate[date]} />
+      ))}
+    </div>
+  );
+}
+
 export default function Calendar() {
   const { demoMode } = useAuth();
   const [year, setYear] = useState(new Date().getFullYear());
@@ -31,24 +101,13 @@ export default function Calendar() {
   const [selectedTeam, setSelectedTeam] = useState('all');
   const [counts, setCounts] = useState({ services: 0, reports: 0, checklists: 0, handovers: 0 });
 
-  const demoEvents = [
-    { id: 'demo_s1', type: 'service', title: 'Sunday Morning Service', date: '2026-02-08', time: '11:00', team: 'envoy_nation', service_type: 'sunday_service' },
-    { id: 'demo_s2', type: 'service', title: 'E-Nation Sunday Service', date: '2026-02-08', time: '09:00', team: 'e_nation', service_type: 'sunday_service' },
-    { id: 'demo_s3', type: 'service', title: 'Midweek Service', date: '2026-02-12', time: '18:00', team: 'envoy_nation', service_type: 'midweek_service' },
-    { id: 'demo_s4', type: 'service', title: 'E-Nation Midweek', date: '2026-02-11', time: '18:00', team: 'e_nation', service_type: 'midweek_service' },
-    { id: 'demo_r1', type: 'report', title: 'Report: Sunday Morning Service', date: '2026-02-08', attendees_count: 8 },
-    { id: 'demo_c1', type: 'checklist', title: 'Service Checklist', date: '2026-02-08', progress: '25/29' },
-    { id: 'demo_h1', type: 'handover', title: 'Equipment Handover', date: '2026-02-10', from_team: 'envoy_nation', to_team: 'e_nation', condition: 'good' },
-    { id: 'demo_e1', type: 'service', title: 'Annual Conference', date: '2026-02-22', time: '09:00', is_combined: true, service_type: 'conference' }
-  ];
-
   useEffect(() => {
     loadData();
   }, [year, month, selectedTeam, demoMode]);
 
   const loadData = async () => {
     if (demoMode) {
-      const filtered = selectedTeam === 'all' ? demoEvents : demoEvents.filter(e => e.team === selectedTeam || e.is_combined);
+      const filtered = selectedTeam === 'all' ? DEMO_EVENTS : DEMO_EVENTS.filter(e => e.team === selectedTeam || e.is_combined);
       setEvents(filtered);
       setCounts({ services: 4, reports: 1, checklists: 1, handovers: 1 });
       setLoading(false);
@@ -70,11 +129,11 @@ export default function Calendar() {
           handovers: data.handovers_count || 0
         });
       } else {
-        setEvents(demoEvents);
+        setEvents(DEMO_EVENTS);
       }
     } catch (err) {
       console.error(err);
-      setEvents(demoEvents);
+      setEvents(DEMO_EVENTS);
     } finally {
       setLoading(false);
     }
@@ -129,14 +188,12 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Month Navigation */}
       <div className="flex items-center justify-between mb-6 bg-slate-900 rounded-xl p-4 border border-slate-800">
         <button onClick={prevMonth} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">← Previous</button>
         <h2 className="text-2xl font-bold text-white">{MONTHS[month - 1]} {year}</h2>
         <button onClick={nextMonth} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">Next →</button>
       </div>
 
-      {/* Stats */}
       <div className="grid grid-cols-4 gap-4 mb-6">
         <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
           <p className="text-sm text-slate-400">Services</p>
@@ -156,46 +213,8 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* Events List */}
       <div className="bg-slate-900 rounded-xl border border-slate-800">
-        {sortedDates.length > 0 ? (
-          sortedDates.map(date => (
-            <div key={date} className="border-b border-slate-800 last:border-0">
-              <div className="px-6 py-3 bg-slate-800/50">
-                <span className="font-bold text-white">{new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}</span>
-              </div>
-              <div className="p-4 space-y-3">
-                {eventsByDate[date].map(event => (
-                  <div key={event.id} className="p-4 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <EventBadge type={event.type} />
-                          <TeamBadge team={event.team} isCombined={event.is_combined} />
-                          {event.time && <span className="text-xs text-slate-500">{event.time}</span>}
-                        </div>
-                        <h3 className="font-medium text-white">{event.title}</h3>
-                        {event.type === 'report' && <p className="text-sm text-slate-400">Attendees: {event.attendees_count}</p>}
-                        {event.type === 'checklist' && <p className="text-sm text-slate-400">Progress: {event.progress}</p>}
-                        {event.type === 'handover' && (
-                          <p className="text-sm text-slate-400">
-                            {event.from_team} → {event.to_team} | Condition: {event.condition}
-                          </p>
-                        )}
-                        {event.service_type && <span className="text-xs text-slate-500 capitalize">{event.service_type?.replace('_', ' ')}</span>}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))
-        ) : (
-          <div className="text-center py-12 text-slate-500">
-            <p className="text-5xl mb-4">📅</p>
-            <p>No events for this month</p>
-          </div>
-        )}
+        <EventsList eventsByDate={eventsByDate} sortedDates={sortedDates} />
       </div>
     </div>
   );
