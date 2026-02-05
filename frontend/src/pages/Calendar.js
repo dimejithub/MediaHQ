@@ -1,220 +1,351 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/App';
+import { toast } from 'sonner';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
-const DEMO_EVENTS = [
-  { id: 'demo_s1', type: 'service', title: 'Sunday Morning Service', date: '2026-02-08', time: '11:00', team: 'envoy_nation', service_type: 'sunday_service' },
-  { id: 'demo_s2', type: 'service', title: 'E-Nation Sunday Service', date: '2026-02-08', time: '09:00', team: 'e_nation', service_type: 'sunday_service' },
-  { id: 'demo_s3', type: 'service', title: 'Midweek Service', date: '2026-02-12', time: '18:00', team: 'envoy_nation', service_type: 'midweek_service' },
-  { id: 'demo_s4', type: 'service', title: 'E-Nation Midweek', date: '2026-02-11', time: '18:00', team: 'e_nation', service_type: 'midweek_service' },
-  { id: 'demo_r1', type: 'report', title: 'Report: Sunday Morning Service', date: '2026-02-08', attendees_count: 8 },
-  { id: 'demo_c1', type: 'checklist', title: 'Service Checklist', date: '2026-02-08', progress: '25/29' },
-  { id: 'demo_h1', type: 'handover', title: 'Equipment Handover', date: '2026-02-10', from_team: 'envoy_nation', to_team: 'e_nation', condition: 'good' },
-  { id: 'demo_e1', type: 'service', title: 'Annual Conference', date: '2026-02-22', time: '09:00', is_combined: true, service_type: 'conference' }
+// Q1 and Q2 months for 2026
+const Q1_Q2_MONTHS = [
+  { month: 1, name: 'January', quarter: 'Q1' },
+  { month: 2, name: 'February', quarter: 'Q1' },
+  { month: 3, name: 'March', quarter: 'Q1' },
+  { month: 4, name: 'April', quarter: 'Q2' },
+  { month: 5, name: 'May', quarter: 'Q2' },
+  { month: 6, name: 'June', quarter: 'Q2' }
 ];
 
-function EventBadge({ type }) {
-  const colors = {
-    service: 'bg-blue-500/20 text-blue-400',
-    report: 'bg-green-500/20 text-green-400',
-    checklist: 'bg-amber-500/20 text-amber-400',
-    handover: 'bg-purple-500/20 text-purple-400'
-  };
-  return <span className={`px-2 py-0.5 text-xs rounded ${colors[type] || 'bg-slate-700 text-slate-300'}`}>{type}</span>;
+const DEMO_EVENTS = [
+  { id: 'demo_s1', type: 'service', title: 'Sunday Morning Service', date: '2026-02-08', time: '11:00', team: 'envoy_nation' },
+  { id: 'demo_s2', type: 'service', title: 'E-Nation Sunday Service', date: '2026-02-08', time: '09:00', team: 'e_nation' },
+  { id: 'demo_s3', type: 'service', title: 'Midweek Service', date: '2026-02-12', time: '18:00', team: 'envoy_nation' },
+  { id: 'demo_e1', type: 'service', title: 'Annual Conference', date: '2026-02-22', time: '09:00', is_combined: true }
+];
+
+function getDaysInMonth(year, month) {
+  return new Date(year, month, 0).getDate();
 }
 
-function TeamBadge({ team, isCombined }) {
-  if (isCombined) return <span className="px-2 py-0.5 text-xs rounded bg-pink-500/20 text-pink-400">Combined</span>;
-  if (team === 'envoy_nation') return <span className="px-2 py-0.5 text-xs rounded bg-blue-500/20 text-blue-400">Envoy Nation</span>;
-  if (team === 'e_nation') return <span className="px-2 py-0.5 text-xs rounded bg-green-500/20 text-green-400">E-Nation</span>;
-  return null;
+function getFirstDayOfMonth(year, month) {
+  return new Date(year, month - 1, 1).getDay();
 }
 
-function EventCard({ event }) {
-  return (
-    <div className="p-4 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all">
-      <div className="flex items-start justify-between">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-1">
-            <EventBadge type={event.type} />
-            <TeamBadge team={event.team} isCombined={event.is_combined} />
-            {event.time && <span className="text-xs text-slate-500">{event.time}</span>}
-          </div>
-          <h3 className="font-medium text-white">{event.title}</h3>
-          {event.type === 'report' && <p className="text-sm text-slate-400">Attendees: {event.attendees_count}</p>}
-          {event.type === 'checklist' && <p className="text-sm text-slate-400">Progress: {event.progress}</p>}
-          {event.type === 'handover' && (
-            <p className="text-sm text-slate-400">
-              {event.from_team} → {event.to_team} | Condition: {event.condition}
-            </p>
-          )}
-          {event.service_type && <span className="text-xs text-slate-500 capitalize">{event.service_type?.replace('_', ' ')}</span>}
-        </div>
-      </div>
-    </div>
-  );
-}
+function AvailabilityCalendar({ year, month, availability, onToggle, events }) {
+  const daysInMonth = getDaysInMonth(year, month);
+  const firstDay = getFirstDayOfMonth(year, month);
+  const days = [];
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-function DateGroup({ date, events }) {
-  const formattedDate = new Date(date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-  
-  return (
-    <div className="border-b border-slate-800 last:border-0">
-      <div className="px-6 py-3 bg-slate-800/50">
-        <span className="font-bold text-white">{formattedDate}</span>
-      </div>
-      <div className="p-4 space-y-3">
-        {events.map(event => <EventCard key={event.id} event={event} />)}
-      </div>
-    </div>
-  );
-}
+  // Add empty cells for days before the first day
+  for (let i = 0; i < firstDay; i++) {
+    days.push(<div key={`empty-${i}`} className="h-10 sm:h-12"></div>);
+  }
 
-function EventsList({ eventsByDate, sortedDates }) {
-  if (sortedDates.length === 0) {
-    return (
-      <div className="text-center py-12 text-slate-500">
-        <p className="text-5xl mb-4">📅</p>
-        <p>No events for this month</p>
-      </div>
+  // Add days
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const isAvailable = availability[dateStr] === true;
+    const isUnavailable = availability[dateStr] === false;
+    const hasEvent = events.some(e => e.date === dateStr);
+    const isPast = new Date(dateStr) < new Date(new Date().toDateString());
+    const isSunday = new Date(dateStr).getDay() === 0;
+
+    days.push(
+      <button
+        key={day}
+        onClick={() => !isPast && onToggle(dateStr)}
+        disabled={isPast}
+        className={`h-10 sm:h-12 rounded-lg text-xs sm:text-sm font-medium transition-all relative
+          ${isPast ? 'bg-slate-800/30 text-slate-600 cursor-not-allowed' : ''}
+          ${!isPast && isAvailable ? 'bg-green-500/30 text-green-400 border-2 border-green-500' : ''}
+          ${!isPast && isUnavailable ? 'bg-red-500/30 text-red-400 border-2 border-red-500' : ''}
+          ${!isPast && !isAvailable && !isUnavailable ? 'bg-slate-800 text-white hover:bg-slate-700' : ''}
+          ${isSunday && !isPast ? 'ring-2 ring-blue-500/50' : ''}
+        `}
+      >
+        {day}
+        {hasEvent && <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-blue-400"></span>}
+      </button>
     );
   }
 
   return (
     <div>
-      {sortedDates.map(date => (
-        <DateGroup key={date} date={date} events={eventsByDate[date]} />
-      ))}
+      <div className="grid grid-cols-7 gap-1 mb-2">
+        {weekDays.map(d => (
+          <div key={d} className="h-8 flex items-center justify-center text-xs text-slate-500 font-medium">{d}</div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {days}
+      </div>
+    </div>
+  );
+}
+
+function MonthCard({ monthData, year, availability, onToggle, events, expanded, onExpand }) {
+  const monthEvents = events.filter(e => {
+    const eventDate = new Date(e.date);
+    return eventDate.getMonth() + 1 === monthData.month && eventDate.getFullYear() === year;
+  });
+
+  const availableDays = Object.entries(availability).filter(([date, val]) => {
+    const d = new Date(date);
+    return d.getMonth() + 1 === monthData.month && d.getFullYear() === year && val === true;
+  }).length;
+
+  const unavailableDays = Object.entries(availability).filter(([date, val]) => {
+    const d = new Date(date);
+    return d.getMonth() + 1 === monthData.month && d.getFullYear() === year && val === false;
+  }).length;
+
+  return (
+    <div className={`bg-slate-900 rounded-xl border border-slate-800 overflow-hidden transition-all ${expanded ? 'col-span-full' : ''}`}>
+      <button 
+        onClick={onExpand}
+        className="w-full p-4 flex items-center justify-between hover:bg-slate-800/50 transition-all"
+      >
+        <div className="flex items-center gap-3">
+          <span className={`px-2 py-1 text-xs rounded ${monthData.quarter === 'Q1' ? 'bg-blue-500/20 text-blue-400' : 'bg-purple-500/20 text-purple-400'}`}>
+            {monthData.quarter}
+          </span>
+          <h3 className="text-lg font-bold text-white">{monthData.name}</h3>
+        </div>
+        <div className="flex items-center gap-3">
+          {availableDays > 0 && <span className="text-xs text-green-400">{availableDays} available</span>}
+          {unavailableDays > 0 && <span className="text-xs text-red-400">{unavailableDays} unavailable</span>}
+          <span className="text-slate-400">{expanded ? '▲' : '▼'}</span>
+        </div>
+      </button>
+      
+      {expanded && (
+        <div className="p-4 border-t border-slate-800">
+          <div className="flex flex-wrap gap-2 mb-4">
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <span className="w-3 h-3 rounded bg-green-500/30 border border-green-500"></span> Available
+            </span>
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <span className="w-3 h-3 rounded bg-red-500/30 border border-red-500"></span> Unavailable
+            </span>
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <span className="w-3 h-3 rounded bg-slate-800 ring-2 ring-blue-500/50"></span> Sunday
+            </span>
+            <span className="flex items-center gap-1 text-xs text-slate-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400"></span> Has event
+            </span>
+          </div>
+          <AvailabilityCalendar 
+            year={year} 
+            month={monthData.month} 
+            availability={availability} 
+            onToggle={onToggle}
+            events={monthEvents}
+          />
+          {monthEvents.length > 0 && (
+            <div className="mt-4 pt-4 border-t border-slate-800">
+              <p className="text-sm text-slate-400 mb-2">Events this month:</p>
+              <div className="space-y-2">
+                {monthEvents.map(e => (
+                  <div key={e.id} className="flex items-center gap-2 text-sm">
+                    <span className="text-slate-500">{new Date(e.date).getDate()}</span>
+                    <span className="text-white">{e.title}</span>
+                    {e.time && <span className="text-slate-500">{e.time}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function Calendar() {
-  const { demoMode } = useAuth();
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [month, setMonth] = useState(new Date().getMonth() + 1);
+  const { demoMode, user, selectedTeam } = useAuth();
+  const [view, setView] = useState('availability'); // 'availability' or 'events'
+  const [year] = useState(2026);
   const [events, setEvents] = useState([]);
+  const [availability, setAvailability] = useState({});
+  const [expandedMonth, setExpandedMonth] = useState(new Date().getMonth() + 1);
   const [loading, setLoading] = useState(true);
-  const [selectedTeam, setSelectedTeam] = useState('all');
-  const [counts, setCounts] = useState({ services: 0, reports: 0, checklists: 0, handovers: 0 });
 
   useEffect(() => {
     loadData();
-  }, [year, month, selectedTeam, demoMode]);
+  }, [demoMode, selectedTeam]);
 
-  const loadData = async () => {
+  const loadData = () => {
     if (demoMode) {
-      const filtered = selectedTeam === 'all' ? DEMO_EVENTS : DEMO_EVENTS.filter(e => e.team === selectedTeam || e.is_combined);
-      setEvents(filtered);
-      setCounts({ services: 4, reports: 1, checklists: 1, handovers: 1 });
+      setEvents(DEMO_EVENTS);
+      // Load saved availability from localStorage
+      const saved = localStorage.getItem(`availability_${user?.user_id}`);
+      if (saved) {
+        setAvailability(JSON.parse(saved));
+      }
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    try {
-      const teamParam = selectedTeam !== 'all' ? `&team=${selectedTeam}` : '';
-      const res = await fetch(`${BACKEND_URL}/api/calendar/month/${year}/${month}?${teamParam}`, { credentials: 'include' });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setEvents(data.events || []);
-        setCounts({
-          services: data.services_count || 0,
-          reports: data.reports_count || 0,
-          checklists: data.checklists_count || 0,
-          handovers: data.handovers_count || 0
-        });
-      } else {
-        setEvents(DEMO_EVENTS);
+    // Real API call would go here
+    setEvents(DEMO_EVENTS);
+    setLoading(false);
+  };
+
+  const toggleAvailability = (dateStr) => {
+    const current = availability[dateStr];
+    let newValue;
+    
+    if (current === undefined) {
+      newValue = true; // First click = available
+    } else if (current === true) {
+      newValue = false; // Second click = unavailable
+    } else {
+      newValue = undefined; // Third click = unset
+    }
+
+    const newAvailability = { ...availability };
+    if (newValue === undefined) {
+      delete newAvailability[dateStr];
+    } else {
+      newAvailability[dateStr] = newValue;
+    }
+    
+    setAvailability(newAvailability);
+    
+    // Save to localStorage in demo mode
+    if (demoMode) {
+      localStorage.setItem(`availability_${user?.user_id}`, JSON.stringify(newAvailability));
+    }
+    
+    toast.success(newValue === true ? 'Marked as available' : newValue === false ? 'Marked as unavailable' : 'Availability cleared');
+  };
+
+  const markAllSundaysAvailable = () => {
+    const newAvailability = { ...availability };
+    
+    Q1_Q2_MONTHS.forEach(m => {
+      const daysInMonth = getDaysInMonth(year, m.month);
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(m.month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const date = new Date(dateStr);
+        if (date.getDay() === 0 && date >= new Date(new Date().toDateString())) {
+          newAvailability[dateStr] = true;
+        }
       }
-    } catch (err) {
-      console.error(err);
-      setEvents(DEMO_EVENTS);
-    } finally {
-      setLoading(false);
+    });
+    
+    setAvailability(newAvailability);
+    if (demoMode) {
+      localStorage.setItem(`availability_${user?.user_id}`, JSON.stringify(newAvailability));
     }
+    toast.success('All Sundays marked as available');
   };
 
-  const prevMonth = () => {
-    if (month === 1) {
-      setMonth(12);
-      setYear(year - 1);
-    } else {
-      setMonth(month - 1);
+  const clearAllAvailability = () => {
+    setAvailability({});
+    if (demoMode) {
+      localStorage.removeItem(`availability_${user?.user_id}`);
     }
+    toast.success('Availability cleared');
   };
 
-  const nextMonth = () => {
-    if (month === 12) {
-      setMonth(1);
-      setYear(year + 1);
-    } else {
-      setMonth(month + 1);
-    }
-  };
-
-  // Group events by date
-  const eventsByDate = events.reduce((acc, event) => {
-    const date = event.date;
-    if (!acc[date]) acc[date] = [];
-    acc[date].push(event);
-    return acc;
-  }, {});
-
-  const sortedDates = Object.keys(eventsByDate).sort((a, b) => new Date(b) - new Date(a));
+  // Count stats
+  const totalAvailable = Object.values(availability).filter(v => v === true).length;
+  const totalUnavailable = Object.values(availability).filter(v => v === false).length;
 
   if (loading) {
     return <div className="flex items-center justify-center h-full"><div className="text-xl text-slate-400 animate-pulse">Loading calendar...</div></div>;
   }
 
   return (
-    <div className="p-8" data-testid="calendar-page">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8" data-testid="calendar-page">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">Calendar</h1>
-          <p className="text-slate-400">View services, reports, checklists, and handovers</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1">Availability Calendar</h1>
+          <p className="text-sm sm:text-base text-slate-400">Plan your availability for Q1 & Q2 {year}</p>
         </div>
-        <div className="flex items-center gap-4">
-          <select value={selectedTeam} onChange={(e) => setSelectedTeam(e.target.value)}
-            className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white">
-            <option value="all">All Teams</option>
-            <option value="envoy_nation">Envoy Nation</option>
-            <option value="e_nation">E-Nation</option>
-          </select>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between mb-6 bg-slate-900 rounded-xl p-4 border border-slate-800">
-        <button onClick={prevMonth} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">← Previous</button>
-        <h2 className="text-2xl font-bold text-white">{MONTHS[month - 1]} {year}</h2>
-        <button onClick={nextMonth} className="px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">Next →</button>
-      </div>
-
-      <div className="grid grid-cols-4 gap-4 mb-6">
-        <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <p className="text-sm text-slate-400">Services</p>
-          <p className="text-2xl font-bold text-blue-400">{counts.services}</p>
-        </div>
-        <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <p className="text-sm text-slate-400">Reports</p>
-          <p className="text-2xl font-bold text-green-400">{counts.reports}</p>
-        </div>
-        <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <p className="text-sm text-slate-400">Checklists</p>
-          <p className="text-2xl font-bold text-amber-400">{counts.checklists}</p>
-        </div>
-        <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <p className="text-sm text-slate-400">Handovers</p>
-          <p className="text-2xl font-bold text-purple-400">{counts.handovers}</p>
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={markAllSundaysAvailable}
+            className="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-all"
+          >
+            Mark All Sundays
+          </button>
+          <button
+            onClick={clearAllAvailability}
+            className="px-3 py-2 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600 transition-all"
+          >
+            Clear All
+          </button>
         </div>
       </div>
 
-      <div className="bg-slate-900 rounded-xl border border-slate-800">
-        <EventsList eventsByDate={eventsByDate} sortedDates={sortedDates} />
+      {/* User Info */}
+      <div className="bg-slate-900 rounded-xl p-4 border border-slate-800 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-lg font-bold text-white">
+              {user?.name?.charAt(0) || '?'}
+            </div>
+            <div>
+              <p className="text-white font-medium">{user?.name}</p>
+              <p className="text-xs text-slate-400 capitalize">{user?.role?.replace('_', ' ')}</p>
+            </div>
+          </div>
+          <div className="flex gap-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-green-400">{totalAvailable}</p>
+              <p className="text-xs text-slate-400">Available</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-red-400">{totalUnavailable}</p>
+              <p className="text-xs text-slate-400">Unavailable</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Instructions */}
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 mb-6">
+        <p className="text-sm text-amber-400">
+          <strong>How to use:</strong> Click a date once to mark as <span className="text-green-400">available</span>, 
+          click again for <span className="text-red-400">unavailable</span>, click a third time to clear. 
+          Sundays are highlighted with a blue ring.
+        </p>
+      </div>
+
+      {/* Quarter Tabs */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setExpandedMonth(Q1_Q2_MONTHS.find(m => m.quarter === 'Q1')?.month || 1)}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-all"
+        >
+          Q1 (Jan-Mar)
+        </button>
+        <button
+          onClick={() => setExpandedMonth(Q1_Q2_MONTHS.find(m => m.quarter === 'Q2')?.month || 4)}
+          className="px-4 py-2 rounded-lg text-sm font-medium bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 transition-all"
+        >
+          Q2 (Apr-Jun)
+        </button>
+      </div>
+
+      {/* Month Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {Q1_Q2_MONTHS.map(monthData => (
+          <MonthCard
+            key={monthData.month}
+            monthData={monthData}
+            year={year}
+            availability={availability}
+            onToggle={toggleAvailability}
+            events={events}
+            expanded={expandedMonth === monthData.month}
+            onExpand={() => setExpandedMonth(expandedMonth === monthData.month ? null : monthData.month)}
+          />
+        ))}
       </div>
     </div>
   );
