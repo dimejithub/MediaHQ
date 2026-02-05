@@ -14,6 +14,8 @@ import Settings from '@/pages/Settings';
 import Login from '@/pages/Login';
 import LeadRotation from '@/pages/LeadRotation';
 import Performance from '@/pages/Performance';
+import Calendar from '@/pages/Calendar';
+import DirectorDashboard from '@/pages/DirectorDashboard';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
