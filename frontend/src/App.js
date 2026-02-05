@@ -42,13 +42,14 @@ function AuthProvider({ children }) {
 
   // Role-based access configuration
   // Weekly lead is dynamic - members get checklist access when assigned as lead
+  // Calendar is accessible to everyone for availability planning
   const roleAccess = {
     director: ['all'], // Access to everything
     admin: ['all'],
     team_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
     assistant_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
-    unit_head: ['dashboard', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
-    member: ['dashboard', 'team', 'my-rotas', 'training', 'performance', 'reports']
+    unit_head: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
+    member: ['dashboard', 'calendar', 'team', 'my-rotas', 'training', 'performance', 'reports']
   };
 
   // Check if member is assigned as weekly lead (gives them checklist access)
