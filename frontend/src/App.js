@@ -132,7 +132,8 @@ function AuthProvider({ children }) {
 
 function Layout({ children }) {
   const location = useLocation();
-  const { user, logout, demoMode } = useAuth();
+  const { user, logout, demoMode, notifications, unreadCount, markAllRead } = useAuth();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const navItems = [
     { name: 'Dashboard', path: '/dashboard', icon: '📊' },
@@ -140,9 +141,11 @@ function Layout({ children }) {
     { name: 'Services', path: '/services', icon: '🗓️' },
     { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝' },
     { name: 'My Rotas', path: '/my-rotas', icon: '✅' },
+    { name: 'Lead Rotation', path: '/lead-rotation', icon: '🔄' },
     { name: 'Equipment', path: '/equipment', icon: '🎥' },
     { name: 'Checklists', path: '/checklists', icon: '📋' },
     { name: 'Reports', path: '/reports', icon: '📄' },
+    { name: 'Performance', path: '/performance', icon: '📈' },
     { name: 'Training', path: '/training', icon: '🎓' },
     { name: 'Settings', path: '/settings', icon: '⚙️' }
   ];
@@ -162,12 +165,50 @@ function Layout({ children }) {
           </div>
         </div>
 
-        {/* Demo Mode Banner */}
-        {demoMode && (
-          <div className="mx-4 mt-4 px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg">
-            <p className="text-xs text-amber-400 font-medium text-center">Demo Mode Active</p>
+        {/* Notification & Demo Banner */}
+        <div className="px-4 pt-4 space-y-2">
+          {/* Notification Bell */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotifications(!showNotifications)}
+              className="w-full flex items-center justify-between px-3 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition-all"
+              data-testid="notification-bell"
+            >
+              <span className="text-sm text-slate-300">🔔 Notifications</span>
+              {unreadCount > 0 && (
+                <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">{unreadCount}</span>
+              )}
+            </button>
+            
+            {showNotifications && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-50 max-h-64 overflow-y-auto">
+                <div className="p-3 border-b border-slate-700 flex items-center justify-between">
+                  <span className="text-sm font-medium text-white">Notifications</span>
+                  {unreadCount > 0 && (
+                    <button onClick={markAllRead} className="text-xs text-blue-400 hover:text-blue-300">Mark all read</button>
+                  )}
+                </div>
+                {notifications && notifications.length > 0 ? (
+                  notifications.slice(0, 5).map(n => (
+                    <div key={n.notification_id} className={`p-3 border-b border-slate-700 last:border-0 ${!n.read ? 'bg-slate-700/50' : ''}`}>
+                      <p className="text-sm font-medium text-white">{n.title}</p>
+                      <p className="text-xs text-slate-400 mt-1">{n.message}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-4 text-center text-slate-500 text-sm">No notifications</div>
+                )}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Demo Mode Banner */}
+          {demoMode && (
+            <div className="px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg">
+              <p className="text-xs text-amber-400 font-medium text-center">Demo Mode Active</p>
+            </div>
+          )}
+        </div>
 
         {/* Navigation */}
         <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
