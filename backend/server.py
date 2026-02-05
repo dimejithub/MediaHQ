@@ -42,6 +42,10 @@ api_router = APIRouter(prefix="/api")
 
 # ========== MODELS ==========
 
+# Team constants
+TEAMS = ["envoy_nation", "e_nation"]
+ROLES = ["member", "team_lead", "admin", "director"]
+
 class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
@@ -49,6 +53,8 @@ class User(BaseModel):
     name: str
     picture: Optional[str] = None
     role: str = "member"
+    teams: List[str] = []  # Can belong to multiple teams
+    primary_team: Optional[str] = None  # Primary team assignment
     skills: List[str] = []
     availability: str = "available"
     phone: Optional[str] = None
@@ -75,6 +81,8 @@ class Service(BaseModel):
     date: str
     time: str
     type: str
+    team: str = "envoy_nation"  # Which team this service belongs to
+    is_combined: bool = False  # True for combined workforce events
     description: Optional[str] = None
     created_by: str
     created_at: datetime
@@ -84,6 +92,8 @@ class ServiceCreate(BaseModel):
     date: str
     time: str
     type: str
+    team: str = "envoy_nation"
+    is_combined: bool = False
     description: Optional[str] = None
 
 class RotaAssignment(BaseModel):
@@ -96,6 +106,7 @@ class Rota(BaseModel):
     model_config = ConfigDict(extra="ignore")
     rota_id: str
     service_id: str
+    team: str = "envoy_nation"
     assignments: List[RotaAssignment]
     notes: Optional[str] = None
     created_at: datetime
