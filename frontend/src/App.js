@@ -421,8 +421,8 @@ function Layout({ children }) {
         </div>
       </div>
 
-      {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-slate-950">{children}</main>
+      {/* Main Content - Add padding for mobile header */}
+      <main className="flex-1 overflow-auto bg-slate-950 lg:ml-0 pt-16 lg:pt-0">{children}</main>
     </div>
   );
 }
