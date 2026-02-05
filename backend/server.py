@@ -240,6 +240,39 @@ class NotificationCreate(BaseModel):
     message: str
     type: str
 
+# New: Equipment Handover
+class EquipmentHandover(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    handover_id: str
+    equipment_id: str
+    from_team: str
+    to_team: str
+    from_user_id: str
+    to_user_id: str
+    condition_before: str  # good, fair, needs_repair
+    condition_notes: Optional[str] = None
+    photo_urls: List[str] = []  # External URLs for photos
+    handover_date: str
+    created_at: datetime
+
+class EquipmentHandoverCreate(BaseModel):
+    equipment_id: str
+    to_team: str
+    to_user_id: str
+    condition_before: str
+    condition_notes: Optional[str] = None
+    photo_urls: List[str] = []
+
+# New: Director Dashboard Summary
+class TeamSummary(BaseModel):
+    team: str
+    total_members: int
+    total_services: int
+    total_rotas: int
+    total_reports: int
+    avg_reliability: float
+    upcoming_services: int
+
 class TrainingProgress(BaseModel):
     model_config = ConfigDict(extra="ignore")
     user_id: str
