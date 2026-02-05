@@ -181,14 +181,6 @@ export default function AssignRotas() {
       console.error('Submit error:', err);
     }
   };
-      setSelectedService(null);
-      setWeeklyLead('');
-      setAssignments([]);
-    } catch (err) {
-      toast.error('Failed to create rota');
-      console.error(err);
-    }
-  };
 
   const getMemberName = (userId) => {
     return members.find(m => m.user_id === userId)?.name || 'Unknown';
