@@ -38,7 +38,7 @@ const CHECKLIST_ITEMS = [
 ];
 
 export default function AssignRotas() {
-  const { demoMode } = useAuth();
+  const { demoMode, selectedTeam } = useAuth();
   const [services, setServices] = useState([]);
   const [members, setMembers] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
@@ -46,6 +46,8 @@ export default function AssignRotas() {
   const [assignments, setAssignments] = useState([]);
   const [newAssignment, setNewAssignment] = useState({ user_id: '', role: '' });
   const [loading, setLoading] = useState(true);
+
+  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
 
   const roles = [
     'Camera Operator',
@@ -59,58 +61,72 @@ export default function AssignRotas() {
     'Video Editor'
   ];
 
-  // Demo data
-  const demoServices = [
-    { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service' },
-    { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night' },
-    { service_id: 'demo_3', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service' }
-  ];
+  // Demo data by team
+  const demoServices = {
+    envoy_nation: [
+      { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service' },
+      { service_id: 'demo_en_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night' }
+    ],
+    e_nation: [
+      { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service' },
+      { service_id: 'demo_e_2', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service' }
+    ]
+  };
 
-  const demoMembers = [
-    { user_id: 'demo_admin', name: 'John Smith', role: 'admin' },
-    { user_id: 'demo_lead', name: 'Sarah Johnson', role: 'team_lead' },
-    { user_id: 'demo_member1', name: 'Mike Wilson', role: 'member' },
-    { user_id: 'demo_member2', name: 'Emily Brown', role: 'member' },
-    { user_id: 'demo_member3', name: 'David Lee', role: 'member' }
-  ];
+  const demoMembers = {
+    envoy_nation: [
+      { user_id: 'demo_en_admin', name: 'John Smith', role: 'admin' },
+      { user_id: 'demo_en_lead', name: 'Sarah Johnson', role: 'team_lead' },
+      { user_id: 'demo_en_member1', name: 'Mike Wilson', role: 'member' },
+      { user_id: 'demo_en_member2', name: 'Emily Brown', role: 'member' }
+    ],
+    e_nation: [
+      { user_id: 'demo_e_admin', name: 'David Lee', role: 'admin' },
+      { user_id: 'demo_e_lead', name: 'Lisa Chen', role: 'team_lead' },
+      { user_id: 'demo_e_member1', name: 'James Park', role: 'member' }
+    ]
+  };
 
   useEffect(() => {
     loadData();
-  }, [demoMode]);
+  }, [demoMode, selectedTeam]);
 
   const loadData = async () => {
+    const teamServices = demoServices[selectedTeam] || demoServices.envoy_nation;
+    const teamMembers = demoMembers[selectedTeam] || demoMembers.envoy_nation;
+    
     if (demoMode) {
-      setServices(demoServices);
-      setMembers(demoMembers);
+      setServices(teamServices);
+      setMembers(teamMembers);
       setLoading(false);
       return;
     }
 
     try {
       const [servicesRes, membersRes] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/api/team/members`, { credentials: 'include' })
+        fetch(`${BACKEND_URL}/api/services?team=${selectedTeam}`, { credentials: 'include' }),
+        fetch(`${BACKEND_URL}/api/team/members?team=${selectedTeam}`, { credentials: 'include' })
       ]);
       
       if (servicesRes.ok) {
         const servicesData = await servicesRes.json();
-        setServices(servicesData.length > 0 ? servicesData : demoServices);
+        setServices(servicesData.length > 0 ? servicesData : teamServices);
       } else {
-        setServices(demoServices);
+        setServices(teamServices);
         toast.error('Unable to load services. Using demo data.');
       }
       
       if (membersRes.ok) {
         const membersData = await membersRes.json();
-        setMembers(membersData.length > 0 ? membersData : demoMembers);
+        setMembers(membersData.length > 0 ? membersData : teamMembers);
       } else {
-        setMembers(demoMembers);
+        setMembers(teamMembers);
         toast.error('Unable to load team members. Using demo data.');
       }
     } catch (err) {
       console.error('Load data error:', err);
-      setServices(demoServices);
-      setMembers(demoMembers);
+      setServices(teamServices);
+      setMembers(teamMembers);
       toast.error('Error loading data. Using demo mode.');
     } finally {
       setLoading(false);
@@ -244,8 +260,8 @@ export default function AssignRotas() {
   return (
     <div className="p-8 space-y-6" data-testid="assign-rotas-page">
       <div>
-        <h1 className="text-4xl font-bold text-white mb-2">Assign Rotas</h1>
-        <p className="text-slate-400">Create service rotas and assign weekly lead</p>
+        <h1 className="text-4xl font-bold text-white mb-2">Assign Rotas - {teamDisplayName}</h1>
+        <p className="text-slate-400">Create service rotas and assign weekly lead for {teamDisplayName}</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
