@@ -92,8 +92,40 @@ The app is fully responsive and optimized for mobile devices:
 ## Pending Tasks
 
 ### P1 - High Priority
-- [ ] Twilio WhatsApp notifications (need WhatsApp-enabled number)
-- [ ] Google OAuth end-to-end testing
+- [ ] Twilio WhatsApp notifications (need WhatsApp-enabled number, Account SID, Auth Token)
+- [ ] Google OAuth end-to-end testing with real credentials
 
 ### P2 - Medium Priority
-- [ ] Equipment Handover UI
+- [ ] Backend refactoring - split server.py into separate modules (routes, models, business logic)
+
+---
+
+## Recently Completed (Feb 5, 2026)
+
+### Team Directory Card Redesign ✅
+- Fixed profile picture avatars being cut off/covered
+- Removed overflow-hidden clipping issue
+- 3-dot menu properly positioned in top-right corner
+- Add/Edit modals include profile picture upload with camera icon
+- Mobile-responsive layout with single column on small screens
+
+### Equipment Handover System ✅
+- Added **Inventory** and **Handovers** tabs to Equipment page
+- **Inventory Tab**: Equipment grid with check out/check in functionality
+- **Handovers Tab**: Shows transfer history with From→To flow, team badges, condition status
+- **New Handover Modal**:
+  - Equipment dropdown (filters to available items only)
+  - Destination team selector
+  - Receiving member dropdown (updates based on team)
+  - Condition toggle buttons (Good/Fair/Needs Repair)
+  - Condition notes textarea
+- Backend endpoint: `POST /api/equipment/handover`, `GET /api/equipment/handovers`
+- Demo mode uses hardcoded DEMO_HANDOVERS data for testing
+
+---
+
+## Key Files Reference
+- `/app/frontend/src/pages/TeamDirectory.js` - Member cards with avatar fix
+- `/app/frontend/src/pages/Equipment.js` - Equipment inventory + handovers tabs
+- `/app/frontend/src/App.js` - Core routing, RBAC, mobile responsiveness
+- `/app/backend/server.py` - FastAPI backend with all endpoints
