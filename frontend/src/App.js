@@ -213,9 +213,10 @@ function AuthProvider({ children }) {
 
 function Layout({ children }) {
   const location = useLocation();
-  const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole } = useAuth();
+  const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole, isWeeklyLead } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const isDirector = user?.role === 'director' || user?.role === 'admin';
 
@@ -225,7 +226,6 @@ function Layout({ children }) {
     team_lead: 'Team Lead',
     assistant_lead: 'Assistant Lead',
     unit_head: 'Unit Head',
-    weekly_lead: 'Weekly Lead',
     member: 'Member'
   };
 
@@ -253,10 +253,44 @@ function Layout({ children }) {
     return hasAccess(item.access);
   });
 
+  // Close sidebar when navigating on mobile
+  const handleNavClick = () => {
+    setSidebarOpen(false);
+  };
+
   return (
     <div className="flex h-screen bg-slate-950">
-      {/* Sidebar */}
-      <div className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl h-screen">
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white p-2 -ml-2" data-testid="mobile-menu-btn">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            </svg>
+          </button>
+          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-sm text-slate-900">TEN</div>
+          <span className="font-bold text-white">MediaHQ</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2 text-white" data-testid="mobile-notification-btn">
+            <span className="text-xl">🔔</span>
+            {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      {/* Sidebar - Desktop always visible, Mobile slide-in */}
+      <div className={`
+        fixed lg:static inset-y-0 left-0 z-50
+        w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl
+        transform transition-transform duration-300 ease-in-out
+        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
         {/* Logo - Fixed */}
         <div className="flex-shrink-0 p-5 border-b border-slate-800">
           <div className="flex items-center gap-3">
