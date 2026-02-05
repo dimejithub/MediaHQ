@@ -98,72 +98,71 @@ export default function Dashboard() {
 
         <div className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-3" data-testid="kpi-equipment">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-2xl animate-float">🎥</div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-xl sm:text-2xl">🎥</div>
             <div>
-              <p className="text-sm text-slate-400">Equipment</p>
-              <p className="text-2xl font-bold text-white">{kpis?.available_equipment || 0}<span className="text-sm text-slate-500">/{kpis?.total_equipment || 0}</span></p>
+              <p className="text-xs sm:text-sm text-slate-400">Equipment</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{kpis?.available_equipment || 0}<span className="text-xs sm:text-sm text-slate-500">/{kpis?.total_equipment || 0}</span></p>
             </div>
           </div>
         </div>
 
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-4" data-testid="kpi-rotas">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-2xl animate-float">⏳</div>
+        <div className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-4" data-testid="kpi-rotas">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg bg-orange-500/10 flex items-center justify-center text-xl sm:text-2xl">⏳</div>
             <div>
-              <p className="text-sm text-slate-400">Pending Rotas</p>
-              <p className="text-2xl font-bold text-white">{kpis?.pending_rotas || 0}</p>
+              <p className="text-xs sm:text-sm text-slate-400">Pending</p>
+              <p className="text-xl sm:text-2xl font-bold text-white">{kpis?.pending_rotas || 0}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Upcoming Services & Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
         {/* Upcoming Services */}
-        <div className="lg:col-span-2 bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInLeft glass">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <span className="text-2xl">📅</span>
+        <div className="lg:col-span-2 bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 animate-fadeInLeft glass">
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">📅</span>
             Upcoming Services
           </h2>
           <div className="space-y-3">
             {kpis?.upcoming_services && kpis.upcoming_services.length > 0 ? (
               kpis.upcoming_services.slice(0, 5).map((service, idx) => (
-                <div key={idx} className="p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:bg-slate-800 hover:border-slate-600 transition-all hover-scale">
-                  <h3 className="font-semibold text-white">{service.title}</h3>
-                  <p className="text-sm text-slate-400 mt-1">{service.description || 'No description'}</p>
-                  <div className="flex flex-wrap gap-2 mt-3">
+                <div key={idx} className="p-3 sm:p-4 rounded-lg bg-slate-800/50 border border-slate-700 hover:bg-slate-800 hover:border-slate-600 transition-all">
+                  <h3 className="font-semibold text-white text-sm sm:text-base">{service.title}</h3>
+                  <p className="text-xs sm:text-sm text-slate-400 mt-1">{service.description || 'No description'}</p>
+                  <div className="flex flex-wrap gap-2 mt-2 sm:mt-3">
                     <span className="px-2 py-1 rounded text-xs bg-slate-700 text-slate-300">{service.date}</span>
                     <span className="px-2 py-1 rounded text-xs bg-slate-700 text-slate-300">{service.time}</span>
-                    <span className="px-2 py-1 rounded text-xs bg-slate-700 text-slate-300 capitalize">{service.type?.replace('_', ' ') || 'Service'}</span>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-12 text-slate-500">
-                <p className="text-4xl mb-2">📭</p>
-                <p>No upcoming services</p>
+              <div className="text-center py-8 sm:py-12 text-slate-500">
+                <p className="text-3xl sm:text-4xl mb-2">📭</p>
+                <p className="text-sm sm:text-base">No upcoming services</p>
               </div>
             )}
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInRight glass">
-          <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-            <span className="text-2xl">⚡</span>
+        <div className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800 animate-fadeInRight glass">
+          <h2 className="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-6 flex items-center gap-2">
+            <span className="text-xl sm:text-2xl">⚡</span>
             Quick Actions
           </h2>
-          <div className="space-y-3">
-            <Link to="/services" data-testid="quick-action-schedule" className="block w-full px-4 py-3 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all text-center btn-animate hover-lift">
+          <div className="space-y-2 sm:space-y-3">
+            <Link to="/services" data-testid="quick-action-schedule" className="block w-full px-4 py-3 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all text-center text-sm sm:text-base btn-animate">
               Schedule Service
             </Link>
-            <Link to="/assign-rotas" data-testid="quick-action-rotas" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 btn-animate hover-lift">
+            <Link to="/assign-rotas" data-testid="quick-action-rotas" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 text-sm sm:text-base btn-animate">
               Assign Rotas
             </Link>
-            <Link to="/equipment" data-testid="quick-action-equipment" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 btn-animate hover-lift">
+            <Link to="/equipment" data-testid="quick-action-equipment" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 text-sm sm:text-base btn-animate">
               Manage Equipment
             </Link>
-            <Link to="/checklists" data-testid="quick-action-checklists" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 btn-animate hover-lift">
+            <Link to="/checklists" data-testid="quick-action-checklists" className="block w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-center border border-slate-700 text-sm sm:text-base btn-animate">
               View Checklists
             </Link>
           </div>
