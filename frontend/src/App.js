@@ -81,9 +81,9 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/team" element={<TeamDirectory />} />
             <Route path="/services" element={<Services />} />
+            <Route path="/assign-rotas" element={<AssignRotas />} />
             <Route path="/my-rotas" element={<MyRotas />} />
             <Route path="/equipment" element={<Equipment />} />
-            {/* <Route path="/checklists" element={<ServiceChecklists />} /> */}
             <Route path="/reports" element={<ServiceReports />} />
             <Route path="/training" element={<Training />} />
             <Route path="/settings" element={<Settings />} />
