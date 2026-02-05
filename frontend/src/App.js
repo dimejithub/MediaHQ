@@ -385,14 +385,15 @@ function Layout({ children }) {
               <Link
                 key={item.path}
                 to={item.path}
+                onClick={handleNavClick}
                 data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
                   isActive
                     ? 'bg-white text-slate-900 shadow-lg'
                     : 'text-slate-400 hover:bg-slate-800 hover:text-white'
                 }`}
               >
-                <span className="text-base">{item.icon}</span>
+                <span className="text-lg">{item.icon}</span>
                 <span className="font-medium text-sm">{item.name}</span>
               </Link>
             );
