@@ -3,12 +3,19 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-const DEMO_MEMBERS = [
-  { user_id: 'demo_admin', name: 'John Smith', email: 'john@mediahq.com', role: 'admin', skills: ['Camera', 'Sound'], availability: 'available' },
-  { user_id: 'demo_lead', name: 'Sarah Johnson', email: 'sarah@mediahq.com', role: 'team_lead', skills: ['ProPresenter'], availability: 'available' },
-  { user_id: 'demo_member1', name: 'Mike Wilson', email: 'mike@mediahq.com', role: 'member', skills: ['Camera'], availability: 'available' },
-  { user_id: 'demo_member2', name: 'Emily Brown', email: 'emily@mediahq.com', role: 'member', skills: ['Sound'], availability: 'busy' }
-];
+const DEMO_MEMBERS = {
+  envoy_nation: [
+    { user_id: 'demo_en_admin', name: 'John Smith', email: 'john@mediahq.com', role: 'admin', skills: ['Camera', 'Sound'], availability: 'available', team: 'envoy_nation' },
+    { user_id: 'demo_en_lead', name: 'Sarah Johnson', email: 'sarah@mediahq.com', role: 'team_lead', skills: ['ProPresenter'], availability: 'available', team: 'envoy_nation' },
+    { user_id: 'demo_en_member1', name: 'Mike Wilson', email: 'mike@mediahq.com', role: 'member', skills: ['Camera'], availability: 'available', team: 'envoy_nation' },
+    { user_id: 'demo_en_member2', name: 'Emily Brown', email: 'emily@mediahq.com', role: 'member', skills: ['Sound'], availability: 'busy', team: 'envoy_nation' }
+  ],
+  e_nation: [
+    { user_id: 'demo_e_admin', name: 'David Lee', email: 'david@mediahq.com', role: 'admin', skills: ['Lighting', 'Camera'], availability: 'available', team: 'e_nation' },
+    { user_id: 'demo_e_lead', name: 'Lisa Chen', email: 'lisa@mediahq.com', role: 'team_lead', skills: ['Sound'], availability: 'available', team: 'e_nation' },
+    { user_id: 'demo_e_member1', name: 'James Park', email: 'james@mediahq.com', role: 'member', skills: ['ProPresenter'], availability: 'available', team: 'e_nation' }
+  ]
+};
 
 function SkillBadge({ skill }) {
   return <span className="px-2 py-1 text-xs bg-slate-800 text-slate-300 rounded">{skill}</span>;
@@ -63,28 +70,32 @@ function MembersList({ members }) {
 }
 
 export default function TeamDirectory() {
-  const { demoMode } = useAuth();
+  const { demoMode, selectedTeam } = useAuth();
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
+
   useEffect(() => {
+    const demoData = DEMO_MEMBERS[selectedTeam] || DEMO_MEMBERS.envoy_nation;
+    
     if (demoMode) {
-      setMembers(DEMO_MEMBERS);
+      setMembers(demoData);
       setLoading(false);
       return;
     }
 
-    fetch(`${BACKEND_URL}/api/team/members`, { credentials: 'include' })
-      .then(res => res.ok ? res.json() : DEMO_MEMBERS)
+    fetch(`${BACKEND_URL}/api/team/members?team=${selectedTeam}`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : demoData)
       .then(data => {
-        setMembers(data.length > 0 ? data : DEMO_MEMBERS);
+        setMembers(data.length > 0 ? data : demoData);
         setLoading(false);
       })
       .catch(() => {
-        setMembers(DEMO_MEMBERS);
+        setMembers(demoData);
         setLoading(false);
       });
-  }, [demoMode]);
+  }, [demoMode, selectedTeam]);
 
   if (loading) {
     return (
@@ -97,7 +108,7 @@ export default function TeamDirectory() {
   return (
     <div className="p-8" data-testid="team-directory">
       <h1 className="text-4xl font-bold text-white mb-2">Team Directory</h1>
-      <p className="text-slate-400 mb-8">Manage your media team members</p>
+      <p className="text-slate-400 mb-8">Manage {teamDisplayName} team members</p>
       <MembersList members={members} />
     </div>
   );

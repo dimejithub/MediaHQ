@@ -4,31 +4,45 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+const DEMO_DATA = {
+  envoy_nation: {
+    total_members: 8,
+    total_services: 5,
+    total_equipment: 15,
+    available_equipment: 12,
+    pending_rotas: 2,
+    upcoming_services: [
+      { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Envoy Nation worship service' },
+      { service_id: 'demo_en_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night', description: 'Evening worship and prayer' }
+    ]
+  },
+  e_nation: {
+    total_members: 6,
+    total_services: 4,
+    total_equipment: 10,
+    available_equipment: 8,
+    pending_rotas: 1,
+    upcoming_services: [
+      { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service', description: 'E-Nation worship service' },
+      { service_id: 'demo_e_2', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service', description: 'Youth ministry event' }
+    ]
+  }
+};
+
 export default function Dashboard() {
-  const { demoMode } = useAuth();
+  const { demoMode, selectedTeam } = useAuth();
   const [kpis, setKpis] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (demoMode) {
-      // Demo data
-      setKpis({
-        total_members: 12,
-        total_services: 8,
-        total_equipment: 25,
-        available_equipment: 18,
-        pending_rotas: 3,
-        upcoming_services: [
-          { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Main worship service' },
-          { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night', description: 'Evening worship and prayer' },
-          { service_id: 'demo_3', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service', description: 'Youth ministry event' }
-        ]
-      });
+      // Demo data filtered by selected team
+      setKpis(DEMO_DATA[selectedTeam] || DEMO_DATA.envoy_nation);
       setLoading(false);
       return;
     }
 
-    fetch(`${BACKEND_URL}/api/dashboard/kpis`, { credentials: 'include' })
+    fetch(`${BACKEND_URL}/api/dashboard/kpis?team=${selectedTeam}`, { credentials: 'include' })
       .then(res => {
         if (!res.ok) throw new Error('Failed to load');
         return res.json();
@@ -39,10 +53,10 @@ export default function Dashboard() {
       })
       .catch(err => {
         console.error(err);
-        setKpis({ total_members: 0, total_services: 0, total_equipment: 0, available_equipment: 0, pending_rotas: 0, upcoming_services: [] });
+        setKpis(DEMO_DATA[selectedTeam] || DEMO_DATA.envoy_nation);
         setLoading(false);
       });
-  }, [demoMode]);
+  }, [demoMode, selectedTeam]);
 
   if (loading) {
     return (
