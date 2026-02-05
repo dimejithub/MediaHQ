@@ -6,15 +6,17 @@ const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 const DEMO_EQUIPMENT = {
   envoy_nation: [
-    { equipment_id: 'demo_en_1', name: 'Sony PTZ Camera', category: 'camera', status: 'available', notes: 'Main pulpit camera', team: 'envoy_nation' },
-    { equipment_id: 'demo_en_2', name: 'Blackmagic ATEM Mini', category: 'video_switcher', status: 'available', notes: 'Live switching', team: 'envoy_nation' },
-    { equipment_id: 'demo_en_3', name: 'Shure SM58 Mic', category: 'audio', status: 'checked_out', notes: 'Handheld microphone', team: 'envoy_nation' },
-    { equipment_id: 'demo_en_4', name: 'Dell Laptop', category: 'computer', status: 'available', notes: 'For ProPresenter', team: 'envoy_nation' }
+    { equipment_id: 'en_eq_1', name: 'PTZ Camera', category: 'camera', status: 'available', notes: 'Main pulpit camera for livestream', team: 'envoy_nation' },
+    { equipment_id: 'en_eq_2', name: 'Panasonic Lumix DC-G9 #1', category: 'camera', status: 'available', notes: 'Photography camera - working condition', team: 'envoy_nation' },
+    { equipment_id: 'en_eq_3', name: 'Panasonic Lumix DC-G9 #2', category: 'camera', status: 'maintenance', notes: 'Photography camera - needs repair', team: 'envoy_nation' },
+    { equipment_id: 'en_eq_4', name: 'Canon EOS 850D', category: 'camera', status: 'maintenance', notes: 'FAULTY - requires servicing', team: 'envoy_nation' },
+    { equipment_id: 'en_eq_5', name: 'BlackMagic Camera', category: 'camera', status: 'available', notes: 'Production camera', team: 'envoy_nation' },
+    { equipment_id: 'en_eq_6', name: 'Mac Mini Pro', category: 'computer', status: 'available', notes: 'Main production computer for editing and ProPresenter', team: 'envoy_nation' }
   ],
   e_nation: [
-    { equipment_id: 'demo_e_1', name: 'Canon XA50 Camera', category: 'camera', status: 'available', notes: 'Main camera', team: 'e_nation' },
-    { equipment_id: 'demo_e_2', name: 'Yamaha MG10XU Mixer', category: 'audio', status: 'available', notes: 'Audio mixer', team: 'e_nation' },
-    { equipment_id: 'demo_e_3', name: 'LED Panel Light', category: 'lighting', status: 'maintenance', notes: 'Needs repair', team: 'e_nation' }
+    { equipment_id: 'e_eq_1', name: 'Canon XA50 Camera', category: 'camera', status: 'available', notes: 'Main camera', team: 'e_nation' },
+    { equipment_id: 'e_eq_2', name: 'Yamaha MG10XU Mixer', category: 'audio', status: 'available', notes: 'Audio mixer', team: 'e_nation' },
+    { equipment_id: 'e_eq_3', name: 'LED Panel Light', category: 'lighting', status: 'available', notes: 'Studio lighting', team: 'e_nation' }
   ]
 };
 
