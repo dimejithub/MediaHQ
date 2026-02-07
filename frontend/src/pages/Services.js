@@ -44,8 +44,8 @@ export default function Services() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newService, setNewService] = useState({ title: '', date: '', time: '', type: 'sunday_service', description: '' });
 
-  const serviceTypes = ['sunday_service', 'worship_night', 'youth_service', 'special_event', 'conference', 'midweek_service'];
-  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
+  const serviceTypes = SERVICE_TYPES[selectedTeam] || SERVICE_TYPES.envoy_nation;
+  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'The Commissioned Envoy (E-Nation)';
 
   useEffect(() => {
     const demoData = DEMO_SERVICES[selectedTeam] || DEMO_SERVICES.envoy_nation;
