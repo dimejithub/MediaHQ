@@ -116,53 +116,67 @@ function AuthProvider({ children }) {
   }, [demoRole, demoMode]);
 
   const checkAuth = async () => {
-    try {
-      const sessionToken = localStorage.getItem('session_token');
-      const storedUser = localStorage.getItem('user');
-      
-      // First try to get user from API
-      const headers = sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {};
-      
-      const res = await fetch(`${BACKEND_URL}/api/auth/me`, { 
-        credentials: 'include',
-        headers: headers
-      });
-      
-      if (res.ok) {
-        const userData = await res.json();
-        setUser(userData);
-        localStorage.setItem('user', JSON.stringify(userData));
-        // Clear demo mode if we have a real user
-        localStorage.removeItem('demoMode');
-        localStorage.removeItem('demoRole');
-        setDemoMode(false);
-      } else if (storedUser) {
-        // Fallback to stored user data
+    const sessionToken = localStorage.getItem('session_token');
+    const storedUser = localStorage.getItem('user');
+    
+    // Immediately use stored user if available (optimistic loading)
+    if (storedUser) {
+      try {
         const userData = JSON.parse(storedUser);
         setUser(userData);
-      } else {
-        // Auth failed - clear session token
-        localStorage.removeItem('session_token');
+        setLoading(false);
+        
+        // Clear demo mode if we have a real user session
+        if (sessionToken) {
+          localStorage.removeItem('demoMode');
+          localStorage.removeItem('demoRole');
+          setDemoMode(false);
+        }
+      } catch {
         localStorage.removeItem('user');
       }
-    } catch (err) {
-      console.log('Not authenticated');
-      // Try fallback to stored user
-      const storedUser = localStorage.getItem('user');
-      if (storedUser) {
-        try {
-          const userData = JSON.parse(storedUser);
+    }
+    
+    // If no stored user and no session, stop loading
+    if (!sessionToken && !storedUser) {
+      setLoading(false);
+      return;
+    }
+    
+    // Background refresh from API (don't block UI)
+    if (sessionToken) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
+        
+        const res = await fetch(`${BACKEND_URL}/api/auth/me`, { 
+          credentials: 'include',
+          headers: { 'Authorization': `Bearer ${sessionToken}` },
+          signal: controller.signal
+        });
+        
+        clearTimeout(timeoutId);
+        
+        if (res.ok) {
+          const userData = await res.json();
           setUser(userData);
-        } catch {
+          localStorage.setItem('user', JSON.stringify(userData));
+          localStorage.removeItem('demoMode');
+          localStorage.removeItem('demoRole');
+          setDemoMode(false);
+        } else if (res.status === 401) {
+          // Session expired - clear everything
           localStorage.removeItem('session_token');
           localStorage.removeItem('user');
+          setUser(null);
         }
-      } else {
-        localStorage.removeItem('session_token');
+      } catch (err) {
+        // Network error - keep using stored user
+        console.log('Auth refresh failed, using cached user');
       }
-    } finally {
-      setLoading(false);
     }
+    
+    setLoading(false);
   };
 
   const logout = async () => {
