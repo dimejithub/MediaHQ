@@ -91,13 +91,52 @@ The app is fully responsive and optimized for mobile devices:
 
 ## Pending Tasks
 
-### P2 - Medium Priority
-- [ ] Backend refactoring - split server.py into separate route modules
-- [ ] Deployment guidance and production environment setup
+### Completed ✅
+All P0 and P1 tasks have been completed!
+
+### Future Enhancements
+- [ ] Add email notifications as backup for WhatsApp
+- [ ] Add multi-language support
+- [ ] Performance analytics dashboard enhancements
 
 ---
 
 ## Recently Completed (Feb 7, 2026)
+
+### Generate Recurring Services ✅
+- Auto-create all weekly/monthly services for 1-3 months
+- Services to generate:
+  - Sunday Service (every Sunday)
+  - Midweek Service / Leicester Blessings (every Thursday)
+  - Tuesday Standup (every Tuesday)
+  - Connected with PMO (last Thursday of month)
+- Modal with duration selector (1/2/3 months)
+- Prevents duplicate service creation
+
+### Tuesday Standup Attendance Tracking ✅
+- New `/attendance` page for tracking standup meeting attendance
+- **Consecutive Absence Flagging**: Members with 2+ consecutive absences shown in red alert
+- Stats cards: Total Members, Meetings Recorded, Last Meeting Rate, Flagged Count
+- Member table with attendance percentage and status badges
+- "Mark Attendance" modal to select attendees with date picker
+- Recent meetings progress bars
+
+### Backend Refactoring ✅
+Created modular route structure in `/app/backend/routes/`:
+- `auth.py` - Authentication (session exchange, login, logout)
+- `users.py` - User management
+- `services.py` - Services and recurring generation
+- `rotas.py` - Rota management
+- `equipment.py` - Equipment and handovers
+- `attendance.py` - Standup attendance tracking
+
+### Deployment Guide ✅
+Created `/app/DEPLOYMENT.md` with:
+- Multiple deployment options (Emergent, Railway, Render, VPS)
+- Environment variable configuration
+- Post-deployment checklist
+- Troubleshooting guide
+- Security recommendations
 
 ### Service Names Update ✅
 Updated all service names to match actual church services:
