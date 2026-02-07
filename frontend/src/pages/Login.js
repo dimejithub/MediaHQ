@@ -24,6 +24,8 @@ export default function Login() {
     setError(null);
     setLoading(true);
 
+    console.log('Starting login...', { email, BACKEND_URL });
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
@@ -32,7 +34,9 @@ export default function Login() {
         body: JSON.stringify({ email: email.toLowerCase(), password })
       });
 
+      console.log('Login response status:', response.status);
       const data = await response.json();
+      console.log('Login response data:', data);
 
       if (!response.ok) {
         throw new Error(data.detail || 'Login failed');
@@ -47,10 +51,12 @@ export default function Login() {
       localStorage.removeItem('demoRole');
       localStorage.removeItem('onboarding_complete');
 
+      console.log('Login successful, redirecting...');
       // Force full page reload to reset auth state
       window.location.replace('/onboarding');
     } catch (err) {
-      setError(err.message);
+      console.error('Login error:', err);
+      setError(err.message || 'Network error - please try again');
       setLoading(false);
     }
   };
