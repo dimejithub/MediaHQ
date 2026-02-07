@@ -44,8 +44,9 @@ export default function Checklists() {
   const [loading, setLoading] = useState(true);
 
   const demoServices = [
-    { service_id: 'demo_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' },
-    { service_id: 'demo_2', title: 'Worship Night', date: '2026-02-12', time: '19:00' }
+    { service_id: 'demo_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service' },
+    { service_id: 'demo_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', type: 'leicester_blessings' },
+    { service_id: 'demo_3', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo' }
   ];
 
   useEffect(() => {
