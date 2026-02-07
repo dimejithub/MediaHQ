@@ -164,21 +164,6 @@ function AuthProvider({ children }) {
       setLoading(false);
     }
   };
-        // Clear demo mode if we have a real user
-        localStorage.removeItem('demoMode');
-        localStorage.removeItem('demoRole');
-        setDemoMode(false);
-      } else {
-        // Auth failed - clear session token
-        localStorage.removeItem('session_token');
-      }
-    } catch (err) {
-      console.log('Not authenticated');
-      localStorage.removeItem('session_token');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const logout = async () => {
     localStorage.removeItem('demoMode');
