@@ -11,9 +11,11 @@ const DEMO_DATA = {
     total_equipment: 6,
     available_equipment: 4,
     pending_rotas: 2,
+    weekly_lead: 'Oladimeji Tiamiyu',
     upcoming_services: [
-      { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Envoy Nation worship service' },
-      { service_id: 'demo_en_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night', description: 'Evening worship and prayer' }
+      { service_id: 'demo_en_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service', description: 'Envoy Nation Sunday worship service' },
+      { service_id: 'demo_en_2', title: 'Midweek (Leicester Blessings)', date: '2026-02-12', time: '19:00', type: 'midweek_service', description: 'Thursday midweek service' },
+      { service_id: 'demo_en_3', title: 'Tuesday Standup', date: '2026-02-10', time: '19:00', type: 'tuesday_standup', description: 'Weekly team meeting' }
     ]
   },
   e_nation: {
@@ -22,9 +24,10 @@ const DEMO_DATA = {
     total_equipment: 3,
     available_equipment: 3,
     pending_rotas: 1,
+    weekly_lead: 'David Lee',
     upcoming_services: [
-      { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service', description: 'E-Nation worship service' },
-      { service_id: 'demo_e_2', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service', description: 'Youth ministry event' }
+      { service_id: 'demo_e_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', type: 'sunday_service', description: 'E-Nation Sunday service' },
+      { service_id: 'demo_e_2', title: 'Midweek Service', date: '2026-02-11', time: '19:00', type: 'midweek_service', description: 'Wednesday gathering' }
     ]
   }
 };
