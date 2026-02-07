@@ -23,10 +23,19 @@ function ExportButton({ label, icon, onClick }) {
 
 export default function Settings() {
   const { user, demoMode } = useAuth();
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'director';
   const [importCollection, setImportCollection] = useState('users');
   const [csvData, setCsvData] = useState([]);
   const [importing, setImporting] = useState(false);
+  const [whatsappStatus, setWhatsappStatus] = useState({ configured: false, loading: true });
+
+  useEffect(() => {
+    // Check WhatsApp status
+    fetch(`${BACKEND_URL}/api/whatsapp/test-connection`)
+      .then(res => res.json())
+      .then(data => setWhatsappStatus({ ...data, loading: false }))
+      .catch(() => setWhatsappStatus({ configured: false, loading: false, error: 'Failed to check' }));
+  }, []);
 
   const handleExport = (collection) => {
     if (demoMode) {
