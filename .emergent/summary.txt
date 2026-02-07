@@ -2,176 +2,183 @@
 The user wants to build TEN MediaHQ, a comprehensive platform for church media teams to manage personnel, equipment, schedules, and training.
 
 **Core Modules:**
-1.  Secure authentication (JWT + Google Social Login) and role-based access control (RBAC).
+1.  Secure authentication and role-based access control (RBAC).
 2.  Admin and Director dashboards with performance metrics.
 3.  Team directory with profile pictures.
 4.  Service and rota scheduling, including a 52-week lead rotation planner.
 5.  Equipment inventory with a handover tracking system.
 6.  Interactive service checklists that auto-populate.
 7.  A training center for linking external documents.
-8.  A multi-team system to segregate data for Envoy Nation and E-Nation.
+8.  A multi-team system to segregate data.
 9.  Notifications via in-app alerts and Twilio for WhatsApp.
 10. Data management via CSV/Excel import/export.
 
 **PRODUCT REQUIREMENTS:**
 -   **UI Preference:** Sophisticated, modern, with a monochrome black gradient accent.
--   **Onboarding:** A mandatory onboarding flow for all first-time users.
+-   **Onboarding:** A mandatory onboarding flow for all first-time users, which includes selecting which team(s) they are volunteering for.
 -   **Data:** The app must use real data provided by the user and connect to their live MongoDB instance.
--   **Service Management:** Service names and times must reflect the church's actual schedule, with a feature to generate recurring services automatically.
--   **Leadership Development:** The weekly lead rotation must include all team members to foster leadership skills.
--   **Attendance:** A system to track attendance for Tuesday standup meetings and flag members with consecutive absences.
+-   **Authentication:** The system was changed from Google OAuth to a simple email/password system where an admin would create users. The credentials are  with a shared password .
 
 **User's preferred language**: English
 
 **what currently exists?**
-A full-stack application with a FastAPI backend and a React frontend, connected to the user's live MongoDB Atlas instance. The app is fully mobile-responsive and populated with real user and equipment data.
-
-Key implemented features include a multi-team system, granular RBAC, a feature-rich calendar, and a modern, animated UI. Recent additions include a redesigned team directory, a complete equipment handover system, a mandatory onboarding flow for new users, a personalized dashboard, and an attendance tracking page. The backend has been partially refactored into a modular structure.
+A full-stack application with a refactored FastAPI backend and a React frontend. The application has been successfully deployed, with the backend hosted on Railway and the frontend on Cloudflare Pages. Due to persistent deployment issues with Google OAuth, the authentication system was completely replaced with a simple email/password login using a predefined list of 23 users. All Emergent branding has been removed from the codebase. The user has reported significant performance issues (slowness and lag) with the deployed application.
 
 **Last working item**:
-- **Last item agent was working:** Implementing a mandatory onboarding flow for first-time users. The agent created the  page and added logic to  to check for an  flag in . If the flag is not present, any attempt to access a protected route results in a redirect to .
-- **Status:** USER VERIFICATION PENDING
-- **Agent Testing Done:** Y (Manual test by clearing localStorage to simulate a new user and verifying the redirect).
-- **Which testing method agent to use?** frontend testing agent. The agent should verify the redirection logic for both new and existing users, ensuring new users are forced into onboarding and existing users can access the app directly.
-- **User Testing Done:** N
+-   **Last item agent was working:** Addressing user complaints about the app being slow and buggy after deployment. The agent began a comprehensive fix by implementing a fallback data mechanism to make the app more resilient to database connection failures (a persistent issue in the preview environment). This involved creating a  module and updating several API routes (, , , , ) to use it.
+-   **Status:** IN PROGRESS
+-   **Agent Testing Done:** N
+-   **Which testing method agent to use?** Both. The frontend testing agent should be used to assess UI responsiveness and data loading times on the live URL. The backend testing agent should verify API response times and the correctness of the fallback data logic.
+-   **User Testing Done:** N
 
 **All Pending/In progress Issue list**:
-- There are no high-priority blocking issues.
+-   **Issue 1:** The deployed application is very slow, with significant lag when loading data. (P0)
+-   **Issue 2:** The new email/password login system may not correctly separate real user sessions from demo data, leading to the wrong user's name (e.g., Adebowale) being displayed after another user (e.g., Oladimeji) logs in. (P1)
+-   **Issue 3:** The MongoDB Atlas connection, while stable on Railway, was highly unstable in the preview environment, which can complicate testing and debugging. (P2)
 
 **Issues Detail:**
-- None.
+-   **Issue 1: Application Performance Lag**
+    -   **Attempted fixes:** The agent reduced the database connection timeout and started implementing a fallback data system, which was more of a fix for preview environment instability than a direct performance optimization for production.
+    -   **Next debug checklist:**
+        1.  Use browser developer tools to analyze the Network tab on the deployed site and identify which API calls are slow.
+        2.  Inspect the logs on Railway for the  service to check for slow database queries or server-side errors.
+        3.  Review the key frontend components (, , ) for inefficient data fetching, processing, or rendering loops.
+        4.  Consider adding indexes to the MongoDB collections for frequently queried fields.
+    -   **Why fix this issue?** The application is not usable in its current slow state. This is the user's most critical complaint.
+    -   **Status:** IN PROGRESS
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Both
+-   **Issue 2: Login Session Data Corruption**
+    -   **Attempted fixes:** The agent refactored  and  to explicitly clear  from  upon successful login.
+    -   **Next debug checklist:**
+        1.  After logging in on the deployed site, use browser developer tools to inspect . Verify  and  are removed, while  and  are set correctly.
+        2.  Verify the  endpoint returns the correct user data for the session.
+        3.  Confirm the dashboard greeting and other personalized elements show the logged-in user's name.
+    -   **Why fix this issue?** It breaks the core user experience and personalization of the application.
+    -   **Status:** TESTING PENDING
+    -   **Is recurring issue?** Y
+    -   **Should Test frontend/backend/both after fix?** Both
 
 **In progress Task List**:
-- **Task 1:** Finalize the mandatory onboarding flow. (P0)
-    - **Where to resume:** Awaiting user verification of the implemented logic.
-    - **What will be achieved with this?** Ensures every new member understands the team's mission and commitments before using the app.
-    - **Status:** USER VERIFICATION PENDING
-    - **Should Test frontend/backend/both after fix?** frontend
-    - **Blocked on something:** User feedback.
+-   **Task 1: Complete Fallback Data Implementation**
+    -   **Where to resume:** Continue updating all remaining API routes in  (e.g., , ) to use the new  module in their  blocks.
+    -   **What will be achieved with this?** This will make the application in the preview environment usable for testing even when the MongoDB Atlas connection is down, preventing development blockages.
+    -   **Status:** IN PROGRESS
+    -   **Should Test frontend/backend/both after fix?** Backend
+    -   **Blocked on something:** None.
 
 **Upcoming and Future Tasks**
-
 **Upcoming Tasks:**
--   **P0:** Implement backend logic for the **Attendance** page, including endpoints to save/fetch attendance records and logic to flag users with consecutive absences.
--   **P1:** Move the  flag from  to the  collection in the database to ensure persistence across devices.
+-   **P0:** Implement backend logic for the **Attendance** page. This is a core feature that is currently non-functional.
+-   **P1:** Move the  flag from  to the  collection in the database to ensure it persists across devices.
 -   **P1:** Conduct full end-to-end testing of **Twilio WhatsApp notifications** by triggering a message from a user action (e.g., rota assignment).
--   **P1:** Conduct full end-to-end testing of **Google OAuth** with a real user account to confirm user creation and session handling.
 
 **Future Tasks:**
--   **P2:** Complete the **backend refactoring** by moving all remaining route logic from  into the respective modular files under .
--   **P2:** Implement **CSV/Excel import functionality** for populating events like conferences and bootcamps from the settings page.
--   **P2:** Provide **deployment guidance** to the user, referencing the  guide.
+-   **P2:** Implement **CSV/Excel import functionality** for populating events from the settings page.
 
 **Completed work in this session**
--   **UI Redesign & Modernization:**
-    -   Finalized the sleek and tidy Team Directory card redesign, fixing all visual bugs.
-    -   Added sophisticated UI animations, floating icons, and glass effects to the Dashboard, Login page, and other components for a modern feel.
--   **Core Feature Implementation:**
-    -   Built the **Equipment Handover UI** with Inventory and Handovers tabs and a creation modal.
-    -   Updated all service names, times, and types to reflect the church's actual schedule.
-    -   Implemented a **Generate Recurring Services** feature to auto-populate the calendar.
-    -   Created a new **Attendance** page for tracking Tuesday standup attendance.
-    -   Replaced all demo data with live data from the backend across the entire application.
-    -   Updated the **Lead Rotation** logic to cycle through all 23 team members.
-    -   Created a multi-step **Onboarding** page and implemented a mandatory redirect for first-time users.
--   **Integrations & Backend:**
-    -   Configured and validated **Twilio WhatsApp** integration with user credentials and added a status card to the Settings page.
-    -   Visually verified the **Google OAuth** login flow.
-    -   Initiated a major **backend refactoring**, creating a modular structure for models, services, and routes.
--   **Personalization:**
-    -   Implemented a time-sensitive, **personalized greeting** on the Dashboard (e.g., Good morning, Adebowale).
+-   **Backend Refactoring:** Successfully moved all endpoints from a monolithic  into a modular structure under .
+-   **Authentication Overhaul:** Replaced the entire Emergent-managed Google OAuth system with a simple, custom email/password JWT authentication system.
+-   **Deployment & Debugging:** Created all necessary configs (, , etc.) and successfully deployed the app to Railway (backend) and Cloudflare Pages (frontend), resolving numerous build and configuration errors along the way.
+-   **Branding Removal:** Systematically removed all Made with Emergent branding, logos, and scripts from the entire codebase.
+-   **Onboarding UI Update:** Updated the onboarding screen with a new title, tagline, and a team selection step as per user request.
+-   **Created Deployment Guides:** Wrote detailed guides for deploying to Cloudflare and Railway (, ).
 
 **Earlier issues found/mentioned but not fixed**
--   None.
+-   **Issue 1: Babel Crash**
+    -   **Debug checklist:** This is a known recurring issue (Maximum call stack size exceeded). The workaround is to simplify complex JSX by breaking it into smaller components or helper functions. A root cause investigation has not been performed.
+    -   **Why to solve this issue and what will be achieved with this?** Prevents random build failures when developing complex UI components.
+    -   **Should Test frontend/backend/both after fix:** Frontend
+    -   **Is recurring issue?** Y
 
 **Known issue recurrence from previous fork**
 -   **Issue recurrence in previous fork:** Maximum call stack size exceeded Babel error.
--   **Recurrence count:** High.
--   **Status:** NOT STARTED (for a root cause fix). The workaround—simplifying complex JSX into helper functions—remains the effective mitigation strategy.
+-   **Recurrence count:** High
+-   **Status:** NOT STARTED
 
 **Code Architecture**
 
 
 **Key Technical Concepts**
--   **Backend:** FastAPI, Python, Motor (async MongoDB driver)
+-   **Backend:** FastAPI, Python, Motor
 -   **Frontend:** React.js, Tailwind CSS
 -   **Database:** MongoDB Atlas (Live)
--   **Authentication:** JWT, Emergent-managed Google OAuth
--   **State Management:** React Context API, 
--   **UI/UX:** Mobile-first design, advanced CSS animations (), glass-morphism
+-   **Authentication:** Custom JWT-based email/password system.
+-   **Deployment:** Backend on Railway, Frontend on Cloudflare Pages.
 
 **key DB schema**
 -   : {email, name, roles, team_id, profile_picture_url, **has_completed_onboarding** (Needs to be added)}
--   : {user_id, service_id, date, status} (New schema required)
--   Other schemas (, , , , etc.) remain as previously defined.
+-   : {user_id, service_id, date, status} (Schema required)
 
 **changes in tech stack**
--   None.
+-   **Authentication:** Switched from Emergent-managed Google OAuth to a custom-built email/password JWT system.
 
 **All files of reference**
--   : Contains the critical  logic for the onboarding redirect.
--   : The new, mandatory onboarding page.
--   : Updated to manage the onboarding flag in .
--   : New page that requires backend implementation.
--   : The monolithic file that is currently being refactored.
--   : A new guide created for deployment.
+-   : Contains the new custom login logic.
+-   : The new email/password login form UI.
+-   : Manages the core authentication state and session logic.
+-   : New module providing mock data when the database connection fails.
+-   : Defines the production environment for the Railway backend deployment.
+-   : All external branding and scripts were removed from this file.
 
 **Areas that need refactoring**:
--   **Backend Monolith:** The refactoring of  must be completed. All route logic should be moved into the corresponding files in .
--   **Onboarding State:** The  flag should be migrated from  to a field in the  database collection for persistence across devices and sessions.
+-   The state management in  concerning authentication and demo mode has been changed multiple times. It should be reviewed for clarity and to prevent bugs where demo data might persist for authenticated users.
+-   The implementation of fallback data is incomplete and needs to be applied consistently across all data-fetching API endpoints.
 
 **key api endpoints**
--   : New endpoint to validate Twilio setup.
--   The API is being modularized, so endpoints will be organized under files like , , , etc.
+-    (POST): Handles user login with email and password.
+-    (GET): Retrieves the current authenticated user's data using the session token.
 
 **Critical Info for New Agent**
--   **Priority 1: Implement Attendance Backend:** The  page is frontend-only. You must build the backend endpoints to save and retrieve attendance data, along with the logic to flag users who are absent for two consecutive meetings.
--   **Priority 2: Persist Onboarding Status:** Move the  flag from  to the user's document in the database. Update the login and protected route logic accordingly.
--   **Backend Refactoring is In-Progress:** Do not add new endpoints to . Follow the established modular pattern by adding logic to the appropriate files in the , , and  directories.
--   **Babel Crash Risk:** Be mindful of the Maximum call stack size exceeded error. Avoid complex inline JSX and extract logic into helper functions to prevent this recurring issue.
+-   **The top priority is fixing the performance lag.** The user is frustrated, and the app is unusable. Investigate slow API endpoints and inefficient frontend rendering.
+-   **The authentication system is now a simple email/password flow.** Do not re-introduce Google OAuth. The credentials for all 23 team members are  and password .
+-   **You MUST instruct the user to Save to GitHub to deploy any fixes.** Changes in the preview environment are not live.
+-   The MongoDB connection in the preview environment is unstable. The backend now includes a  module to allow for testing even when the database is unreachable. Use this for local testing, but remember the production app on Railway has a stable connection.
 
 **documents and test reports created in this job**
 -   
 -   
 -   
--   
--    (Continuously updated)
--    (New)
+-    (Updated)
 
 **Last 10 User Messages and any pending HUMAN messages**
-1.  **User:** Requests service names be updated to real church services.
-2.  **User:** Adds requirement for attendance tracking and flagging absent members.
-3.  **User:** Asks for a Generate Recurring Services feature and confirms real team member names should be used.
-4.  **User:** Clarifies that the weekly lead rotation should include all team members.
-5.  **User:** Requests more UI animations for a modern aesthetic.
-6.  **User:** Asks for an onboarding page and a personalized dashboard greeting.
-7.  **User:** Specifies that the onboarding page must be mandatory for all first-time users.
-8.  **User:** Provides final confirmation on a feature.
-9.  **Agent:** Implements forced onboarding flow.
-10. **Agent:** Tests the onboarding redirect and confirms it works as expected for a new user.
+1.  **User:** the system is lagging all the functionality are now loading slowly - Reports performance issues. (IN PROGRESS)
+2.  **User:** login fail to fetch - Reports login failure in the preview environment. (RESOLVED, by adding fallback data)
+3.  **User:** why cant i preview here anymore - Preview was down. (RESOLVED)
+4.  **User:** Complains about wasted credits and the Google login button still being present on the live site. (RESOLVED, explained deployment process)
+5.  **User:** Frustrated that after logging in with a real name, the dashboard shows demo data (adebowale) and the Emergent badge is still present. (IN PROGRESS - fix coded but needs deployment and verification)
+6.  **User:** Asks to remove Google Auth and replace it with a simple, non-verifying email system () due to persistent issues. (DONE)
+7.  **User:** Reports Google login error doesnt comply with Googles OAuth 2.0 policy related to the redirect URI. (RESOLVED, by replacing Google Auth)
+8.  **User:** Reports getting a Google OAuth not configured message after deployment. (RESOLVED, by replacing Google Auth)
+9.  **User:** Provides their own Google OAuth credentials to replace the Emergent-managed ones. (DONE, but later removed)
+10. **User:** Asks to remove all Emergent branding from the app. (DONE)
 
 **Project Health Check:**
 -   **Broken:**
-    -   The **Attendance** page is non-functional as it lacks backend support.
+    -   The entire deployed application is suffering from severe performance lag, making it difficult to use.
+    -   The  page is non-functional as it still lacks a backend implementation.
 -   **Mocked:**
-    -   The full end-to-end flow for **WhatsApp notifications** (triggered by a real user action) remains untested.
-    -   The full end-to-end flow for **Google OAuth** (from login to session creation with a real account) is pending.
+    -   The backend now uses a fallback data module to serve mock data when the live MongoDB connection fails in the preview environment.
+    -   Twilio WhatsApp notifications remain untested end-to-end.
 
 **3rd Party Integrations**
--   **Emergent-managed Google Auth:** Partially integrated, E2E test pending.
--   **Twilio (WhatsApp Business API):** Configured and connection verified; E2E test pending.
--   **MongoDB Atlas:** Fully configured and connected.
+-   **Twilio (WhatsApp Business API):** Configured; end-to-end test pending.
+-   **MongoDB Atlas:** Fully configured and connected for the production environment on Railway.
+-   ~~Emergent-managed Google Auth:~~ **REMOVED**.
+-   ~~Custom Google OAuth:~~ **REMOVED**.
 
 **Testing status**
--   **Testing agent used after significant changes:** YES. The agent was used after every major feature implementation.
+-   **Testing agent used after significant changes:** YES, for the onboarding flow.
 -   **Test files created:** None.
--   **Known regressions:** The recurring Babel crash remains a known risk when creating complex UI components.
+-   **Known regressions:** The recurring Babel crash (Maximum call stack size exceeded) when creating complex JSX components remains a risk.
 
 **Credentials to test flow:**
-Use the Continue in Demo Mode button on the login page. A role selector is available on the bottom-left of the main layout to test different user permissions. Twilio credentials are in .
+-   **Email:**  (or any other team member's first name)
+-   **Password:** 
+-   The Try Demo Mode button is also available for frontend-only testing.
 
 **What agent forgot to execute**
--   The agent did not build the backend endpoints and business logic for the **Attendance** page, leaving it non-functional.
--   The agent did not implement the logic for **flagging users who miss two consecutive meetings**.
--   The agent did not move the **onboarding completion status** to the database, leaving it in non-persistent .
--   The agent did not fully complete the **backend refactoring**, as significant route logic still resides in .</analysis>
+-   The agent did not resolve the critical performance issues (lagging) reported by the user, which was the final and most important complaint.
+-   The backend implementation for the **Attendance** page is still missing.
+-   The task to move the **onboarding completion status** to the database from  was not completed.
+-   The implementation of the fallback data mechanism was started but not finished for all API routes.</analysis>
