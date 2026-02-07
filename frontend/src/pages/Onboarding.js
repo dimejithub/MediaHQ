@@ -247,20 +247,50 @@ export default function Onboarding() {
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!canProceed()) return;
     
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Save team selection and mark onboarding complete
+      // Save onboarding completion to database
+      const sessionToken = localStorage.getItem('session_token');
+      try {
+        await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${sessionToken}`
+          },
+          credentials: 'include'
+        });
+      } catch (err) {
+        console.log('Could not save onboarding to server:', err);
+      }
+      
+      // Also save locally as backup
       localStorage.setItem('onboarding_complete', 'true');
       localStorage.setItem('selected_teams', JSON.stringify(selectedTeams));
       navigate('/dashboard');
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Save onboarding completion to database
+    const sessionToken = localStorage.getItem('session_token');
+    try {
+      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionToken}`
+        },
+        credentials: 'include'
+      });
+    } catch (err) {
+      console.log('Could not save onboarding to server:', err);
+    }
+    
     localStorage.setItem('onboarding_complete', 'true');
     navigate('/dashboard');
   };
