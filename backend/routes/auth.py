@@ -233,3 +233,84 @@ async def get_all_users():
     
     # Fallback to hardcoded data
     return [{k: v for k, v in m.items() if k != "password_hash"} for m in TEAM_MEMBERS]
+
+@router.post("/auth/onboarding-complete")
+async def complete_onboarding(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Mark user's onboarding as complete"""
+    # Get session token from header if not in cookie
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.replace("Bearer ", "")
+    
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Get user from session
+    user_id = None
+    if session_token in _sessions:
+        session = _sessions[session_token]
+        if session["expires_at"] > datetime.now(timezone.utc):
+            user_id = session["user_id"]
+    
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Session not found")
+    
+    # Update user's onboarding status in database
+    try:
+        await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": {"onboarding_completed": True, "onboarding_completed_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    except Exception as e:
+        print(f"DB update failed: {e}")
+    
+    # Update in-memory cache
+    email_lower = None
+    for email, user in _user_cache.items():
+        if user.get("user_id") == user_id:
+            user["onboarding_completed"] = True
+            email_lower = email
+            break
+    
+    return {"message": "Onboarding completed", "user_id": user_id}
+
+@router.get("/auth/onboarding-status")
+async def get_onboarding_status(request: Request, session_token: Optional[str] = Cookie(None)):
+    """Check if user has completed onboarding"""
+    # Get session token from header if not in cookie
+    if not session_token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            session_token = auth_header.replace("Bearer ", "")
+    
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+    
+    # Get user from session
+    user_id = None
+    if session_token in _sessions:
+        session = _sessions[session_token]
+        if session["expires_at"] > datetime.now(timezone.utc):
+            user_id = session["user_id"]
+    
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Session not found")
+    
+    # Check database first
+    try:
+        user = await asyncio.wait_for(
+            db.users.find_one({"user_id": user_id}, {"_id": 0, "onboarding_completed": 1}),
+            timeout=2.0
+        )
+        if user and user.get("onboarding_completed"):
+            return {"completed": True}
+    except Exception as e:
+        print(f"DB query failed: {e}")
+    
+    # Check in-memory cache
+    for email, user in _user_cache.items():
+        if user.get("user_id") == user_id:
+            return {"completed": user.get("onboarding_completed", False)}
+    
+    return {"completed": False}
