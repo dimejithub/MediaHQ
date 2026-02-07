@@ -113,7 +113,7 @@ export default function Services() {
     }
   };
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'team_lead';
+  const isAdmin = user?.role === 'admin' || user?.role === 'team_lead' || user?.role === 'director' || user?.role === 'assistant_lead';
 
   if (loading) {
     return (
