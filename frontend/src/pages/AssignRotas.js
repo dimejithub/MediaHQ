@@ -74,17 +74,37 @@ export default function AssignRotas() {
     ]
   };
 
+  // Real team members
   const demoMembers = {
     envoy_nation: [
-      { user_id: 'demo_en_admin', name: 'John Smith', role: 'admin' },
-      { user_id: 'demo_en_lead', name: 'Sarah Johnson', role: 'team_lead' },
-      { user_id: 'demo_en_member1', name: 'Mike Wilson', role: 'member' },
-      { user_id: 'demo_en_member2', name: 'Emily Brown', role: 'member' }
+      { user_id: 'en_1', name: 'Dr. Adebowale Owoseni', role: 'director' },
+      { user_id: 'en_2', name: 'Adeola Hilton', role: 'team_lead' },
+      { user_id: 'en_3', name: 'Oladimeji Tiamiyu', role: 'assistant_lead' },
+      { user_id: 'en_4', name: 'Michel Adimula', role: 'unit_head' },
+      { user_id: 'en_5', name: 'Bro Oluseye', role: 'unit_head' },
+      { user_id: 'en_6', name: 'Oladipupo Hilton', role: 'unit_head' },
+      { user_id: 'en_7', name: 'Peter Ndiparya', role: 'member' },
+      { user_id: 'en_8', name: 'Jemima Eromon', role: 'member' },
+      { user_id: 'en_9', name: 'Jasper Eromon', role: 'member' },
+      { user_id: 'en_10', name: 'Seun Morenikeji', role: 'member' },
+      { user_id: 'en_11', name: 'Chase Hadley', role: 'member' },
+      { user_id: 'en_12', name: 'Olukunle Ogunniran', role: 'member' },
+      { user_id: 'en_13', name: 'Wade Osunmakinde', role: 'member' },
+      { user_id: 'en_14', name: 'Bro Tobi', role: 'member' },
+      { user_id: 'en_15', name: 'Onose Thompson', role: 'member' },
+      { user_id: 'en_16', name: 'Precious Achudume', role: 'member' },
+      { user_id: 'en_17', name: 'Oladeinde Omidiji', role: 'member' },
+      { user_id: 'en_18', name: 'Abiodun Durojaiye', role: 'member' },
+      { user_id: 'en_19', name: 'Temidayo Peters', role: 'member' },
+      { user_id: 'en_20', name: 'Favour Olusanya', role: 'member' },
+      { user_id: 'en_21', name: 'Favour Anwo', role: 'member' },
+      { user_id: 'en_22', name: 'Damilare Akeredolu', role: 'member' },
+      { user_id: 'en_23', name: 'Adeleke Matanmi', role: 'member' }
     ],
     e_nation: [
-      { user_id: 'demo_e_admin', name: 'David Lee', role: 'admin' },
-      { user_id: 'demo_e_lead', name: 'Lisa Chen', role: 'team_lead' },
-      { user_id: 'demo_e_member1', name: 'James Park', role: 'member' }
+      { user_id: 'e_1', name: 'David Lee', role: 'team_lead' },
+      { user_id: 'e_2', name: 'Lisa Chen', role: 'assistant_lead' },
+      { user_id: 'e_3', name: 'James Park', role: 'member' }
     ]
   };
 
