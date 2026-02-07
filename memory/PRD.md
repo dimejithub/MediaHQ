@@ -182,15 +182,34 @@ Service type badges now have distinct colors:
 - Backend creates user session and sets HTTP-only cookie
 - New users automatically get "member" role
 
-### Backend Modular Structure (Partial) ✅
-- Created `/app/backend/models/` directory with separate model files:
-  - user.py, service.py, rota.py, equipment.py, checklist.py
-  - training.py, report.py, availability.py, notification.py
-  - lead_rotation.py, dashboard.py
-- Created `/app/backend/services/` directory with:
-  - twilio_service.py - Twilio client initialization and helpers
-- Created `/app/backend/config.py` - Centralized configuration
-- Created `/app/backend/database.py` - Database connection
+### Backend Modular Structure ✅ COMPLETE
+All route logic has been moved from the monolithic `server.py` to modular files:
+
+**Route Files (`/app/backend/routes/`):**
+- `auth.py` - Authentication (session exchange, login, logout)
+- `users.py` - User management and team members
+- `services.py` - Services and recurring generation
+- `rotas.py` - Rota management and assignments
+- `equipment.py` - Equipment inventory and handovers
+- `attendance.py` - Tuesday standup attendance tracking
+- `training.py` - Training videos and materials
+- `notifications.py` - In-app notifications
+- `reports.py` - Service reports
+- `availability.py` - Member availability
+- `performance.py` - Performance metrics
+- `lead_rotation.py` - 52-week lead rotation planner
+- `dashboard.py` - Dashboard KPIs and team data
+- `director.py` - Director dashboard overview
+- `calendar.py` - Calendar data and events
+- `data_import.py` - CSV/Excel import/export
+- `whatsapp.py` - Twilio WhatsApp notifications
+
+**Shared Resources:**
+- `database.py` - Shared MongoDB connection for all routes
+- `__init__.py` - Central router registration
+
+**Server Architecture:**
+- `server.py` - Slim entry point (imports modular routes)
 
 ---
 
