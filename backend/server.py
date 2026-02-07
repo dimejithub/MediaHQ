@@ -1462,6 +1462,24 @@ async def get_whatsapp_status():
         "account_sid_prefix": TWILIO_ACCOUNT_SID[:10] + "..." if TWILIO_ACCOUNT_SID else None
     }
 
+@api_router.get("/whatsapp/test-connection")
+async def test_whatsapp_connection():
+    """Test Twilio connection by fetching account info"""
+    if not twilio_client:
+        return {"success": False, "error": "Twilio not configured"}
+    
+    try:
+        # Fetch account info to verify credentials
+        account = twilio_client.api.accounts(TWILIO_ACCOUNT_SID).fetch()
+        return {
+            "success": True,
+            "account_name": account.friendly_name,
+            "account_status": account.status,
+            "whatsapp_number": TWILIO_WHATSAPP_NUMBER
+        }
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
 # ========== 52-WEEK LEAD ROTATION PLANNER ==========
 
 @api_router.get("/lead-rotation/year/{year}")
