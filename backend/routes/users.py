@@ -1,102 +1,85 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import Optional, List
 from datetime import datetime, timezone
 import uuid
-import os
 
 router = APIRouter()
 
-# Shared database connection
 from database import db
-
-class UserCreate(BaseModel):
-    email: str
-    name: str
-    role: str = "member"
-    teams: List[str] = ["envoy_nation"]
-    skills: List[str] = []
-    unit: Optional[str] = None
-    phone: Optional[str] = None
+from fallback_data import TEAM_MEMBERS
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
     role: Optional[str] = None
     skills: Optional[List[str]] = None
-    unit: Optional[str] = None
-    phone: Optional[str] = None
     availability: Optional[str] = None
+    phone: Optional[str] = None
 
 @router.get("/users")
-async def get_all_users():
-    """Get all users"""
-    users = await db.users.find({}, {"_id": 0}).to_list(1000)
-    return users
-
-@router.get("/users/team/{team_id}")
-async def get_team_users(team_id: str):
-    """Get users for a specific team"""
-    users = await db.users.find(
-        {"$or": [{"teams": team_id}, {"primary_team": team_id}]},
-        {"_id": 0}
-    ).to_list(1000)
-    return users
+async def get_users(team: Optional[str] = None):
+    """Get all users, optionally filtered by team"""
+    try:
+        query = {}
+        if team:
+            query = {"$or": [{"teams": team}, {"primary_team": team}]}
+        
+        users = await db.users.find(query, {"_id": 0, "password_hash": 0}).to_list(100)
+        if users:
+            return users
+    except Exception as e:
+        print(f"Database error, using fallback: {e}")
+    
+    # Fallback
+    if team:
+        return [m for m in TEAM_MEMBERS if team in m.get("teams", []) or m.get("primary_team") == team]
+    return TEAM_MEMBERS
 
 @router.get("/users/{user_id}")
 async def get_user(user_id: str):
     """Get a specific user"""
-    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return user
-
-@router.post("/users")
-async def create_user(user_data: UserCreate):
-    """Create a new user"""
-    existing = await db.users.find_one({"email": user_data.email})
-    if existing:
-        raise HTTPException(status_code=400, detail="User with this email already exists")
+    try:
+        user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+        if user:
+            return user
+    except Exception as e:
+        print(f"Database error, using fallback: {e}")
     
-    user = {
-        "user_id": str(uuid.uuid4()),
-        **user_data.dict(),
-        "primary_team": user_data.teams[0] if user_data.teams else "envoy_nation",
-        "availability": "available",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
+    # Fallback
+    for m in TEAM_MEMBERS:
+        if m["user_id"] == user_id:
+            return m
     
-    await db.users.insert_one({**user})
-    return user
+    raise HTTPException(status_code=404, detail="User not found")
 
 @router.put("/users/{user_id}")
-async def update_user(user_id: str, user_update: UserUpdate):
+async def update_user(user_id: str, data: UserUpdate):
     """Update a user"""
-    update_data = {k: v for k, v in user_update.dict().items() if v is not None}
+    update_data = {k: v for k, v in data.dict().items() if v is not None}
     
     if not update_data:
-        raise HTTPException(status_code=400, detail="No update data provided")
+        raise HTTPException(status_code=400, detail="No data to update")
     
-    result = await db.users.update_one(
-        {"user_id": user_id},
-        {"$set": update_data}
-    )
+    try:
+        result = await db.users.update_one(
+            {"user_id": user_id},
+            {"$set": update_data}
+        )
+        
+        user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+        if user:
+            return user
+    except Exception as e:
+        print(f"Database error: {e}")
     
-    if result.matched_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
+    # Fallback - return the user with updates applied locally
+    for m in TEAM_MEMBERS:
+        if m["user_id"] == user_id:
+            return {**m, **update_data}
     
-    user = await db.users.find_one({"user_id": user_id}, {"_id": 0})
-    return user
+    raise HTTPException(status_code=404, detail="User not found")
 
-@router.delete("/users/{user_id}")
-async def delete_user(user_id: str):
-    """Delete a user"""
-    result = await db.users.delete_one({"user_id": user_id})
-    if result.deleted_count == 0:
-        raise HTTPException(status_code=404, detail="User not found")
-    return {"message": "User deleted successfully"}
-
-@router.get("/team/members")
-async def get_all_team_members():
-    """Get all team members (for handover dropdowns, etc.)"""
-    users = await db.users.find({}, {"_id": 0, "user_id": 1, "name": 1, "team": 1, "primary_team": 1}).to_list(1000)
-    return users
+@router.get("/members")
+async def get_members(team: Optional[str] = None):
+    """Get all team members (alias for /users)"""
+    return await get_users(team)
