@@ -73,15 +73,26 @@ export default function Dashboard() {
   }
 
   const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
+  
+  // Get first name for personalized greeting
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Team Member';
+  
+  // Get time-based greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 space-y-6 particles-bg" data-testid="dashboard">
       {/* Header */}
       <div className="mb-4 sm:mb-8 animate-fadeIn">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-1 sm:mb-2">
-          <span className="gradient-text-shine">Welcome to {teamDisplayName}</span>
+          <span className="gradient-text-shine">{getGreeting()}, {firstName}</span> 👋
         </h1>
-        <p className="text-sm sm:text-base text-slate-400">Overview of your media operations</p>
+        <p className="text-sm sm:text-base text-slate-400">Here's your {teamDisplayName} overview for today</p>
       </div>
 
       {/* KPI Cards */}
