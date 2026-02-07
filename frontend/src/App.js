@@ -117,13 +117,28 @@ function AuthProvider({ children }) {
 
   const checkAuth = async () => {
     try {
-      const res = await fetch(`${BACKEND_URL}/api/auth/me`, { credentials: 'include' });
+      const sessionToken = localStorage.getItem('session_token');
+      const headers = sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {};
+      
+      const res = await fetch(`${BACKEND_URL}/api/auth/me`, { 
+        credentials: 'include',
+        headers: headers
+      });
+      
       if (res.ok) {
         const userData = await res.json();
         setUser(userData);
+        // Clear demo mode if we have a real user
+        localStorage.removeItem('demoMode');
+        localStorage.removeItem('demoRole');
+        setDemoMode(false);
+      } else {
+        // Auth failed - clear session token
+        localStorage.removeItem('session_token');
       }
     } catch (err) {
       console.log('Not authenticated');
+      localStorage.removeItem('session_token');
     } finally {
       setLoading(false);
     }
