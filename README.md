@@ -19,7 +19,7 @@ A comprehensive platform for church media teams to manage personnel, equipment, 
 - **Frontend**: React.js, Tailwind CSS, Shadcn/UI
 - **Backend**: FastAPI (Python)
 - **Database**: MongoDB Atlas
-- **Auth**: Emergent-managed Google OAuth
+- **Auth**: Google OAuth
 - **Notifications**: Twilio WhatsApp
 
 ## Project Structure
