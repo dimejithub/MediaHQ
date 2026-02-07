@@ -74,8 +74,17 @@ export default function Dashboard() {
 
   const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
   
-  // Get first name for personalized greeting
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Team Member';
+  // Get first name for personalized greeting (handle "Dr." prefix)
+  const getFirstName = () => {
+    if (!user?.name) return 'Team Member';
+    const parts = user.name.split(' ');
+    // If first part is "Dr." or similar title, use the second part
+    if (parts[0].toLowerCase() === 'dr.' || parts[0].toLowerCase() === 'bro' || parts[0].toLowerCase() === 'sis') {
+      return parts[1] || parts[0];
+    }
+    return parts[0];
+  };
+  const firstName = getFirstName();
   
   // Get time-based greeting
   const getGreeting = () => {
