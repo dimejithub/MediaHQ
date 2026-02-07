@@ -34,24 +34,34 @@ class LoginRequest(BaseModel):
 
 @router.post("/auth/login")
 async def login(data: LoginRequest, response: Response):
-    """Login with email and password"""
+    """Login with email and password - optimized for speed"""
     
-    # Try database first with timeout, fallback to hardcoded if DB fails
+    email_lower = data.email.lower()
     user = None
     
-    try:
-        user = await asyncio.wait_for(
-            db.users.find_one({"email": data.email.lower()}, {"_id": 0}),
-            timeout=2.0
-        )
-    except Exception as e:
-        print(f"Database error during login, using fallback: {e}")
-    
-    # Fallback: check hardcoded members
-    if not user:
-        fallback_user = get_user_by_email(data.email)
-        if fallback_user:
-            user = {**fallback_user, "password_hash": DEFAULT_PASSWORD_HASH}
+    # Fast path: check pre-cached users first
+    if email_lower in _user_cache:
+        user = _user_cache[email_lower]
+    else:
+        # Try database with timeout
+        try:
+            db_user = await asyncio.wait_for(
+                db.users.find_one({"email": email_lower}, {"_id": 0}),
+                timeout=2.0
+            )
+            if db_user:
+                user = db_user
+                # Cache for future lookups
+                _user_cache[email_lower] = {**db_user, "password_hash": db_user.get("password_hash", DEFAULT_PASSWORD_HASH)}
+        except Exception as e:
+            print(f"Database error during login: {e}")
+        
+        # Last resort: check fallback data
+        if not user:
+            fallback_user = get_user_by_email(data.email)
+            if fallback_user:
+                user = {**fallback_user, "password_hash": DEFAULT_PASSWORD_HASH}
+                _user_cache[email_lower] = user
     
     if not user:
         raise HTTPException(status_code=401, detail="Invalid email or password")
@@ -71,7 +81,7 @@ async def login(data: LoginRequest, response: Response):
         "expires_at": expires_at
     }
     
-    # Try to store session in DB (non-blocking)
+    # Try to store session in DB (non-blocking, fire and forget)
     try:
         asyncio.create_task(
             db.sessions.insert_one({
