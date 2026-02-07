@@ -16,6 +16,7 @@ import LeadRotation from '@/pages/LeadRotation';
 import Performance from '@/pages/Performance';
 import Calendar from '@/pages/Calendar';
 import DirectorDashboard from '@/pages/DirectorDashboard';
+import Attendance from '@/pages/Attendance';
 import '@/App.css';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
