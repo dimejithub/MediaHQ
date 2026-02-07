@@ -8,11 +8,8 @@ import requests
 
 router = APIRouter()
 
-# Get database from parent
-from motor.motor_asyncio import AsyncIOMotorClient
-mongo_url = os.environ['MONGO_URL']
-client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ['DB_NAME']]
+# Shared database connection
+from database import db
 
 AUTH_BACKEND_URL = os.environ.get('AUTH_BACKEND_URL', 'https://demobackend.emergentagent.com')
 
