@@ -12,8 +12,11 @@ DB_NAME = os.environ['DB_NAME']
 # CORS
 CORS_ORIGINS = os.environ.get('CORS_ORIGINS', '*')
 
-# Auth
-AUTH_BACKEND_URL = os.environ.get('AUTH_BACKEND_URL', 'https://demobackend.emergentagent.com')
+# Google OAuth
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI')
+FRONTEND_URL = os.environ.get('FRONTEND_URL')
 
 # Twilio
 TWILIO_ACCOUNT_SID = os.environ.get('TWILIO_ACCOUNT_SID')
