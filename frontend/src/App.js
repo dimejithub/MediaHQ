@@ -236,6 +236,7 @@ function Layout({ children }) {
     { name: 'Dashboard', path: '/dashboard', icon: '📊', access: 'dashboard' },
     { name: 'Director View', path: '/director', icon: '👁️', access: 'director', directorOnly: true },
     { name: 'Calendar', path: '/calendar', icon: '📅', access: 'calendar' },
+    { name: 'Attendance', path: '/attendance', icon: '✋', access: 'attendance' },
     { name: 'Team', path: '/team', icon: '👥', access: 'team' },
     { name: 'Services', path: '/services', icon: '🗓️', access: 'services' },
     { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝', access: 'assign-rotas' },
