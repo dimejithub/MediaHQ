@@ -4,36 +4,56 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-// Service type configurations
+// Service type configurations with recurring patterns
 const SERVICE_TYPES = {
   envoy_nation: [
-    { value: 'sunday_service', label: 'Sunday Service', defaultTime: '11:00', day: 'Sunday' },
-    { value: 'leicester_blessings', label: 'Leicester Blessings', defaultTime: '19:00', day: 'Thursday' },
-    { value: 'connected_pmo', label: 'Connected with PMO', defaultTime: '19:00', day: 'Last Thursday' },
-    { value: 'conference', label: 'Conference', defaultTime: '10:00', day: null },
-    { value: 'bootcamp', label: 'Bootcamp', defaultTime: '09:00', day: null },
-    { value: 'special_event', label: 'Special Event', defaultTime: '18:00', day: null }
+    { value: 'sunday_service', label: 'Sunday Service', defaultTime: '11:00', day: 'Sunday', recurring: true },
+    { value: 'midweek_service', label: 'Midweek Service (Leicester Blessings)', defaultTime: '19:00', day: 'Thursday', recurring: true },
+    { value: 'connected_pmo', label: 'Connected with PMO', defaultTime: '19:00', day: 'Last Thursday', recurring: true },
+    { value: 'tuesday_standup', label: 'Tuesday Standup Meeting', defaultTime: '19:00', day: 'Tuesday', recurring: true },
+    { value: 'conference', label: 'Conference', defaultTime: '10:00', day: null, recurring: false },
+    { value: 'bootcamp', label: 'Bootcamp', defaultTime: '09:00', day: null, recurring: false },
+    { value: 'special_event', label: 'Special Event', defaultTime: '18:00', day: null, recurring: false }
   ],
   e_nation: [
-    { value: 'sunday_service', label: 'Sunday Service (Commissioned Envoy)', defaultTime: '14:00', day: 'Sunday' },
-    { value: 'midweek_service', label: 'Midweek Service', defaultTime: '19:00', day: 'Wednesday' },
-    { value: 'conference', label: 'Conference', defaultTime: '10:00', day: null },
-    { value: 'bootcamp', label: 'Bootcamp', defaultTime: '09:00', day: null },
-    { value: 'special_event', label: 'Special Event', defaultTime: '18:00', day: null }
+    { value: 'sunday_service', label: 'Sunday Service (The Commissioned Envoy)', defaultTime: '14:00', day: 'Sunday', recurring: true },
+    { value: 'midweek_service', label: 'Midweek Service', defaultTime: '19:00', day: 'Wednesday', recurring: true },
+    { value: 'tuesday_standup', label: 'Tuesday Standup Meeting', defaultTime: '19:00', day: 'Tuesday', recurring: true },
+    { value: 'conference', label: 'Conference', defaultTime: '10:00', day: null, recurring: false },
+    { value: 'bootcamp', label: 'Bootcamp', defaultTime: '09:00', day: null, recurring: false },
+    { value: 'special_event', label: 'Special Event', defaultTime: '18:00', day: null, recurring: false }
+  ]
+};
+
+// Real team members for demo data
+const REAL_MEMBERS = {
+  envoy_nation: [
+    { user_id: 'en_1', name: 'Dr. Adebowale Owoseni', role: 'director' },
+    { user_id: 'en_2', name: 'Adeola Hilton', role: 'team_lead' },
+    { user_id: 'en_3', name: 'Oladimeji Tiamiyu', role: 'assistant_lead' },
+    { user_id: 'en_4', name: 'Michel Adimula', role: 'unit_head' },
+    { user_id: 'en_5', name: 'Bro Oluseye', role: 'unit_head' }
+  ],
+  e_nation: [
+    { user_id: 'e_1', name: 'David Lee', role: 'team_lead' },
+    { user_id: 'e_2', name: 'Lisa Chen', role: 'assistant_lead' },
+    { user_id: 'e_3', name: 'James Park', role: 'member' }
   ]
 };
 
 const DEMO_SERVICES = {
   envoy_nation: [
     { service_id: 'demo_en_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service', description: 'Envoy Nation Sunday worship service', team: 'envoy_nation' },
-    { service_id: 'demo_en_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', type: 'leicester_blessings', description: 'Thursday midweek service', team: 'envoy_nation' },
-    { service_id: 'demo_en_3', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo', description: 'Last Thursday of the month fellowship', team: 'envoy_nation' },
-    { service_id: 'demo_en_4', title: 'Sunday Service', date: '2026-02-15', time: '11:00', type: 'sunday_service', description: 'Envoy Nation Sunday worship service', team: 'envoy_nation' }
+    { service_id: 'demo_en_2', title: 'Midweek Service (Leicester Blessings)', date: '2026-02-12', time: '19:00', type: 'midweek_service', description: 'Thursday midweek service', team: 'envoy_nation' },
+    { service_id: 'demo_en_3', title: 'Tuesday Standup', date: '2026-02-10', time: '19:00', type: 'tuesday_standup', description: 'Weekly team standup meeting - Attendance required', team: 'envoy_nation' },
+    { service_id: 'demo_en_4', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo', description: 'Last Thursday of the month fellowship', team: 'envoy_nation' },
+    { service_id: 'demo_en_5', title: 'Sunday Service', date: '2026-02-15', time: '11:00', type: 'sunday_service', description: 'Envoy Nation Sunday worship service', team: 'envoy_nation' }
   ],
   e_nation: [
     { service_id: 'demo_e_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', type: 'sunday_service', description: 'E-Nation Sunday service', team: 'e_nation' },
     { service_id: 'demo_e_2', title: 'Midweek Service', date: '2026-02-11', time: '19:00', type: 'midweek_service', description: 'Wednesday midweek gathering', team: 'e_nation' },
-    { service_id: 'demo_e_3', title: 'The Commissioned Envoy', date: '2026-02-15', time: '14:00', type: 'sunday_service', description: 'E-Nation Sunday service', team: 'e_nation' }
+    { service_id: 'demo_e_3', title: 'Tuesday Standup', date: '2026-02-10', time: '19:00', type: 'tuesday_standup', description: 'Weekly team standup meeting - Attendance required', team: 'e_nation' },
+    { service_id: 'demo_e_4', title: 'The Commissioned Envoy', date: '2026-02-15', time: '14:00', type: 'sunday_service', description: 'E-Nation Sunday service', team: 'e_nation' }
   ]
 };
 
