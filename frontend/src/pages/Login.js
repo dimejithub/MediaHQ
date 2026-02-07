@@ -12,15 +12,16 @@ export default function Login() {
     const sessionId = params.get('session_id');
     
     if (sessionId) {
+      // Clear onboarding for new OAuth login - they'll see onboarding first
+      localStorage.removeItem('onboarding_complete');
+      
       // Exchange session ID for our session
-      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/session`, {
-        method: 'POST',
-        headers: { 'X-Session-ID': sessionId },
+      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/session?session_id=${sessionId}`, {
         credentials: 'include'
       }).then(res => {
         if (res.ok) {
           checkAuth();
-          navigate('/dashboard');
+          navigate('/onboarding'); // Go to onboarding first
         }
       }).catch(console.error);
     }
@@ -28,7 +29,9 @@ export default function Login() {
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      // Check if onboarding is complete
+      const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
+      navigate(onboardingComplete ? '/dashboard' : '/onboarding');
     }
   }, [user, navigate]);
 
