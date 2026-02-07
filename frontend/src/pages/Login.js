@@ -28,7 +28,9 @@ export default function Login() {
       // Store session token and check auth
       localStorage.setItem('session_token', sessionToken);
       
-      // Clear onboarding for new OAuth login - they'll see onboarding first
+      // IMPORTANT: Clear demo mode when real user logs in
+      localStorage.removeItem('demoMode');
+      localStorage.removeItem('demoRole');
       localStorage.removeItem('onboarding_complete');
       
       // Set session cookie via API
@@ -38,10 +40,8 @@ export default function Login() {
         body: JSON.stringify({ session_token: sessionToken }),
         credentials: 'include'
       }).then(() => {
-        checkAuth();
-        // Clear URL params
-        window.history.replaceState({}, document.title, '/login');
-        navigate('/onboarding');
+        // Force page reload to clear demo state and reload with real user
+        window.location.href = '/onboarding';
       }).catch(err => {
         console.error('Session error:', err);
         setError('Failed to create session');
