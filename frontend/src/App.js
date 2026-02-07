@@ -249,6 +249,7 @@ function Layout({ children }) {
     { name: 'Reports', path: '/reports', icon: '📄', access: 'reports' },
     { name: 'Performance', path: '/performance', icon: '📈', access: 'performance' },
     { name: 'Training', path: '/training', icon: '🎓', access: 'training' },
+    { name: 'Our Mission', path: '/onboarding', icon: '💫', access: 'dashboard' },
     { name: 'Settings', path: '/settings', icon: '⚙️', access: 'settings' }
   ];
 
