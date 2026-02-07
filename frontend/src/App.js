@@ -81,8 +81,14 @@ function AuthProvider({ children }) {
   };
 
   useEffect(() => {
-    // Check if demo mode was enabled
-    if (demoMode) {
+    // First check if there's a real session token (takes priority over demo)
+    const sessionToken = localStorage.getItem('session_token');
+    
+    if (sessionToken && !demoMode) {
+      // Real user - check auth from backend
+      checkAuth();
+    } else if (demoMode) {
+      // Demo mode
       const roleNames = {
         director: 'Dr. Adebowale Owoseni',
         team_lead: 'Adeola Hilton',
@@ -104,9 +110,10 @@ function AuthProvider({ children }) {
       setIsWeeklyLead(demoRole === 'member');
       setLoading(false);
     } else {
+      // No session, no demo - check if there's a cookie session
       checkAuth();
     }
-  }, [demoRole]);
+  }, [demoRole, demoMode]);
 
   const checkAuth = async () => {
     try {
