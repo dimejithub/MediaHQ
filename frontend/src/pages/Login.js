@@ -42,7 +42,9 @@ export default function Login() {
 
   const handleDemoMode = () => {
     enableDemoMode();
-    navigate('/dashboard');
+    // Check if onboarding is complete for demo mode
+    const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
+    navigate(onboardingComplete ? '/dashboard' : '/onboarding');
   };
 
   return (
