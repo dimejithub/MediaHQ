@@ -142,23 +142,35 @@ export default function Services() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {services.map((service) => (
-          <div key={service.service_id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all" data-testid={`service-card-${service.service_id}`}>
-            <h3 className="text-xl font-bold text-white mb-2">{service.title}</h3>
-            <p className="text-sm text-slate-400 mb-3">{service.description || 'No description'}</p>
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-500">📅</span>
-                <span className="text-slate-300">{service.date}</span>
+        {services.map((service) => {
+          const typeInfo = serviceTypes.find(t => t.value === service.type);
+          const typeLabel = typeInfo?.label || service.type?.replace('_', ' ');
+          return (
+            <div key={service.service_id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all" data-testid={`service-card-${service.service_id}`}>
+              <h3 className="text-xl font-bold text-white mb-2">{service.title}</h3>
+              <p className="text-sm text-slate-400 mb-3">{service.description || 'No description'}</p>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-500">📅</span>
+                  <span className="text-slate-300">{service.date}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-slate-500">🕐</span>
+                  <span className="text-slate-300">{service.time}</span>
+                </div>
+                <span className={`inline-block px-3 py-1 text-xs rounded-full ${
+                  service.type === 'sunday_service' ? 'bg-blue-500/20 text-blue-400' :
+                  service.type === 'leicester_blessings' ? 'bg-purple-500/20 text-purple-400' :
+                  service.type === 'connected_pmo' ? 'bg-amber-500/20 text-amber-400' :
+                  service.type === 'midweek_service' ? 'bg-green-500/20 text-green-400' :
+                  service.type === 'conference' ? 'bg-pink-500/20 text-pink-400' :
+                  service.type === 'bootcamp' ? 'bg-cyan-500/20 text-cyan-400' :
+                  'bg-slate-700 text-slate-300'
+                }`}>{typeLabel}</span>
               </div>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-slate-500">🕐</span>
-                <span className="text-slate-300">{service.time}</span>
-              </div>
-              <span className="inline-block px-3 py-1 text-xs bg-slate-800 text-slate-300 rounded-full capitalize">{service.type?.replace('_', ' ')}</span>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Add Service Modal */}
