@@ -1,147 +1,137 @@
-from fastapi import APIRouter, HTTPException, Cookie, Response, Request
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, HTTPException, Response, Request, Cookie
 from pydantic import BaseModel
 from typing import Optional
 from datetime import datetime, timezone, timedelta
 import uuid
-import os
-import httpx
+import hashlib
 
 router = APIRouter()
 
 # Shared database connection
 from database import db
 
-# Google OAuth Configuration
-GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET')
-GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'https://mediahq-production.up.railway.app/api/auth/google/callback')
-FRONTEND_URL = os.environ.get('FRONTEND_URL', 'https://3e3e7d9a.mediahq.pages.dev')
+# Simple password hashing
+def hash_password(password: str) -> str:
+    return hashlib.sha256(password.encode()).hexdigest()
+
+def verify_password(password: str, hashed: str) -> bool:
+    return hash_password(password) == hashed
+
+# Default password for all team members
+DEFAULT_PASSWORD = "Envoy@2026"
+DEFAULT_PASSWORD_HASH = hash_password(DEFAULT_PASSWORD)
+
+# Predefined team members
+TEAM_MEMBERS = [
+    {"name": "Adebowale Owoseni", "email": "adebowale@tenmediahq.com", "role": "director"},
+    {"name": "Adeola Hilton", "email": "adeola@tenmediahq.com", "role": "team_lead"},
+    {"name": "Oladimeji Tiamiyu", "email": "oladimeji@tenmediahq.com", "role": "assistant_lead"},
+    {"name": "Michel Adimula", "email": "michel@tenmediahq.com", "role": "unit_head"},
+    {"name": "Oluseye Ogunleye", "email": "oluseye@tenmediahq.com", "role": "unit_head"},
+    {"name": "Oladipupo Hilton", "email": "oladipupo@tenmediahq.com", "role": "unit_head"},
+    {"name": "Jasper Eromon", "email": "jasper@tenmediahq.com", "role": "member"},
+    {"name": "Gabriel Oladipo", "email": "gabriel@tenmediahq.com", "role": "member"},
+    {"name": "Joshua Awojide", "email": "joshua@tenmediahq.com", "role": "member"},
+    {"name": "Boluwatife Akinola", "email": "boluwatife@tenmediahq.com", "role": "member"},
+    {"name": "Damilola Oyeleke", "email": "damilola@tenmediahq.com", "role": "member"},
+    {"name": "Emmanuel Adeyemi", "email": "emmanuel@tenmediahq.com", "role": "member"},
+    {"name": "David Oluwaseun", "email": "david@tenmediahq.com", "role": "member"},
+    {"name": "Samuel Okonkwo", "email": "samuel@tenmediahq.com", "role": "member"},
+    {"name": "Peter Adeleke", "email": "peter@tenmediahq.com", "role": "member"},
+    {"name": "John Okafor", "email": "john@tenmediahq.com", "role": "member"},
+    {"name": "Michael Eze", "email": "michael@tenmediahq.com", "role": "member"},
+    {"name": "Andrew Nnamdi", "email": "andrew@tenmediahq.com", "role": "member"},
+    {"name": "Philip Chukwu", "email": "philip@tenmediahq.com", "role": "member"},
+    {"name": "Stephen Obiora", "email": "stephen@tenmediahq.com", "role": "member"},
+    {"name": "Daniel Amaechi", "email": "daniel@tenmediahq.com", "role": "member"},
+    {"name": "Matthew Ikenna", "email": "matthew@tenmediahq.com", "role": "member"},
+    {"name": "Mark Chibueze", "email": "mark@tenmediahq.com", "role": "member"},
+]
+
+class LoginRequest(BaseModel):
+    email: str
+    password: str
 
 class SessionData(BaseModel):
-    id: str
+    user_id: str
     email: str
     name: str
-    picture: Optional[str] = None
-    session_token: str
+    role: str
 
-@router.get("/auth/google")
-async def google_login():
-    """Redirect to Google OAuth"""
-    if not GOOGLE_CLIENT_ID:
-        raise HTTPException(status_code=500, detail="Google OAuth not configured")
-    
-    google_auth_url = (
-        "https://accounts.google.com/o/oauth2/v2/auth"
-        f"?client_id={GOOGLE_CLIENT_ID}"
-        f"&redirect_uri={GOOGLE_REDIRECT_URI}"
-        "&response_type=code"
-        "&scope=openid%20email%20profile"
-        "&access_type=offline"
-        "&prompt=consent"
-    )
-    return RedirectResponse(url=google_auth_url)
-
-@router.get("/auth/google/callback")
-async def google_callback(code: str, response: Response):
-    """Handle Google OAuth callback"""
-    if not GOOGLE_CLIENT_ID or not GOOGLE_CLIENT_SECRET:
-        raise HTTPException(status_code=500, detail="Google OAuth not configured")
-    
-    try:
-        # Exchange code for tokens
-        async with httpx.AsyncClient() as client:
-            token_response = await client.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "code": code,
-                    "client_id": GOOGLE_CLIENT_ID,
-                    "client_secret": GOOGLE_CLIENT_SECRET,
-                    "redirect_uri": GOOGLE_REDIRECT_URI,
-                    "grant_type": "authorization_code"
-                }
-            )
-            
-            if token_response.status_code != 200:
-                raise HTTPException(status_code=400, detail="Failed to exchange code for token")
-            
-            tokens = token_response.json()
-            access_token = tokens.get("access_token")
-            
-            # Get user info from Google
-            user_response = await client.get(
-                "https://www.googleapis.com/oauth2/v2/userinfo",
-                headers={"Authorization": f"Bearer {access_token}"}
-            )
-            
-            if user_response.status_code != 200:
-                raise HTTPException(status_code=400, detail="Failed to get user info")
-            
-            google_user = user_response.json()
-        
-        # Find or create user in database
-        user = await db.users.find_one({"email": google_user['email']}, {"_id": 0})
-        
-        if not user:
-            # Create new user
+async def seed_users():
+    """Seed predefined users if they don't exist"""
+    for member in TEAM_MEMBERS:
+        existing = await db.users.find_one({"email": member["email"]})
+        if not existing:
             user = {
                 "user_id": str(uuid.uuid4()),
-                "email": google_user['email'],
-                "name": google_user.get('name', google_user['email'].split('@')[0]),
-                "picture": google_user.get('picture'),
-                "role": "member",
+                "email": member["email"],
+                "name": member["name"],
+                "password_hash": DEFAULT_PASSWORD_HASH,
+                "role": member["role"],
                 "teams": ["envoy_nation"],
                 "primary_team": "envoy_nation",
                 "skills": [],
                 "availability": "available",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
-            await db.users.insert_one({**user})
-        else:
-            # Update picture if changed
-            if google_user.get('picture') and user.get('picture') != google_user.get('picture'):
-                await db.users.update_one(
-                    {"email": google_user['email']},
-                    {"$set": {"picture": google_user.get('picture')}}
-                )
-                user['picture'] = google_user.get('picture')
-        
-        # Create session
-        session_token = str(uuid.uuid4())
-        expires_at = datetime.now(timezone.utc) + timedelta(days=7)
-        
-        await db.sessions.insert_one({
-            "session_token": session_token,
-            "user_id": user['user_id'],
-            "expires_at": expires_at.isoformat(),
-            "created_at": datetime.now(timezone.utc).isoformat()
-        })
-        
-        # Redirect to frontend with session token
-        redirect_url = f"{FRONTEND_URL}/login?session_token={session_token}"
-        redirect_response = RedirectResponse(url=redirect_url, status_code=302)
-        
-        # Also set cookie
-        redirect_response.set_cookie(
-            key="session_token",
-            value=session_token,
-            httponly=True,
-            secure=True,
-            samesite="none",
-            max_age=7*24*60*60
-        )
-        
-        return redirect_response
-        
-    except Exception as e:
-        # Redirect to frontend with error
-        error_url = f"{FRONTEND_URL}/login?error={str(e)}"
-        return RedirectResponse(url=error_url, status_code=302)
+            await db.users.insert_one(user)
+
+@router.post("/auth/login")
+async def login(data: LoginRequest, response: Response):
+    """Login with email and password"""
+    # Seed users on first login attempt
+    await seed_users()
+    
+    # Find user by email
+    user = await db.users.find_one({"email": data.email.lower()}, {"_id": 0})
+    
+    if not user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Check password
+    stored_hash = user.get("password_hash", DEFAULT_PASSWORD_HASH)
+    if not verify_password(data.password, stored_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    # Create session
+    session_token = str(uuid.uuid4())
+    expires_at = datetime.now(timezone.utc) + timedelta(days=7)
+    
+    await db.sessions.insert_one({
+        "session_token": session_token,
+        "user_id": user["user_id"],
+        "expires_at": expires_at.isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    })
+    
+    # Set cookie
+    response.set_cookie(
+        key="session_token",
+        value=session_token,
+        httponly=True,
+        secure=True,
+        samesite="none",
+        max_age=7*24*60*60
+    )
+    
+    return {
+        "message": "Login successful",
+        "session_token": session_token,
+        "user": {
+            "user_id": user["user_id"],
+            "email": user["email"],
+            "name": user["name"],
+            "role": user.get("role", "member"),
+            "teams": user.get("teams", ["envoy_nation"]),
+            "primary_team": user.get("primary_team", "envoy_nation")
+        }
+    }
 
 @router.get("/auth/me")
 async def get_current_user(request: Request, session_token: Optional[str] = Cookie(None)):
     """Get current logged in user"""
-    # Also check for session token in header (for API calls)
+    # Check header first
     if not session_token:
         auth_header = request.headers.get("Authorization")
         if auth_header and auth_header.startswith("Bearer "):
@@ -154,50 +144,40 @@ async def get_current_user(request: Request, session_token: Optional[str] = Cook
     if not session:
         raise HTTPException(status_code=401, detail="Invalid session")
     
-    expires_at = session.get('expires_at')
+    # Check expiry
+    expires_at = session.get("expires_at")
     if isinstance(expires_at, str):
-        expires_at = datetime.fromisoformat(expires_at)
+        expires_at = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
     
     if expires_at and expires_at < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Session expired")
     
-    user = await db.users.find_one({"user_id": session['user_id']}, {"_id": 0})
+    user = await db.users.find_one({"user_id": session["user_id"]}, {"_id": 0, "password_hash": 0})
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
     return {
-        "user_id": user['user_id'],
-        "email": user['email'],
-        "name": user['name'],
-        "picture": user.get('picture'),
-        "role": user.get('role', 'member'),
-        "teams": user.get('teams', ['envoy_nation']),
-        "primary_team": user.get('primary_team', 'envoy_nation')
+        "user_id": user["user_id"],
+        "email": user["email"],
+        "name": user["name"],
+        "role": user.get("role", "member"),
+        "teams": user.get("teams", ["envoy_nation"]),
+        "primary_team": user.get("primary_team", "envoy_nation"),
+        "picture": user.get("picture")
     }
 
 @router.post("/auth/logout")
 async def logout(response: Response, session_token: Optional[str] = Cookie(None)):
-    """Logout user and clear session"""
+    """Logout and clear session"""
     if session_token:
         await db.sessions.delete_one({"session_token": session_token})
     
     response.delete_cookie(key="session_token")
     return {"message": "Logged out successfully"}
 
-@router.post("/auth/session")
-async def create_session_from_token(session_token: str, response: Response):
-    """Validate session token and set cookie"""
-    session = await db.sessions.find_one({"session_token": session_token}, {"_id": 0})
-    if not session:
-        raise HTTPException(status_code=401, detail="Invalid session")
-    
-    response.set_cookie(
-        key="session_token",
-        value=session_token,
-        httponly=True,
-        secure=True,
-        samesite="none",
-        max_age=7*24*60*60
-    )
-    
-    return {"message": "Session created"}
+@router.get("/auth/users")
+async def get_all_users():
+    """Get list of all users (for admin)"""
+    await seed_users()
+    users = await db.users.find({}, {"_id": 0, "password_hash": 0}).to_list(100)
+    return users
