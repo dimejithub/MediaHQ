@@ -195,6 +195,37 @@ export default function Settings() {
       </div>
 
       <div className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h2 className="text-xl font-bold text-white mb-4">📱 WhatsApp Notifications</h2>
+        <div className="flex items-center gap-4">
+          {whatsappStatus.loading ? (
+            <div className="flex items-center gap-2 text-slate-400">
+              <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+              Checking status...
+            </div>
+          ) : whatsappStatus.success ? (
+            <>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-green-400 font-medium">Connected</span>
+              </div>
+              <div className="text-sm text-slate-400">
+                Account: {whatsappStatus.account_name} • Number: {whatsappStatus.whatsapp_number}
+              </div>
+            </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+              <span className="text-red-400 font-medium">Not Configured</span>
+              <span className="text-sm text-slate-500">WhatsApp notifications are disabled</span>
+            </div>
+          )}
+        </div>
+        <p className="text-xs text-slate-500 mt-3">
+          WhatsApp notifications are sent automatically when team members are assigned to rotas.
+        </p>
+      </div>
+
+      <div className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-6">
         <h2 className="text-xl font-bold text-white mb-4">ℹ️ App Info</h2>
         <div className="grid grid-cols-4 gap-4 text-sm">
           <div>
