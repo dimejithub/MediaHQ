@@ -7,31 +7,43 @@ const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 
 // Demo calendar events based on actual church services
 const DEMO_EVENTS = [
   // Envoy Nation - Sunday Services (11am)
-  { id: 'en_sun_1', title: 'Sunday Service (Envoy Nation)', date: '2026-02-08', time: '11:00', team: 'envoy_nation' },
-  { id: 'en_sun_2', title: 'Sunday Service (Envoy Nation)', date: '2026-02-15', time: '11:00', team: 'envoy_nation' },
-  { id: 'en_sun_3', title: 'Sunday Service (Envoy Nation)', date: '2026-02-22', time: '11:00', team: 'envoy_nation' },
-  { id: 'en_sun_4', title: 'Sunday Service (Envoy Nation)', date: '2026-03-01', time: '11:00', team: 'envoy_nation' },
+  { id: 'en_sun_1', title: 'Sunday Service (Envoy Nation)', date: '2026-02-08', time: '11:00', team: 'envoy_nation', type: 'sunday_service' },
+  { id: 'en_sun_2', title: 'Sunday Service (Envoy Nation)', date: '2026-02-15', time: '11:00', team: 'envoy_nation', type: 'sunday_service' },
+  { id: 'en_sun_3', title: 'Sunday Service (Envoy Nation)', date: '2026-02-22', time: '11:00', team: 'envoy_nation', type: 'sunday_service' },
+  { id: 'en_sun_4', title: 'Sunday Service (Envoy Nation)', date: '2026-03-01', time: '11:00', team: 'envoy_nation', type: 'sunday_service' },
   
-  // Envoy Nation - Leicester Blessings (Thursdays 7pm)
-  { id: 'en_lb_1', title: 'Leicester Blessings', date: '2026-02-05', time: '19:00', team: 'envoy_nation' },
-  { id: 'en_lb_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', team: 'envoy_nation' },
-  { id: 'en_lb_3', title: 'Leicester Blessings', date: '2026-02-19', time: '19:00', team: 'envoy_nation' },
+  // Envoy Nation - Midweek (Leicester Blessings) (Thursdays 7pm)
+  { id: 'en_mw_1', title: 'Midweek (Leicester Blessings)', date: '2026-02-05', time: '19:00', team: 'envoy_nation', type: 'midweek_service' },
+  { id: 'en_mw_2', title: 'Midweek (Leicester Blessings)', date: '2026-02-12', time: '19:00', team: 'envoy_nation', type: 'midweek_service' },
+  { id: 'en_mw_3', title: 'Midweek (Leicester Blessings)', date: '2026-02-19', time: '19:00', team: 'envoy_nation', type: 'midweek_service' },
   
   // Envoy Nation - Connected with PMO (Last Thursday)
-  { id: 'en_pmo_1', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', team: 'envoy_nation' },
-  { id: 'en_pmo_2', title: 'Connected with PMO', date: '2026-03-26', time: '19:00', team: 'envoy_nation' },
+  { id: 'en_pmo_1', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', team: 'envoy_nation', type: 'connected_pmo' },
+  { id: 'en_pmo_2', title: 'Connected with PMO', date: '2026-03-26', time: '19:00', team: 'envoy_nation', type: 'connected_pmo' },
+  
+  // Envoy Nation - Tuesday Standups (7pm)
+  { id: 'en_tu_1', title: 'Tuesday Standup', date: '2026-02-03', time: '19:00', team: 'envoy_nation', type: 'tuesday_standup' },
+  { id: 'en_tu_2', title: 'Tuesday Standup', date: '2026-02-10', time: '19:00', team: 'envoy_nation', type: 'tuesday_standup' },
+  { id: 'en_tu_3', title: 'Tuesday Standup', date: '2026-02-17', time: '19:00', team: 'envoy_nation', type: 'tuesday_standup' },
+  { id: 'en_tu_4', title: 'Tuesday Standup', date: '2026-02-24', time: '19:00', team: 'envoy_nation', type: 'tuesday_standup' },
   
   // E-Nation (The Commissioned Envoy) - Sunday Services (2pm)
-  { id: 'e_sun_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', team: 'e_nation' },
-  { id: 'e_sun_2', title: 'The Commissioned Envoy', date: '2026-02-15', time: '14:00', team: 'e_nation' },
-  { id: 'e_sun_3', title: 'The Commissioned Envoy', date: '2026-02-22', time: '14:00', team: 'e_nation' },
-  { id: 'e_sun_4', title: 'The Commissioned Envoy', date: '2026-03-01', time: '14:00', team: 'e_nation' },
+  { id: 'e_sun_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', team: 'e_nation', type: 'sunday_service' },
+  { id: 'e_sun_2', title: 'The Commissioned Envoy', date: '2026-02-15', time: '14:00', team: 'e_nation', type: 'sunday_service' },
+  { id: 'e_sun_3', title: 'The Commissioned Envoy', date: '2026-02-22', time: '14:00', team: 'e_nation', type: 'sunday_service' },
+  { id: 'e_sun_4', title: 'The Commissioned Envoy', date: '2026-03-01', time: '14:00', team: 'e_nation', type: 'sunday_service' },
   
   // E-Nation - Midweek Services (Wednesdays 7pm)
-  { id: 'e_mid_1', title: 'E-Nation Midweek', date: '2026-02-04', time: '19:00', team: 'e_nation' },
-  { id: 'e_mid_2', title: 'E-Nation Midweek', date: '2026-02-11', time: '19:00', team: 'e_nation' },
-  { id: 'e_mid_3', title: 'E-Nation Midweek', date: '2026-02-18', time: '19:00', team: 'e_nation' },
-  { id: 'e_mid_4', title: 'E-Nation Midweek', date: '2026-02-25', time: '19:00', team: 'e_nation' }
+  { id: 'e_mid_1', title: 'E-Nation Midweek', date: '2026-02-04', time: '19:00', team: 'e_nation', type: 'midweek_service' },
+  { id: 'e_mid_2', title: 'E-Nation Midweek', date: '2026-02-11', time: '19:00', team: 'e_nation', type: 'midweek_service' },
+  { id: 'e_mid_3', title: 'E-Nation Midweek', date: '2026-02-18', time: '19:00', team: 'e_nation', type: 'midweek_service' },
+  { id: 'e_mid_4', title: 'E-Nation Midweek', date: '2026-02-25', time: '19:00', team: 'e_nation', type: 'midweek_service' },
+  
+  // E-Nation - Tuesday Standups (7pm)
+  { id: 'e_tu_1', title: 'Tuesday Standup', date: '2026-02-03', time: '19:00', team: 'e_nation', type: 'tuesday_standup' },
+  { id: 'e_tu_2', title: 'Tuesday Standup', date: '2026-02-10', time: '19:00', team: 'e_nation', type: 'tuesday_standup' },
+  { id: 'e_tu_3', title: 'Tuesday Standup', date: '2026-02-17', time: '19:00', team: 'e_nation', type: 'tuesday_standup' },
+  { id: 'e_tu_4', title: 'Tuesday Standup', date: '2026-02-24', time: '19:00', team: 'e_nation', type: 'tuesday_standup' }
 ];
 
 function CalendarDay({ day, dateStr, availability, hasEvent, isPast, isSunday, onToggle }) {
