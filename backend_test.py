@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Any, Optional
 
 class TENMediaHQAPITester:
-    def __init__(self, base_url: str = "https://team-mediahq.preview.emergentagent.com"):
+    def __init__(self, base_url: str = "https://mediahq.preview.emergentagent.com"):
         self.base_url = base_url
         self.session_token = "test_session_1770233896140"  # From MongoDB setup
         self.user_id = "test-user-1770233896140"
