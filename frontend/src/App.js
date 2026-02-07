@@ -118,6 +118,9 @@ function AuthProvider({ children }) {
   const checkAuth = async () => {
     try {
       const sessionToken = localStorage.getItem('session_token');
+      const storedUser = localStorage.getItem('user');
+      
+      // First try to get user from API
       const headers = sessionToken ? { 'Authorization': `Bearer ${sessionToken}` } : {};
       
       const res = await fetch(`${BACKEND_URL}/api/auth/me`, { 
@@ -128,6 +131,39 @@ function AuthProvider({ children }) {
       if (res.ok) {
         const userData = await res.json();
         setUser(userData);
+        localStorage.setItem('user', JSON.stringify(userData));
+        // Clear demo mode if we have a real user
+        localStorage.removeItem('demoMode');
+        localStorage.removeItem('demoRole');
+        setDemoMode(false);
+      } else if (storedUser) {
+        // Fallback to stored user data
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+      } else {
+        // Auth failed - clear session token
+        localStorage.removeItem('session_token');
+        localStorage.removeItem('user');
+      }
+    } catch (err) {
+      console.log('Not authenticated');
+      // Try fallback to stored user
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUser(userData);
+        } catch {
+          localStorage.removeItem('session_token');
+          localStorage.removeItem('user');
+        }
+      } else {
+        localStorage.removeItem('session_token');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
         // Clear demo mode if we have a real user
         localStorage.removeItem('demoMode');
         localStorage.removeItem('demoRole');
