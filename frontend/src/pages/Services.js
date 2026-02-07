@@ -62,6 +62,9 @@ export default function Services() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [generateMonths, setGenerateMonths] = useState(3);
+  const [generating, setGenerating] = useState(false);
   const [newService, setNewService] = useState({ title: '', date: '', time: '', type: 'sunday_service', description: '' });
 
   const serviceTypes = SERVICE_TYPES[selectedTeam] || SERVICE_TYPES.envoy_nation;
@@ -91,6 +94,119 @@ export default function Services() {
         setLoading(false);
       });
   }, [demoMode, selectedTeam]);
+
+  // Helper to get all dates for a specific day of week in a month range
+  const getDatesForDayOfWeek = (dayOfWeek, startDate, endDate) => {
+    const dates = [];
+    const dayMap = { 'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3, 'Thursday': 4, 'Friday': 5, 'Saturday': 6 };
+    const targetDay = dayMap[dayOfWeek];
+    
+    let current = new Date(startDate);
+    current.setDate(current.getDate() + ((targetDay - current.getDay() + 7) % 7));
+    
+    while (current <= endDate) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 7);
+    }
+    return dates;
+  };
+
+  // Get last Thursday of each month in range
+  const getLastThursdays = (startDate, endDate) => {
+    const dates = [];
+    let current = new Date(startDate.getFullYear(), startDate.getMonth(), 1);
+    
+    while (current <= endDate) {
+      const lastDay = new Date(current.getFullYear(), current.getMonth() + 1, 0);
+      let thursday = new Date(lastDay);
+      thursday.setDate(thursday.getDate() - ((thursday.getDay() + 3) % 7));
+      if (thursday >= startDate && thursday <= endDate) {
+        dates.push(thursday);
+      }
+      current.setMonth(current.getMonth() + 1);
+    }
+    return dates;
+  };
+
+  const generateRecurringServices = async () => {
+    setGenerating(true);
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + generateMonths);
+
+    const newServices = [];
+    const recurringTypes = serviceTypes.filter(t => t.recurring);
+
+    for (const serviceType of recurringTypes) {
+      let dates = [];
+      
+      if (serviceType.day === 'Last Thursday') {
+        dates = getLastThursdays(startDate, endDate);
+      } else if (serviceType.day) {
+        dates = getDatesForDayOfWeek(serviceType.day, startDate, endDate);
+      }
+
+      for (const date of dates) {
+        // Skip if Connected with PMO and it's not the last Thursday
+        if (serviceType.value === 'connected_pmo') {
+          // Already filtered by getLastThursdays
+        } else if (serviceType.value === 'midweek_service' && selectedTeam === 'envoy_nation') {
+          // Skip midweek on last Thursdays (that's Connected with PMO)
+          const lastThursdays = getLastThursdays(startDate, endDate);
+          if (lastThursdays.some(lt => lt.toDateString() === date.toDateString())) {
+            continue;
+          }
+        }
+
+        const dateStr = date.toISOString().split('T')[0];
+        const title = serviceType.value === 'sunday_service' && selectedTeam === 'e_nation' 
+          ? 'The Commissioned Envoy'
+          : serviceType.value === 'midweek_service' && selectedTeam === 'envoy_nation'
+            ? 'Midweek Service (Leicester Blessings)'
+            : serviceType.label.replace(' (Leicester Blessings)', '').replace(' (The Commissioned Envoy)', '');
+
+        newServices.push({
+          service_id: `gen_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          title,
+          date: dateStr,
+          time: serviceType.defaultTime,
+          type: serviceType.value,
+          description: `${title} - Auto-generated`,
+          team: selectedTeam
+        });
+      }
+    }
+
+    if (demoMode) {
+      setServices(prev => [...newServices, ...prev].sort((a, b) => new Date(a.date) - new Date(b.date)));
+      toast.success(`Generated ${newServices.length} services for the next ${generateMonths} months`);
+    } else {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/services/generate-recurring`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({ team_id: selectedTeam, months: generateMonths, services: newServices })
+        });
+        
+        if (res.ok) {
+          const data = await res.json();
+          setServices(prev => [...data.services, ...prev].sort((a, b) => new Date(a.date) - new Date(b.date)));
+          toast.success(`Generated ${data.count} services`);
+        } else {
+          // Fallback to local generation
+          setServices(prev => [...newServices, ...prev].sort((a, b) => new Date(a.date) - new Date(b.date)));
+          toast.success(`Generated ${newServices.length} services`);
+        }
+      } catch (err) {
+        setServices(prev => [...newServices, ...prev].sort((a, b) => new Date(a.date) - new Date(b.date)));
+        toast.success(`Generated ${newServices.length} services`);
+      }
+    }
+
+    setGenerating(false);
+    setShowGenerateModal(false);
+  };
 
   const handleAddService = async () => {
     if (!newService.title || !newService.date || !newService.time) {
