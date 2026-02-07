@@ -168,6 +168,8 @@ function AuthProvider({ children }) {
   const logout = async () => {
     localStorage.removeItem('demoMode');
     localStorage.removeItem('demoRole');
+    localStorage.removeItem('session_token');
+    localStorage.removeItem('user');
     setDemoMode(false);
     try {
       await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
