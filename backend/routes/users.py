@@ -2,12 +2,14 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime, timezone
+import asyncio
 import uuid
 
 router = APIRouter()
 
 from database import db
 from fallback_data import TEAM_MEMBERS
+from cache import cache, users_cache_key
 
 class UserUpdate(BaseModel):
     name: Optional[str] = None
@@ -18,32 +20,51 @@ class UserUpdate(BaseModel):
 
 @router.get("/users")
 async def get_users(team: Optional[str] = None):
-    """Get all users, optionally filtered by team"""
+    """Get all users, optionally filtered by team - optimized with caching"""
+    
+    # Check cache first
+    cache_key = users_cache_key(team)
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
+    # Prepare fallback
+    if team:
+        fallback = [m for m in TEAM_MEMBERS if team in m.get("teams", []) or m.get("primary_team") == team]
+    else:
+        fallback = TEAM_MEMBERS
+    
     try:
         query = {}
         if team:
             query = {"$or": [{"teams": team}, {"primary_team": team}]}
         
-        users = await db.users.find(query, {"_id": 0, "password_hash": 0}).to_list(100)
+        users = await asyncio.wait_for(
+            db.users.find(query, {"_id": 0, "password_hash": 0}).to_list(100),
+            timeout=2.0
+        )
+        
         if users:
+            cache.set(cache_key, users, ttl=60)
             return users
     except Exception as e:
-        print(f"Database error, using fallback: {e}")
+        print(f"Users query failed, using fallback: {e}")
     
-    # Fallback
-    if team:
-        return [m for m in TEAM_MEMBERS if team in m.get("teams", []) or m.get("primary_team") == team]
-    return TEAM_MEMBERS
+    cache.set(cache_key, fallback, ttl=30)
+    return fallback
 
 @router.get("/users/{user_id}")
 async def get_user(user_id: str):
     """Get a specific user"""
     try:
-        user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
+        user = await asyncio.wait_for(
+            db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0}),
+            timeout=2.0
+        )
         if user:
             return user
     except Exception as e:
-        print(f"Database error, using fallback: {e}")
+        print(f"User query failed, using fallback: {e}")
     
     # Fallback
     for m in TEAM_MEMBERS:
@@ -68,9 +89,11 @@ async def update_user(user_id: str, data: UserUpdate):
         
         user = await db.users.find_one({"user_id": user_id}, {"_id": 0, "password_hash": 0})
         if user:
+            # Invalidate cache
+            cache.invalidate_pattern("users:")
             return user
     except Exception as e:
-        print(f"Database error: {e}")
+        print(f"User update failed: {e}")
     
     # Fallback - return the user with updates applied locally
     for m in TEAM_MEMBERS:
@@ -83,3 +106,8 @@ async def update_user(user_id: str, data: UserUpdate):
 async def get_members(team: Optional[str] = None):
     """Get all team members (alias for /users)"""
     return await get_users(team)
+
+@router.get("/users/team/{team_id}")
+async def get_users_by_team(team_id: str):
+    """Get users by team ID"""
+    return await get_users(team_id)
