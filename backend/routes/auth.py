@@ -25,6 +25,9 @@ DEFAULT_PASSWORD_HASH = hash_password(DEFAULT_PASSWORD)
 # In-memory session store for fast lookups (backup for DB sessions)
 _sessions = {}
 
+# Pre-compute user lookup map for fast login
+_user_cache = {m["email"].lower(): {**m, "password_hash": DEFAULT_PASSWORD_HASH} for m in TEAM_MEMBERS}
+
 class LoginRequest(BaseModel):
     email: str
     password: str
