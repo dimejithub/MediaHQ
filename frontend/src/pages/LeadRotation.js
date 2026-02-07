@@ -4,41 +4,67 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
+// All team members can be weekly leads (leadership training opportunity)
+const ALL_TEAM_MEMBERS = [
+  { user_id: 'en_1', name: 'Dr. Adebowale Owoseni', role: 'Director' },
+  { user_id: 'en_2', name: 'Adeola Hilton', role: 'Team Lead' },
+  { user_id: 'en_3', name: 'Oladimeji Tiamiyu', role: 'Assistant Lead' },
+  { user_id: 'en_4', name: 'Michel Adimula', role: 'Unit Head' },
+  { user_id: 'en_5', name: 'Bro Oluseye', role: 'Unit Head' },
+  { user_id: 'en_6', name: 'Oladipupo Hilton', role: 'Unit Head' },
+  { user_id: 'en_7', name: 'Peter Ndiparya', role: 'Member' },
+  { user_id: 'en_8', name: 'Jemima Eromon', role: 'Member' },
+  { user_id: 'en_9', name: 'Jasper Eromon', role: 'Member' },
+  { user_id: 'en_10', name: 'Seun Morenikeji', role: 'Member' },
+  { user_id: 'en_11', name: 'Chase Hadley', role: 'Member' },
+  { user_id: 'en_12', name: 'Olukunle Ogunniran', role: 'Member' },
+  { user_id: 'en_13', name: 'Wade Osunmakinde', role: 'Member' },
+  { user_id: 'en_14', name: 'Bro Tobi', role: 'Member' },
+  { user_id: 'en_15', name: 'Onose Thompson', role: 'Member' },
+  { user_id: 'en_16', name: 'Precious Achudume', role: 'Member' },
+  { user_id: 'en_17', name: 'Oladeinde Omidiji', role: 'Member' },
+  { user_id: 'en_18', name: 'Abiodun Durojaiye', role: 'Member' },
+  { user_id: 'en_19', name: 'Temidayo Peters', role: 'Member' },
+  { user_id: 'en_20', name: 'Favour Olusanya', role: 'Member' },
+  { user_id: 'en_21', name: 'Favour Anwo', role: 'Member' },
+  { user_id: 'en_22', name: 'Damilare Akeredolu', role: 'Member' },
+  { user_id: 'en_23', name: 'Adeleke Matanmi', role: 'Member' }
+];
+
 export default function LeadRotation() {
-  const { demoMode, user } = useAuth();
+  const { demoMode, user, selectedTeam } = useAuth();
   const [year, setYear] = useState(new Date().getFullYear());
   const [rotations, setRotations] = useState([]);
   const [leads, setLeads] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingWeek, setEditingWeek] = useState(null);
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'team_lead';
-
-  const demoLeads = [
-    { user_id: 'demo_admin', name: 'John Smith' },
-    { user_id: 'demo_lead', name: 'Sarah Johnson' }
-  ];
+  const isAdmin = user?.role === 'admin' || user?.role === 'team_lead' || user?.role === 'director' || user?.role === 'assistant_lead';
+  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
 
   useEffect(() => {
     loadData();
-  }, [year, demoMode]);
+  }, [year, demoMode, selectedTeam]);
 
   const loadData = async () => {
     setLoading(true);
     
     if (demoMode) {
-      setLeads(demoLeads);
-      // Generate some sample rotations
+      setLeads(ALL_TEAM_MEMBERS);
+      // Generate sample rotations cycling through ALL members
       const sampleRotations = [];
-      for (let i = 1; i <= 12; i++) {
+      for (let i = 1; i <= 52; i++) {
+        const memberIndex = (i - 1) % ALL_TEAM_MEMBERS.length;
+        const backupIndex = (i) % ALL_TEAM_MEMBERS.length;
         sampleRotations.push({
           rotation_id: `demo_rot_${i}`,
           week_number: i,
           year: year,
-          lead_user_id: i % 2 === 0 ? 'demo_admin' : 'demo_lead',
-          lead_name: i % 2 === 0 ? 'John Smith' : 'Sarah Johnson',
-          backup_user_id: i % 2 === 0 ? 'demo_lead' : 'demo_admin',
-          backup_name: i % 2 === 0 ? 'Sarah Johnson' : 'John Smith'
+          lead_user_id: ALL_TEAM_MEMBERS[memberIndex].user_id,
+          lead_name: ALL_TEAM_MEMBERS[memberIndex].name,
+          lead_role: ALL_TEAM_MEMBERS[memberIndex].role,
+          backup_user_id: ALL_TEAM_MEMBERS[backupIndex].user_id,
+          backup_name: ALL_TEAM_MEMBERS[backupIndex].name
         });
       }
       setRotations(sampleRotations);
@@ -47,18 +73,18 @@ export default function LeadRotation() {
     }
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/lead-rotation/year/${year}`, { credentials: 'include' });
+      const res = await fetch(`${BACKEND_URL}/api/lead-rotation/year/${year}?team=${selectedTeam}`, { credentials: 'include' });
       if (res.ok) {
         const data = await res.json();
         setRotations(data.rotations || []);
-        setLeads(data.available_leads || demoLeads);
+        setLeads(data.available_leads || ALL_TEAM_MEMBERS);
       } else {
-        setLeads(demoLeads);
+        setLeads(ALL_TEAM_MEMBERS);
         setRotations([]);
       }
     } catch (err) {
       console.error(err);
-      setLeads(demoLeads);
+      setLeads(ALL_TEAM_MEMBERS);
       setRotations([]);
     } finally {
       setLoading(false);
