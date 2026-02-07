@@ -158,11 +158,12 @@ function AuthProvider({ children }) {
     });
     // Set demo notifications
     setNotifications([
-      { notification_id: 'demo_n1', title: 'New Rota Assignment', message: 'You have been assigned to Sunday Morning Service', type: 'rota_assignment', read: false },
-      { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Worship Night starts in 24 hours', type: 'service_reminder', read: true },
-      { notification_id: 'demo_n3', title: 'Training Update', message: 'New training material available: Camera Basics', type: 'training', read: true }
+      { notification_id: 'demo_n1', title: 'New Rota Assignment', message: 'You have been assigned to Sunday Service this week', type: 'rota_assignment', read: false },
+      { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Midweek Service (Leicester Blessings) starts in 24 hours', type: 'service_reminder', read: true },
+      { notification_id: 'demo_n3', title: 'Standup Meeting', message: 'Tuesday Standup at 7pm - Attendance required', type: 'meeting', read: false },
+      { notification_id: 'demo_n4', title: 'Training Update', message: 'New training material available: Camera Basics', type: 'training', read: true }
     ]);
-    setUnreadCount(1);
+    setUnreadCount(2);
   };
 
   const switchDemoRole = (role) => {
