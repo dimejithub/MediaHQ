@@ -33,7 +33,7 @@ const DEMO_DATA = {
 };
 
 export default function Dashboard() {
-  const { demoMode, selectedTeam } = useAuth();
+  const { demoMode, selectedTeam, user } = useAuth();
   const [kpis, setKpis] = useState(null);
   const [loading, setLoading] = useState(true);
 
