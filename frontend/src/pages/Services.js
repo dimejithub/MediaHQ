@@ -432,6 +432,87 @@ export default function Services() {
           </div>
         </div>
       )}
+
+      {/* Generate Recurring Services Modal */}
+      {showGenerateModal && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-slate-900 rounded-xl w-full max-w-md border border-slate-700">
+            <div className="p-6 border-b border-slate-800">
+              <h2 className="text-xl font-bold text-white">Generate Recurring Services</h2>
+              <p className="text-sm text-slate-400 mt-1">Auto-create services for the next few months</p>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-3">Duration</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {[1, 2, 3].map(months => (
+                    <button
+                      key={months}
+                      onClick={() => setGenerateMonths(months)}
+                      className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
+                        generateMonths === months
+                          ? 'bg-white text-slate-900'
+                          : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                      }`}
+                    >
+                      {months} Month{months > 1 ? 's' : ''}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-slate-800/50 rounded-lg p-4">
+                <h4 className="text-sm font-medium text-white mb-3">Services to be generated:</h4>
+                <div className="space-y-2 text-sm">
+                  {serviceTypes.filter(t => t.recurring).map(type => (
+                    <div key={type.value} className="flex items-center gap-2 text-slate-300">
+                      <span className={`w-2 h-2 rounded-full ${
+                        type.value === 'sunday_service' ? 'bg-blue-400' :
+                        type.value === 'midweek_service' ? 'bg-purple-400' :
+                        type.value === 'tuesday_standup' ? 'bg-orange-400' :
+                        type.value === 'connected_pmo' ? 'bg-amber-400' :
+                        'bg-slate-400'
+                      }`}></span>
+                      {type.label} ({type.day || 'Custom'})
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-xs text-slate-500">
+                This will create all recurring services from today for the selected duration. 
+                Existing services will not be duplicated.
+              </p>
+            </div>
+
+            <div className="p-6 border-t border-slate-800 flex gap-3">
+              <button
+                onClick={() => setShowGenerateModal(false)}
+                className="flex-1 px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 transition-all"
+                disabled={generating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={generateRecurringServices}
+                disabled={generating}
+                data-testid="confirm-generate-btn"
+                className="flex-1 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-medium hover:from-purple-700 hover:to-blue-700 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {generating ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating...
+                  </>
+                ) : (
+                  <>Generate Services</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
