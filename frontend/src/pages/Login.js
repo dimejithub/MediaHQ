@@ -1,16 +1,17 @@
 import { useAuth } from '@/App';
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
 export default function Login() {
-  const { user, login, enableDemoMode } = useAuth();
+  const { user, enableDemoMode } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const isSubmitting = useRef(false);
 
   useEffect(() => {
     if (user) {
@@ -21,22 +22,22 @@ export default function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting.current || loading) return;
+    isSubmitting.current = true;
+    
     setError(null);
     setLoading(true);
-
-    console.log('Starting login...', { email, BACKEND_URL });
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ email: email.toLowerCase(), password })
       });
 
-      console.log('Login response status:', response.status);
       const data = await response.json();
-      console.log('Login response data:', data);
 
       if (!response.ok) {
         throw new Error(data.detail || 'Login failed');
@@ -51,13 +52,14 @@ export default function Login() {
       localStorage.removeItem('demoRole');
       localStorage.removeItem('onboarding_complete');
 
-      console.log('Login successful, redirecting...');
-      // Force full page reload to reset auth state
-      window.location.replace('/onboarding');
+      // Redirect
+      window.location.href = '/onboarding';
+      
     } catch (err) {
       console.error('Login error:', err);
       setError(err.message || 'Network error - please try again');
       setLoading(false);
+      isSubmitting.current = false;
     }
   };
 
@@ -106,6 +108,7 @@ export default function Login() {
               placeholder="firstname@tenmediahq.com"
               className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               required
+              disabled={loading}
               data-testid="email-input"
             />
           </div>
@@ -119,6 +122,7 @@ export default function Login() {
               placeholder="Enter your password"
               className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
               required
+              disabled={loading}
               data-testid="password-input"
             />
           </div>
