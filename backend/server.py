@@ -1448,12 +1448,12 @@ async def notify_rota_assignment(request: Request, session_token: Optional[str] 
     return results
 
 @api_router.get("/whatsapp/status")
-async def get_whatsapp_status(request: Request, session_token: Optional[str] = Cookie(None)):
-    """Check if WhatsApp notifications are configured"""
-    await get_user_from_session(request, session_token)
+async def get_whatsapp_status():
+    """Check if WhatsApp notifications are configured (public endpoint)"""
     return {
         "configured": twilio_client is not None,
-        "whatsapp_number": TWILIO_WHATSAPP_NUMBER if twilio_client else None
+        "whatsapp_number": TWILIO_WHATSAPP_NUMBER if twilio_client else None,
+        "account_sid_prefix": TWILIO_ACCOUNT_SID[:10] + "..." if TWILIO_ACCOUNT_SID else None
     }
 
 # ========== 52-WEEK LEAD ROTATION PLANNER ==========
