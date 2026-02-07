@@ -47,10 +47,10 @@ function AuthProvider({ children }) {
   const roleAccess = {
     director: ['all'], // Access to everything
     admin: ['all'],
-    team_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
-    assistant_lead: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
-    unit_head: ['dashboard', 'calendar', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
-    member: ['dashboard', 'calendar', 'team', 'my-rotas', 'training', 'performance', 'reports']
+    team_lead: ['dashboard', 'calendar', 'attendance', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
+    assistant_lead: ['dashboard', 'calendar', 'attendance', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
+    unit_head: ['dashboard', 'calendar', 'attendance', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
+    member: ['dashboard', 'calendar', 'attendance', 'team', 'my-rotas', 'training', 'performance', 'reports']
   };
 
   // Check if member is assigned as weekly lead (gives them checklist access)
