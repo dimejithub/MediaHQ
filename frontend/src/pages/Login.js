@@ -38,15 +38,17 @@ export default function Login() {
         throw new Error(data.detail || 'Login failed');
       }
 
-      // Store session token
+      // Store session token and user data
       localStorage.setItem('session_token', data.session_token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
       // Clear demo mode
       localStorage.removeItem('demoMode');
       localStorage.removeItem('demoRole');
+      localStorage.removeItem('onboarding_complete');
 
-      // Login successful - reload to get user data
-      window.location.href = '/onboarding';
+      // Force full page reload to reset auth state
+      window.location.replace('/onboarding');
     } catch (err) {
       setError(err.message);
       setLoading(false);
