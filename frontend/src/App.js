@@ -435,6 +435,7 @@ function Layout({ children }) {
 
 function ProtectedRoute({ children }) {
   const { user, loading, demoMode } = useAuth();
+  const location = useLocation();
   
   if (loading) {
     return (
@@ -446,6 +447,20 @@ function ProtectedRoute({ children }) {
   
   if (!user && !demoMode) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // Check if user has completed onboarding (skip for onboarding page itself)
+  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
+  const isOnboardingPage = location.pathname === '/onboarding';
+  
+  // Redirect to onboarding if not completed (unless already on onboarding page)
+  if (!onboardingComplete && !isOnboardingPage) {
+    return <Navigate to="/onboarding" replace />;
+  }
+  
+  // If on onboarding page, don't wrap in Layout
+  if (isOnboardingPage) {
+    return children;
   }
   
   return <Layout>{children}</Layout>;
