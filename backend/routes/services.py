@@ -1,13 +1,15 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional, List
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
+import asyncio
 import uuid
 
 router = APIRouter()
 
 from database import db
 from fallback_data import SERVICES
+from cache import cache, services_cache_key
 
 class ServiceCreate(BaseModel):
     title: str
@@ -19,32 +21,51 @@ class ServiceCreate(BaseModel):
 
 @router.get("/services")
 async def get_services(team: Optional[str] = None):
-    """Get all services"""
+    """Get all services - optimized with caching"""
+    
+    # Check cache first
+    cache_key = services_cache_key(team)
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
+    # Prepare fallback
+    if team:
+        fallback = [s for s in SERVICES if s.get("team") == team or s.get("team_id") == team]
+    else:
+        fallback = SERVICES
+    
     try:
         query = {}
         if team:
             query = {"$or": [{"team": team}, {"team_id": team}]}
         
-        services = await db.services.find(query, {"_id": 0}).sort("date", -1).to_list(500)
+        services = await asyncio.wait_for(
+            db.services.find(query, {"_id": 0}).sort("date", -1).to_list(500),
+            timeout=2.0
+        )
+        
         if services:
+            cache.set(cache_key, services, ttl=60)
             return services
     except Exception as e:
-        print(f"Database error, using fallback: {e}")
+        print(f"Services query failed, using fallback: {e}")
     
-    # Fallback
-    if team:
-        return [s for s in SERVICES if s.get("team") == team or s.get("team_id") == team]
-    return SERVICES
+    cache.set(cache_key, fallback, ttl=30)
+    return fallback
 
 @router.get("/services/{service_id}")
 async def get_service(service_id: str):
     """Get a specific service"""
     try:
-        service = await db.services.find_one({"service_id": service_id}, {"_id": 0})
+        service = await asyncio.wait_for(
+            db.services.find_one({"service_id": service_id}, {"_id": 0}),
+            timeout=2.0
+        )
         if service:
             return service
     except Exception as e:
-        print(f"Database error, using fallback: {e}")
+        print(f"Service query failed, using fallback: {e}")
     
     # Fallback
     for s in SERVICES:
@@ -66,16 +87,18 @@ async def create_service(service: ServiceCreate):
     
     try:
         await db.services.insert_one(new_service)
+        # Invalidate cache
+        cache.invalidate_pattern("services:")
+        cache.invalidate_pattern("dashboard:")
         return await db.services.find_one({"service_id": service_id}, {"_id": 0})
     except Exception as e:
-        print(f"Database error: {e}")
+        print(f"Service create failed: {e}")
         # Return the new service even if DB fails
         return new_service
 
 @router.post("/services/generate-recurring")
 async def generate_recurring_services(weeks: int = 4):
     """Generate recurring services for the next N weeks"""
-    from datetime import timedelta
     
     base_services = [
         {"title": "Sunday Morning Service", "time": "11:00", "type": "sunday_service", "team": "envoy_nation", "day": 6},
@@ -112,5 +135,9 @@ async def generate_recurring_services(weeks: int = 4):
                 pass
             
             created.append(new_service)
+    
+    # Invalidate cache
+    cache.invalidate_pattern("services:")
+    cache.invalidate_pattern("dashboard:")
     
     return {"created": len(created), "services": created}
