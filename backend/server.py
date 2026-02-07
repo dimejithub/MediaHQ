@@ -16,6 +16,10 @@ import json
 import csv
 from collections import defaultdict
 
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -33,11 +37,13 @@ if TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN:
     try:
         from twilio.rest import Client
         twilio_client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
-        logging.info("Twilio client initialized")
+        logger.info(f"Twilio client initialized successfully with number: {TWILIO_WHATSAPP_NUMBER}")
     except ImportError:
-        logging.warning("Twilio package not installed. WhatsApp notifications disabled.")
+        logger.warning("Twilio package not installed. WhatsApp notifications disabled.")
+else:
+    logger.info("Twilio credentials not configured. WhatsApp notifications disabled.")
 
-app = FastAPI()
+app = FastAPI(title="TEN MediaHQ API", description="Church Media Team Management Platform", version="1.0.0")
 api_router = APIRouter(prefix="/api")
 
 # ========== MODELS ==========
