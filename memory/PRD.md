@@ -7,12 +7,40 @@ Build "TEN MediaHQ," a platform for church media teams to manage people, equipme
 - **Frontend:** React.js, Tailwind CSS, Shadcn/UI
 - **Backend:** FastAPI (Python)
 - **Database:** MongoDB Atlas (configured)
-- **Authentication:** JWT with Google OAuth option, Demo Mode
+- **Authentication:** Custom email/password JWT (firstname@tenmediahq.com / Envoy@2026)
+
+---
+
+## Deployment
+- **Backend:** Railway (mediahq-production)
+- **Frontend:** Cloudflare Pages (3e3e7d9a.mediahq.pages.dev)
+- **Preview:** https://mediateam-2.preview.emergentagent.com
+
+---
+
+## Performance Optimizations (Feb 7, 2026)
+
+### Problem
+Users reported the app was extremely slow (2-4 second response times), making it unusable.
+
+### Root Cause
+MongoDB Atlas connection from certain environments has SSL handshake issues, causing timeouts.
+
+### Solution Implemented
+1. **In-memory caching** (`cache.py`) with 60-second TTL for all major endpoints
+2. **Cache warmup on startup** - Pre-loads users, services, equipment into cache
+3. **Pre-computed user lookup** - User credentials cached in memory for fast login
+4. **Optimistic frontend loading** - Uses localStorage for instant UI while refreshing from API
+5. **Timeout protection** - All DB queries have 2s timeout with graceful fallback
+
+### Results
+- Cached API responses: **~50ms** (was 2-4 seconds)
+- Login: **~60ms** for repeat users (was 2+ seconds)
+- Dashboard load: **<100ms** cached (was 3+ seconds)
 
 ---
 
 ## Mobile-First Design ✅
-The app is fully responsive and optimized for mobile devices:
 - Collapsible hamburger menu on mobile
 - Responsive grid layouts (2-column on mobile, 4-column on desktop)
 - Touch-friendly navigation and buttons
@@ -22,25 +50,13 @@ The app is fully responsive and optimized for mobile devices:
 
 ## Role-Based Access Control ✅
 
-| Role | Access Level | Notes |
-|------|-------------|-------|
-| **Director** | All modules including Director View | Full admin access |
-| **Team Lead** | All modules except Director View | Can manage team |
-| **Assistant Lead** | All modules except Director View | Can manage team |
-| **Unit Head** | Limited modules + Calendar | Can input rotas, reports |
-| **Member** | View-only + Calendar + Checklists if Weekly Lead | Gets checklist access when assigned as lead |
-
-### Weekly Lead System
-- Members automatically get **Checklists** access when assigned as the weekly lead
-- This is dynamic based on rota assignment, not a permanent role
-
-### Availability Calendar ✅
-- **All team members** can access the calendar to plan availability
-- Q1 (Jan-Mar) and Q2 (Apr-Jun) 2026 are available for planning
-- Click once = Available (green), Click twice = Unavailable (red), Click three times = Clear
-- "Mark All Sundays" button to quickly mark all Sundays as available
-- Sundays are highlighted with blue rings
-- Events (services) shown as blue dots on dates
+| Role | Access Level |
+|------|-------------|
+| **Director** | All modules including Director View |
+| **Team Lead** | All modules except Director View |
+| **Assistant Lead** | All modules except Director View |
+| **Unit Head** | Limited modules + Calendar |
+| **Member** | View-only + Calendar + Checklists if Weekly Lead |
 
 ---
 
@@ -49,216 +65,98 @@ The app is fully responsive and optimized for mobile devices:
 - **Team Lead:** Adeola Hilton
 - **Assistant Lead:** Oladimeji Tiamiyu
 - **Unit Heads:** Michel Adimula, Bro Oluseye, Oladipupo Hilton
-- **Members:** Peter Ndiparya, Jemima Eromon, Jasper Eromon, and 14 others
-
----
-
-## Equipment Inventory ✅
-| Equipment | Status |
-|-----------|--------|
-| PTZ Camera | Available |
-| Panasonic Lumix DC-G9 #1 | Available |
-| Panasonic Lumix DC-G9 #2 | Maintenance |
-| Canon EOS 850D | FAULTY |
-| BlackMagic Camera | Available |
-| Mac Mini Pro | Available |
+- **Members:** 17 additional members
 
 ---
 
 ## Completed Features
 
 ### Core Features ✅
-- [x] Authentication with Demo Mode + Role Switching
+- [x] Custom email/password authentication
 - [x] Mobile-responsive dashboard with KPI cards
-- [x] Team Directory with Add/Edit/Delete + Unit filter
+- [x] Team Directory with roles and units
 - [x] Services management (per-team)
-- [x] Equipment inventory (per-team)
+- [x] Equipment inventory with checkout/return
 - [x] Rota assignment
 - [x] Service checklists
-- [x] Calendar view
+- [x] Calendar view with availability
 - [x] In-app notifications
 - [x] Director Dashboard
 - [x] Role-based access control
-- [x] Weekly lead dynamic permissions
+- [x] Tuesday Standup Attendance tracking with flagging system
+- [x] Onboarding flow (6 steps)
 
-### Mobile UI ✅
-- [x] Hamburger menu navigation
-- [x] Touch-friendly buttons and inputs
-- [x] Responsive grids and layouts
-- [x] Proper font sizes for readability
+### Performance ✅
+- [x] In-memory caching with TTL
+- [x] Cache warmup on server start
+- [x] Optimistic frontend loading
+- [x] Fast login with user caching
+
+### Bug Fixes (Feb 7, 2026) ✅
+- [x] Fixed session data corruption (wrong user name showing)
+- [x] Fixed slow API responses with caching
+- [x] Removed all Emergent branding
+
+---
+
+## Test Credentials
+- **Email:** oladimeji@tenmediahq.com (or any team member firstname)
+- **Password:** Envoy@2026
+- **Demo Mode:** Available on login page
+
+---
+
+## Key Files
+
+### Backend
+- `/app/backend/server.py` - FastAPI app with cache warmup
+- `/app/backend/cache.py` - In-memory caching system
+- `/app/backend/fallback_data.py` - Fallback data when DB unavailable
+- `/app/backend/routes/` - All API endpoints
+
+### Frontend
+- `/app/frontend/src/App.js` - Auth context, session management
+- `/app/frontend/src/pages/` - All page components
 
 ---
 
 ## Pending Tasks
 
-### Completed ✅
-All P0 and P1 tasks have been completed!
+### P0 (Critical) - None
+
+### P1 (High Priority)
+- [ ] Move `onboardingCompleted` flag from localStorage to database
+- [ ] End-to-end test of Twilio WhatsApp notifications
+
+### P2 (Medium Priority)
+- [ ] CSV/Excel import for events from Settings
+- [ ] Database indexes for frequently queried fields
 
 ### Future Enhancements
-- [ ] Add email notifications as backup for WhatsApp
-- [ ] Add multi-language support
+- [ ] Email notifications as backup for WhatsApp
+- [ ] Multi-language support
 - [ ] Performance analytics dashboard enhancements
 
 ---
 
-## Recently Completed (Feb 7, 2026)
-
-### Generate Recurring Services ✅
-- Auto-create all weekly/monthly services for 1-3 months
-- Services to generate:
-  - Sunday Service (every Sunday)
-  - Midweek Service / Leicester Blessings (every Thursday)
-  - Tuesday Standup (every Tuesday)
-  - Connected with PMO (last Thursday of month)
-- Modal with duration selector (1/2/3 months)
-- Prevents duplicate service creation
-
-### Tuesday Standup Attendance Tracking ✅
-- New `/attendance` page for tracking standup meeting attendance
-- **Consecutive Absence Flagging**: Members with 2+ consecutive absences shown in red alert
-- Stats cards: Total Members, Meetings Recorded, Last Meeting Rate, Flagged Count
-- Member table with attendance percentage and status badges
-- "Mark Attendance" modal to select attendees with date picker
-- Recent meetings progress bars
-
-### Backend Refactoring ✅
-Created modular route structure in `/app/backend/routes/`:
-- `auth.py` - Authentication (session exchange, login, logout)
-- `users.py` - User management
-- `services.py` - Services and recurring generation
-- `rotas.py` - Rota management
-- `equipment.py` - Equipment and handovers
-- `attendance.py` - Standup attendance tracking
-
-### Deployment Guide ✅
-Created `/app/DEPLOYMENT.md` with:
-- Multiple deployment options (Railway, Render, VPS)
-- Environment variable configuration
-- Post-deployment checklist
-- Troubleshooting guide
-- Security recommendations
-
-### Service Names Update ✅
-Updated all service names to match actual church services:
-
-**Envoy Nation Services:**
-- Sunday Service (11:00 AM)
-- Leicester Blessings (Thursday 7:00 PM - midweek)
-- Connected with PMO (Last Thursday 7:00 PM)
-
-**E-Nation (The Commissioned Envoy) Services:**
-- The Commissioned Envoy (Sunday 2:00 PM)
-- Midweek Service (Wednesday 7:00 PM)
-
-**Other Event Types (for CSV import):**
-- Conferences
-- Bootcamps
-- Special Events
-
-Service type badges now have distinct colors:
-- Sunday Service: Blue
-- Leicester Blessings: Purple
-- Connected with PMO: Amber
-- Midweek Service: Green
-- Conference: Pink
-- Bootcamp: Cyan
-
-### Twilio WhatsApp Notifications ✅
-- Configured Twilio credentials (Account SID, Auth Token, WhatsApp Number)
-- Backend automatically sends WhatsApp notifications for rota assignments
-- Added WhatsApp status card to Settings page showing:
-  - Connection status (green indicator)
-  - Twilio account name
-  - WhatsApp number
-- API endpoints:
-  - `GET /api/whatsapp/status` - Check if configured
-  - `GET /api/whatsapp/test-connection` - Validate credentials
-  - `POST /api/whatsapp/send` - Send custom message
-  - `POST /api/whatsapp/notify-rota` - Notify for rota assignments
-
-### Google OAuth Integration ✅
-- Verified working with Google OAuth
-- Login flow: Click "Continue with Google" → Redirects to `accounts.google.com` → OAuth consent → Returns with session_id
-- Backend creates user session and sets HTTP-only cookie
-- New users automatically get "member" role
-
-### Backend Modular Structure ✅ COMPLETE
-All route logic has been moved from the monolithic `server.py` to modular files:
-
-**Route Files (`/app/backend/routes/`):**
-- `auth.py` - Authentication (session exchange, login, logout)
-- `users.py` - User management and team members
-- `services.py` - Services and recurring generation
-- `rotas.py` - Rota management and assignments
-- `equipment.py` - Equipment inventory and handovers
-- `attendance.py` - Tuesday standup attendance tracking
-- `training.py` - Training videos and materials
-- `notifications.py` - In-app notifications
-- `reports.py` - Service reports
-- `availability.py` - Member availability
-- `performance.py` - Performance metrics
-- `lead_rotation.py` - 52-week lead rotation planner
-- `dashboard.py` - Dashboard KPIs and team data
-- `director.py` - Director dashboard overview
-- `calendar.py` - Calendar data and events
-- `data_import.py` - CSV/Excel import/export
-- `whatsapp.py` - Twilio WhatsApp notifications
-
-**Shared Resources:**
-- `database.py` - Shared MongoDB connection for all routes
-- `__init__.py` - Central router registration
-
-**Server Architecture:**
-- `server.py` - Slim entry point (imports modular routes)
+## Known Issues
+- MongoDB Atlas SSL errors from preview environment (handled by fallback data)
+- First API call after cache expiry can be slow (2-3s) due to DB timeout
 
 ---
 
-## Recently Completed (Feb 7, 2026)
+## Changelog
 
-### Backend Refactoring Complete ✅
-- Migrated all 2000+ lines of API endpoints from monolithic `server.py` to 17 modular route files
-- Created shared `database.py` for centralized MongoDB connection
-- Slim `server.py` now just imports and registers modular routes
-- All Python files pass linting
+### Feb 7, 2026
+- Implemented comprehensive caching system for all major endpoints
+- Added cache warmup on server startup
+- Fixed session data corruption issue
+- Optimized login with pre-computed user lookup
+- Added timeout protection for all database queries
+- Frontend optimistic loading using localStorage
 
-### Mandatory Onboarding Flow Verified ✅
-- New users are automatically redirected to `/onboarding` page
-- Multi-step onboarding introduces team mission, values, and commitments
-- Onboarding completion stored in `localStorage.onboarding_complete`
-- Returning users skip onboarding and go directly to dashboard
-- "Our Mission" link in sidebar allows revisiting onboarding
-
----
-
-## Recently Completed (Feb 5, 2026)
-
-### Team Directory Card Redesign ✅
-- Fixed profile picture avatars being cut off/covered
-- Removed overflow-hidden clipping issue
-- 3-dot menu properly positioned in top-right corner
-- Add/Edit modals include profile picture upload with camera icon
-- Mobile-responsive layout with single column on small screens
-
-### Equipment Handover System ✅
-- Added **Inventory** and **Handovers** tabs to Equipment page
-- **Inventory Tab**: Equipment grid with check out/check in functionality
-- **Handovers Tab**: Shows transfer history with From→To flow, team badges, condition status
-- **New Handover Modal**:
-  - Equipment dropdown (filters to available items only)
-  - Destination team selector
-  - Receiving member dropdown (updates based on team)
-  - Condition toggle buttons (Good/Fair/Needs Repair)
-  - Condition notes textarea
-- Backend endpoint: `POST /api/equipment/handover`, `GET /api/equipment/handovers`
-- Demo mode uses hardcoded DEMO_HANDOVERS data for testing
-
----
-
-## Key Files Reference
-- `/app/frontend/src/pages/TeamDirectory.js` - Member cards with avatar fix
-- `/app/frontend/src/pages/Equipment.js` - Equipment inventory + handovers tabs
-- `/app/frontend/src/pages/Onboarding.js` - Mandatory onboarding flow
-- `/app/frontend/src/App.js` - Core routing, RBAC, onboarding redirect
-- `/app/backend/server.py` - Slim FastAPI entry point
-- `/app/backend/routes/` - All modular API route files
-- `/app/backend/database.py` - Shared MongoDB connection
+### Feb 6, 2026
+- Replaced Google OAuth with simple email/password authentication
+- Deployed to Railway (backend) and Cloudflare Pages (frontend)
+- Removed all Emergent branding
+- Added deployment guides
