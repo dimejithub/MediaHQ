@@ -4,15 +4,36 @@ import { useAuth } from '@/App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
-const DEMO_SERVICES = {
+// Service type configurations
+const SERVICE_TYPES = {
   envoy_nation: [
-    { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service', description: 'Envoy Nation worship service', team: 'envoy_nation' },
-    { service_id: 'demo_en_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night', description: 'Evening worship and prayer', team: 'envoy_nation' },
-    { service_id: 'demo_en_3', title: 'Midweek Service', date: '2026-02-11', time: '18:00', type: 'midweek_service', description: 'Midweek gathering', team: 'envoy_nation' }
+    { value: 'sunday_service', label: 'Sunday Service', defaultTime: '11:00', day: 'Sunday' },
+    { value: 'leicester_blessings', label: 'Leicester Blessings', defaultTime: '19:00', day: 'Thursday' },
+    { value: 'connected_pmo', label: 'Connected with PMO', defaultTime: '19:00', day: 'Last Thursday' },
+    { value: 'conference', label: 'Conference', defaultTime: '10:00', day: null },
+    { value: 'bootcamp', label: 'Bootcamp', defaultTime: '09:00', day: null },
+    { value: 'special_event', label: 'Special Event', defaultTime: '18:00', day: null }
   ],
   e_nation: [
-    { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service', description: 'E-Nation worship service', team: 'e_nation' },
-    { service_id: 'demo_e_2', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service', description: 'Youth ministry gathering', team: 'e_nation' }
+    { value: 'sunday_service', label: 'Sunday Service (Commissioned Envoy)', defaultTime: '14:00', day: 'Sunday' },
+    { value: 'midweek_service', label: 'Midweek Service', defaultTime: '19:00', day: 'Wednesday' },
+    { value: 'conference', label: 'Conference', defaultTime: '10:00', day: null },
+    { value: 'bootcamp', label: 'Bootcamp', defaultTime: '09:00', day: null },
+    { value: 'special_event', label: 'Special Event', defaultTime: '18:00', day: null }
+  ]
+};
+
+const DEMO_SERVICES = {
+  envoy_nation: [
+    { service_id: 'demo_en_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service', description: 'Envoy Nation Sunday worship service', team: 'envoy_nation' },
+    { service_id: 'demo_en_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', type: 'leicester_blessings', description: 'Thursday midweek service', team: 'envoy_nation' },
+    { service_id: 'demo_en_3', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo', description: 'Last Thursday of the month fellowship', team: 'envoy_nation' },
+    { service_id: 'demo_en_4', title: 'Sunday Service', date: '2026-02-15', time: '11:00', type: 'sunday_service', description: 'Envoy Nation Sunday worship service', team: 'envoy_nation' }
+  ],
+  e_nation: [
+    { service_id: 'demo_e_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', type: 'sunday_service', description: 'E-Nation Sunday service', team: 'e_nation' },
+    { service_id: 'demo_e_2', title: 'Midweek Service', date: '2026-02-11', time: '19:00', type: 'midweek_service', description: 'Wednesday midweek gathering', team: 'e_nation' },
+    { service_id: 'demo_e_3', title: 'The Commissioned Envoy', date: '2026-02-15', time: '14:00', type: 'sunday_service', description: 'E-Nation Sunday service', team: 'e_nation' }
   ]
 };
 
