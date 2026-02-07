@@ -91,12 +91,42 @@ The app is fully responsive and optimized for mobile devices:
 
 ## Pending Tasks
 
-### P1 - High Priority
-- [ ] Twilio WhatsApp notifications (need WhatsApp-enabled number, Account SID, Auth Token)
-- [ ] Google OAuth end-to-end testing with real credentials
-
 ### P2 - Medium Priority
 - [ ] Backend refactoring - split server.py into separate modules (routes, models, business logic)
+- [ ] Deployment guidance and production environment setup
+
+---
+
+## Recently Completed (Feb 7, 2026)
+
+### Twilio WhatsApp Notifications ✅
+- Configured Twilio credentials (Account SID, Auth Token, WhatsApp Number)
+- Backend automatically sends WhatsApp notifications for rota assignments
+- Added WhatsApp status card to Settings page showing:
+  - Connection status (green indicator)
+  - Twilio account name
+  - WhatsApp number
+- API endpoints:
+  - `GET /api/whatsapp/status` - Check if configured
+  - `GET /api/whatsapp/test-connection` - Validate credentials
+  - `POST /api/whatsapp/send` - Send custom message
+  - `POST /api/whatsapp/notify-rota` - Notify for rota assignments
+
+### Google OAuth Integration ✅
+- Verified working with Emergent's auth service
+- Login flow: Click "Continue with Google" → Redirects to `auth.emergentagent.com` → OAuth consent → Returns with session_id
+- Backend creates user session and sets HTTP-only cookie
+- New users automatically get "member" role
+
+### Backend Modular Structure (Partial) ✅
+- Created `/app/backend/models/` directory with separate model files:
+  - user.py, service.py, rota.py, equipment.py, checklist.py
+  - training.py, report.py, availability.py, notification.py
+  - lead_rotation.py, dashboard.py
+- Created `/app/backend/services/` directory with:
+  - twilio_service.py - Twilio client initialization and helpers
+- Created `/app/backend/config.py` - Centralized configuration
+- Created `/app/backend/database.py` - Database connection
 
 ---
 
