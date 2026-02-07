@@ -495,8 +495,50 @@ function Layout({ children }) {
 function ProtectedRoute({ children }) {
   const { user, loading, demoMode } = useAuth();
   const location = useLocation();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(false);
   
-  if (loading) {
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      // First check localStorage for quick response
+      const localComplete = localStorage.getItem('onboarding_complete') === 'true';
+      if (localComplete) {
+        setOnboardingComplete(true);
+        setOnboardingChecked(true);
+        return;
+      }
+      
+      // Then check server for persistent status
+      const sessionToken = localStorage.getItem('session_token');
+      if (sessionToken && !demoMode) {
+        try {
+          const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-status`, {
+            headers: { 'Authorization': `Bearer ${sessionToken}` },
+            credentials: 'include'
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.completed) {
+              localStorage.setItem('onboarding_complete', 'true');
+              setOnboardingComplete(true);
+            }
+          }
+        } catch (err) {
+          console.log('Could not check onboarding status');
+        }
+      }
+      
+      setOnboardingChecked(true);
+    };
+    
+    if (user || demoMode) {
+      checkOnboarding();
+    } else {
+      setOnboardingChecked(true);
+    }
+  }, [user, demoMode]);
+  
+  if (loading || !onboardingChecked) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-white text-xl animate-pulse">Loading...</div>
@@ -508,8 +550,6 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
   
-  // Check if user has completed onboarding (skip for onboarding page itself)
-  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
   const isOnboardingPage = location.pathname === '/onboarding';
   
   // Redirect to onboarding if not completed (unless already on onboarding page)
