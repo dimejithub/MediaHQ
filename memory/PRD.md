@@ -257,5 +257,8 @@ All route logic has been moved from the monolithic `server.py` to modular files:
 ## Key Files Reference
 - `/app/frontend/src/pages/TeamDirectory.js` - Member cards with avatar fix
 - `/app/frontend/src/pages/Equipment.js` - Equipment inventory + handovers tabs
-- `/app/frontend/src/App.js` - Core routing, RBAC, mobile responsiveness
-- `/app/backend/server.py` - FastAPI backend with all endpoints
+- `/app/frontend/src/pages/Onboarding.js` - Mandatory onboarding flow
+- `/app/frontend/src/App.js` - Core routing, RBAC, onboarding redirect
+- `/app/backend/server.py` - Slim FastAPI entry point
+- `/app/backend/routes/` - All modular API route files
+- `/app/backend/database.py` - Shared MongoDB connection
