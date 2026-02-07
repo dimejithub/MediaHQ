@@ -165,11 +165,13 @@ export default function LeadRotation() {
   }
 
   return (
-    <div className="p-8" data-testid="lead-rotation-page">
-      <div className="flex items-center justify-between mb-8">
+    <div className="p-4 sm:p-6 lg:p-8" data-testid="lead-rotation-page">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-bold text-white mb-2">52-Week Lead Rotation</h1>
-          <p className="text-slate-400">Plan and assign weekly service leads for the entire year</p>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-2">52-Week Lead Rotation</h1>
+          <p className="text-slate-400 text-sm sm:text-base">
+            Rotate leadership among <span className="text-green-400 font-medium">all {teamDisplayName} members</span> for training
+          </p>
         </div>
         <div className="flex items-center gap-4">
           <button onClick={() => setYear(year - 1)} className="px-3 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700">←</button>
@@ -178,8 +180,22 @@ export default function LeadRotation() {
         </div>
       </div>
 
+      {/* Info Banner */}
+      <div className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4 mb-6">
+        <div className="flex items-start gap-3">
+          <span className="text-blue-400 text-xl">💡</span>
+          <div>
+            <h3 className="font-semibold text-blue-400 mb-1">Leadership Development</h3>
+            <p className="text-sm text-slate-300">
+              Any team member can be assigned as Weekly Lead to develop leadership skills. 
+              The Weekly Lead gains access to service checklists and leads the team for that week.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Stats */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
           <p className="text-sm text-slate-400">Total Weeks</p>
           <p className="text-2xl font-bold text-white">52</p>
@@ -193,7 +209,7 @@ export default function LeadRotation() {
           <p className="text-2xl font-bold text-amber-400">{52 - rotations.length}</p>
         </div>
         <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-          <p className="text-sm text-slate-400">Available Leads</p>
+          <p className="text-sm text-slate-400">Team Members</p>
           <p className="text-2xl font-bold text-white">{leads.length}</p>
         </div>
       </div>
@@ -201,9 +217,9 @@ export default function LeadRotation() {
       {/* Quarters */}
       <div className="space-y-6">
         {[1, 2, 3, 4].map(quarter => (
-          <div key={quarter} className="bg-slate-900 rounded-xl p-6 border border-slate-800">
+          <div key={quarter} className="bg-slate-900 rounded-xl p-4 sm:p-6 border border-slate-800">
             <h2 className="text-lg font-bold text-white mb-4">Q{quarter} - Weeks {(quarter - 1) * 13 + 1} to {quarter * 13}</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3">
               {weeks.slice((quarter - 1) * 13, quarter * 13).map(weekNum => {
                 const rotation = getWeekRotation(weekNum);
                 const isEditing = editingWeek === weekNum;
@@ -226,7 +242,7 @@ export default function LeadRotation() {
                         >
                           <option value="">Select Lead...</option>
                           {leads.map(l => (
-                            <option key={l.user_id} value={l.user_id}>{l.name}</option>
+                            <option key={l.user_id} value={l.user_id}>{l.name} ({l.role})</option>
                           ))}
                         </select>
                         <button onClick={() => setEditingWeek(null)} className="w-full text-xs text-slate-400 hover:text-white">Cancel</button>
@@ -236,8 +252,11 @@ export default function LeadRotation() {
                         {rotation ? (
                           <div>
                             <p className="text-sm text-green-400 font-medium truncate">{rotation.lead_name}</p>
+                            {rotation.lead_role && (
+                              <p className="text-xs text-slate-500">{rotation.lead_role}</p>
+                            )}
                             {rotation.backup_name && (
-                              <p className="text-xs text-slate-500">Backup: {rotation.backup_name}</p>
+                              <p className="text-xs text-slate-500 mt-1">Backup: {rotation.backup_name}</p>
                             )}
                           </div>
                         ) : (
