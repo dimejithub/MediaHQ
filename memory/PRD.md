@@ -132,7 +132,7 @@ Created modular route structure in `/app/backend/routes/`:
 
 ### Deployment Guide ✅
 Created `/app/DEPLOYMENT.md` with:
-- Multiple deployment options (Emergent, Railway, Render, VPS)
+- Multiple deployment options (Railway, Render, VPS)
 - Environment variable configuration
 - Post-deployment checklist
 - Troubleshooting guide
@@ -177,8 +177,8 @@ Service type badges now have distinct colors:
   - `POST /api/whatsapp/notify-rota` - Notify for rota assignments
 
 ### Google OAuth Integration ✅
-- Verified working with Emergent's auth service
-- Login flow: Click "Continue with Google" → Redirects to `auth.emergentagent.com` → OAuth consent → Returns with session_id
+- Verified working with Google OAuth
+- Login flow: Click "Continue with Google" → Redirects to `accounts.google.com` → OAuth consent → Returns with session_id
 - Backend creates user session and sets HTTP-only cookie
 - New users automatically get "member" role
 
