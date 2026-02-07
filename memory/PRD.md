@@ -92,12 +92,37 @@ The app is fully responsive and optimized for mobile devices:
 ## Pending Tasks
 
 ### P2 - Medium Priority
-- [ ] Backend refactoring - split server.py into separate modules (routes, models, business logic)
+- [ ] Backend refactoring - split server.py into separate route modules
 - [ ] Deployment guidance and production environment setup
 
 ---
 
 ## Recently Completed (Feb 7, 2026)
+
+### Service Names Update ✅
+Updated all service names to match actual church services:
+
+**Envoy Nation Services:**
+- Sunday Service (11:00 AM)
+- Leicester Blessings (Thursday 7:00 PM - midweek)
+- Connected with PMO (Last Thursday 7:00 PM)
+
+**E-Nation (The Commissioned Envoy) Services:**
+- The Commissioned Envoy (Sunday 2:00 PM)
+- Midweek Service (Wednesday 7:00 PM)
+
+**Other Event Types (for CSV import):**
+- Conferences
+- Bootcamps
+- Special Events
+
+Service type badges now have distinct colors:
+- Sunday Service: Blue
+- Leicester Blessings: Purple
+- Connected with PMO: Amber
+- Midweek Service: Green
+- Conference: Pink
+- Bootcamp: Cyan
 
 ### Twilio WhatsApp Notifications ✅
 - Configured Twilio credentials (Account SID, Auth Token, WhatsApp Number)
