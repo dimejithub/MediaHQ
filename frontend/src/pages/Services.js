@@ -204,12 +204,21 @@ export default function Services() {
                 <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
                 <select
                   value={newService.type}
-                  onChange={(e) => setNewService({ ...newService, type: e.target.value })}
+                  onChange={(e) => {
+                    const selectedType = serviceTypes.find(t => t.value === e.target.value);
+                    setNewService({ 
+                      ...newService, 
+                      type: e.target.value,
+                      time: selectedType?.defaultTime || newService.time
+                    });
+                  }}
                   className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white"
                   data-testid="service-type-select"
                 >
                   {serviceTypes.map(type => (
-                    <option key={type} value={type}>{type.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}</option>
+                    <option key={type.value} value={type.value}>
+                      {type.label} {type.day ? `(${type.day})` : ''}
+                    </option>
                   ))}
                 </select>
               </div>
