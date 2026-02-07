@@ -64,12 +64,13 @@ export default function AssignRotas() {
   // Demo data by team
   const demoServices = {
     envoy_nation: [
-      { service_id: 'demo_en_1', title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00', type: 'sunday_service' },
-      { service_id: 'demo_en_2', title: 'Worship Night', date: '2026-02-12', time: '19:00', type: 'worship_night' }
+      { service_id: 'demo_en_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service' },
+      { service_id: 'demo_en_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', type: 'leicester_blessings' },
+      { service_id: 'demo_en_3', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo' }
     ],
     e_nation: [
-      { service_id: 'demo_e_1', title: 'E-Nation Sunday Service', date: '2026-02-09', time: '09:00', type: 'sunday_service' },
-      { service_id: 'demo_e_2', title: 'Youth Service', date: '2026-02-14', time: '18:00', type: 'youth_service' }
+      { service_id: 'demo_e_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', type: 'sunday_service' },
+      { service_id: 'demo_e_2', title: 'Midweek Service', date: '2026-02-11', time: '19:00', type: 'midweek_service' }
     ]
   };
 
