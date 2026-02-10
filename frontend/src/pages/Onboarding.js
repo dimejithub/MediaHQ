@@ -253,46 +253,48 @@ export default function Onboarding() {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Save onboarding completion to database
+      // CRITICAL: Set localStorage FIRST before any async operation
+      localStorage.setItem('onboarding_complete', 'true');
+      localStorage.setItem('selected_teams', JSON.stringify(selectedTeams));
+      
+      // Try to save to server (fire and forget - don't wait)
       const sessionToken = localStorage.getItem('session_token');
-      try {
-        await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
+      if (sessionToken) {
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${sessionToken}`
           },
           credentials: 'include'
-        });
-      } catch (err) {
-        console.log('Could not save onboarding to server:', err);
+        }).catch(() => {});
       }
       
-      // Also save locally as backup
-      localStorage.setItem('onboarding_complete', 'true');
-      localStorage.setItem('selected_teams', JSON.stringify(selectedTeams));
-      navigate('/dashboard');
+      // Hard redirect to dashboard
+      window.location.href = '/dashboard';
     }
   };
 
-  const handleSkip = async () => {
-    // Save onboarding completion to database
+  const handleSkip = () => {
+    // CRITICAL: Set localStorage FIRST
+    localStorage.setItem('onboarding_complete', 'true');
+    
+    // Try to save to server (fire and forget)
     const sessionToken = localStorage.getItem('session_token');
-    try {
-      await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
+    if (sessionToken) {
+      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${sessionToken}`
         },
         credentials: 'include'
-      });
-    } catch (err) {
-      console.log('Could not save onboarding to server:', err);
+      }).catch(() => {});
     }
     
-    localStorage.setItem('onboarding_complete', 'true');
-    navigate('/dashboard');
+    // Hard redirect to dashboard
+    window.location.href = '/dashboard';
+  };
   };
 
   return (
