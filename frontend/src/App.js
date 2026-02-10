@@ -495,20 +495,20 @@ function Layout({ children }) {
 function ProtectedRoute({ children }) {
   const { user, loading, demoMode } = useAuth();
   const location = useLocation();
-  const [onboardingChecked, setOnboardingChecked] = useState(false);
-  const [onboardingComplete, setOnboardingComplete] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState(() => {
+    // Check localStorage immediately on mount
+    return localStorage.getItem('onboarding_complete') === 'true';
+  });
+  const [checking, setChecking] = useState(!onboardingComplete);
   
   useEffect(() => {
+    // If already complete from localStorage, skip server check
+    if (onboardingComplete) {
+      setChecking(false);
+      return;
+    }
+    
     const checkOnboarding = async () => {
-      // First check localStorage for quick response
-      const localComplete = localStorage.getItem('onboarding_complete') === 'true';
-      if (localComplete) {
-        setOnboardingComplete(true);
-        setOnboardingChecked(true);
-        return;
-      }
-      
-      // Then check server for persistent status
       const sessionToken = localStorage.getItem('session_token');
       if (sessionToken && !demoMode) {
         try {
@@ -527,18 +527,36 @@ function ProtectedRoute({ children }) {
           console.log('Could not check onboarding status');
         }
       }
-      
-      setOnboardingChecked(true);
+      setChecking(false);
     };
     
     if (user || demoMode) {
       checkOnboarding();
     } else {
-      setOnboardingChecked(true);
+      setChecking(false);
     }
-  }, [user, demoMode]);
+  }, [user, demoMode, onboardingComplete]);
   
-  if (loading || !onboardingChecked) {
+  // Listen for localStorage changes (when onboarding completes)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const complete = localStorage.getItem('onboarding_complete') === 'true';
+      if (complete) {
+        setOnboardingComplete(true);
+      }
+    };
+    
+    // Check periodically in case storage event doesn't fire (same tab)
+    const interval = setInterval(handleStorageChange, 500);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+  
+  if (loading || checking) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-white text-xl animate-pulse">Loading...</div>
