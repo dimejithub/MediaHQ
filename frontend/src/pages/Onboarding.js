@@ -12,12 +12,34 @@ export default function Onboarding() {
 
   useEffect(() => {
     const fetchRoster = async () => {
-      if (demoMode) return;
+      if (demoMode) {
+        setRosterMembers([
+          { id: '1', user_id: 'user_adebowale', name: 'Dr. Adebowale Owoseni', role: 'director', unit: 'Head' },
+          { id: '2', user_id: 'user_adeola', name: 'Adeola Hilton', role: 'team_lead', unit: 'Lead' },
+          { id: '3', user_id: 'user_oladimeji', name: 'Oladimeji Tiamiyu', role: 'assistant_lead', unit: 'Lead' },
+          { id: '4', user_id: 'user_oladipupo', name: 'Oladipupo Hilton', role: 'unit_head', unit: 'Photography' },
+          { id: '5', user_id: 'user_oluseye', name: 'Bro Oluseye', role: 'unit_head', unit: 'Projection & Livestream' },
+          { id: '6', user_id: 'user_michel', name: 'Michel Adimula', role: 'unit_head', unit: 'Production' },
+          { id: '7', user_id: 'user_jasper', name: 'Jasper Eromon', role: 'member', unit: 'Production' },
+          { id: '8', user_id: 'user_jemima', name: 'Jemima Eromon', role: 'member', unit: 'Projection & Livestream' },
+          { id: '9', user_id: 'user_olukunle', name: 'Olukunle Ogunniran', role: 'member', unit: 'Production' },
+          { id: '10', user_id: 'user_wade', name: 'Wade Osunmakinde', role: 'member', unit: 'Production' },
+          { id: '11', user_id: 'user_seun', name: 'Seun Morenikeji', role: 'member', unit: 'Photography' },
+          { id: '12', user_id: 'user_chase', name: 'Chase Hadley', role: 'member', unit: 'Photography' },
+          { id: '13', user_id: 'user_favour_o', name: 'Favour Olusanya', role: 'member', unit: 'Production' },
+          { id: '14', user_id: 'user_damilare', name: 'Damilare Akeredolu', role: 'member', unit: 'Production' },
+          { id: '15', user_id: 'user_temidayo', name: 'Temidayo Peters', role: 'member', unit: 'Post-Production' },
+        ]);
+        return;
+      }
+
       try {
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('profiles')
           .select('id, user_id, name, role, unit')
           .order('name');
+
+        if (error) throw error;
         setRosterMembers(data || []);
       } catch (err) {
         console.error('Error fetching roster:', err);
