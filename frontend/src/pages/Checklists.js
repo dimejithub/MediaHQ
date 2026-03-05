@@ -1,220 +1,196 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-const CHECKLIST_ITEMS = [
-  'Ensure all team members are present',
-  'Check the rota to ensure all unit members officiating are present',
-  'Assign specific roles and responsibilities',
-  'Turn on all sockets, media appliances, screens including LED screen',
-  'Inspect that all equipment are properly connected',
-  'Verify cameras, switchers, and monitors',
-  'Confirm HDMI cables are working',
-  'Check battery levels and replace if needed',
-  'Ensure proper camera angles and framing',
-  'Confirm pulpit camera is properly placed',
-  'Test camera switching and transitions',
-  'Check communication headsets for clear audio',
-  'Ensure livestream feed audio is clear',
-  'Set up laptop/system for projection and livestream',
-  'Download images/videos/lyrics from WhatsApp or Drive',
-  'Verify slides, lyrics, and video cues',
-  'Run short cue test for smooth transitions',
-  'Start streaming 5 mins before service start time',
-  'Confirm overlays/lower-thirds are working',
-  'Ensure smooth camera switching and transitions',
-  'Monitor video quality and adjust as needed',
-  'Stay in sync with presentation and sound teams',
-  'Be ready to troubleshoot issues quickly',
-  'Document conflicts/challenges faced during service',
-  'Discuss what went well and issues faced',
-  'Note any equipment needing maintenance',
-  'Plan improvements for the next service',
-  'Turn off all equipment properly',
-  'Complete service report form'
-];
+import { supabase } from '../lib/supabase';
 
 export default function Checklists() {
-  const { demoMode } = useAuth();
-  const [services, setServices] = useState([]);
-  const [selectedService, setSelectedService] = useState(null);
-  const [checklist, setChecklist] = useState([]);
+  const { profile, demoMode } = useAuth();
+  const [checklists, setChecklists] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const demoServices = [
-    { service_id: 'demo_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service' },
-    { service_id: 'demo_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', type: 'leicester_blessings' },
-    { service_id: 'demo_3', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo' }
-  ];
+  const [activeChecklist, setActiveChecklist] = useState(null);
 
   useEffect(() => {
+    fetchChecklists();
+  }, [demoMode]);
+
+  const fetchChecklists = async () => {
     if (demoMode) {
-      setServices(demoServices);
+      setChecklists([
+        {
+          id: '1',
+          title: 'Sunday Service Setup',
+          service_date: '2026-03-08',
+          items: [
+            { id: 'i1', text: 'Test all microphones', checked: true },
+            { id: 'i2', text: 'Check camera batteries', checked: true },
+            { id: 'i3', text: 'Setup streaming software', checked: false },
+            { id: 'i4', text: 'Test projector connection', checked: false },
+            { id: 'i5', text: 'Sound check with worship team', checked: false },
+          ]
+        },
+        {
+          id: '2',
+          title: 'Post-Service Checklist',
+          service_date: '2026-03-08',
+          items: [
+            { id: 'i1', text: 'Backup recordings', checked: false },
+            { id: 'i2', text: 'Return all equipment', checked: false },
+            { id: 'i3', text: 'Power off all systems', checked: false },
+            { id: 'i4', text: 'Lock media room', checked: false },
+          ]
+        },
+      ]);
       setLoading(false);
       return;
     }
 
-    fetch(`${BACKEND_URL}/api/services`, { credentials: 'include' })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load');
-        return res.json();
-      })
-      .then(data => {
-        setServices(data.length > 0 ? data : demoServices);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setServices(demoServices);
-        setLoading(false);
-      });
-  }, [demoMode]);
+    try {
+      const { data, error } = await supabase
+        .from('checklists')
+        .select('*')
+        .order('created_at', { ascending: false });
 
-  const selectService = (service) => {
-    setSelectedService(service);
-    setChecklist(CHECKLIST_ITEMS.map((item, idx) => ({
-      id: idx,
-      text: item,
-      completed: false
-    })));
-  };
-
-  const toggleItem = (id) => {
-    setChecklist(prev => prev.map(item => 
-      item.id === id ? { ...item, completed: !item.completed } : item
-    ));
-  };
-
-  const saveChecklist = async () => {
-    if (!selectedService) {
-      toast.error('Please select a service');
-      return;
+      if (error) throw error;
+      setChecklists(data || []);
+    } catch (err) {
+      console.error('Error fetching checklists:', err);
+    } finally {
+      setLoading(false);
     }
-
-    const completedCount = checklist.filter(i => i.completed).length;
-    const totalCount = checklist.length;
-
-    toast.success(`Checklist saved! ${completedCount}/${totalCount} items completed`);
-    setSelectedService(null);
-    setChecklist([]);
   };
 
-  const completed = checklist.filter(i => i.completed).length;
-  const total = checklist.length;
-  const progress = total > 0 ? (completed / total) * 100 : 0;
+  const toggleItem = async (checklistId, itemId) => {
+    const checklist = checklists.find(c => c.id === checklistId);
+    if (!checklist) return;
+
+    const updatedItems = checklist.items.map(item =>
+      item.id === itemId ? { ...item, checked: !item.checked } : item
+    );
+
+    setChecklists(checklists.map(c =>
+      c.id === checklistId ? { ...c, items: updatedItems } : c
+    ));
+
+    if (!demoMode) {
+      try {
+        await supabase
+          .from('checklists')
+          .update({ items: updatedItems })
+          .eq('id', checklistId);
+      } catch (err) {
+        console.error('Error updating checklist:', err);
+      }
+    }
+  };
+
+  const getProgress = (checklist) => {
+    const total = checklist.items?.length || 0;
+    const completed = checklist.items?.filter(i => i.checked).length || 0;
+    return { total, completed, percent: total > 0 ? Math.round((completed / total) * 100) : 0 };
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-xl text-slate-400 animate-pulse">Loading...</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-white text-xl animate-pulse">Loading checklists...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6" data-testid="checklists-page">
+    <div className="space-y-6">
+      {/* Header */}
       <div>
-        <h1 className="text-4xl font-bold text-white mb-2">Service Checklists</h1>
-        <p className="text-slate-400">29-item checklist for weekly service leads</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">Checklists</h1>
+        <p className="text-slate-400 mt-1">Service preparation checklists</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Service Selection */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-xl">📅</span>
-            Select Service
-          </h2>
-          <div className="space-y-2">
-            {services.map((service) => (
-              <button
-                key={service.service_id}
-                onClick={() => selectService(service)}
-                data-testid={`checklist-service-${service.service_id}`}
-                className={`w-full text-left p-4 rounded-lg transition-all ${
-                  selectedService?.service_id === service.service_id
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'bg-slate-800 hover:bg-slate-700 text-white'
-                }`}
-              >
-                <p className="font-bold">{service.title}</p>
-                <p className="text-sm opacity-75">{service.date} at {service.time}</p>
-              </button>
-            ))}
-          </div>
+      {/* Checklists Grid */}
+      {checklists.length === 0 ? (
+        <div className="bg-slate-900/50 rounded-2xl p-12 border border-slate-800 text-center">
+          <div className="text-4xl mb-4">✅</div>
+          <p className="text-slate-400">No checklists available</p>
         </div>
-
-        {/* Checklist */}
-        <div className="lg:col-span-2 bg-slate-900 rounded-xl p-6 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-xl">📋</span>
-            Service Checklist (29 Items)
-          </h2>
-
-          {selectedService ? (
-            <div className="space-y-4">
-              {/* Service Info */}
-              <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
-                <p className="font-bold text-lg text-white">{selectedService.title}</p>
-                <p className="text-sm text-slate-400">{selectedService.date} at {selectedService.time}</p>
-              </div>
-
-              {/* Progress */}
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-bold text-amber-400">Progress</span>
-                  <span className="text-sm font-bold text-amber-400">{completed}/{total} ({Math.round(progress)}%)</span>
-                </div>
-                <div className="h-3 bg-slate-700 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-amber-500 transition-all duration-300"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Checklist Items */}
-              <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                {checklist.map((item) => (
-                  <div 
-                    key={item.id}
-                    onClick={() => toggleItem(item.id)}
-                    className={`flex items-start gap-3 p-3 rounded-lg cursor-pointer transition-all ${
-                      item.completed ? 'bg-green-500/10 border border-green-500/30' : 'bg-slate-800 border border-slate-700 hover:border-slate-600'
-                    }`}
-                    data-testid={`checklist-item-${item.id}`}
-                  >
-                    <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                      item.completed ? 'bg-green-500 border-green-500' : 'border-slate-500'
-                    }`}>
-                      {item.completed && <span className="text-white text-xs">✓</span>}
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2">
+          {checklists.map((checklist) => {
+            const progress = getProgress(checklist);
+            return (
+              <div
+                key={checklist.id}
+                className="bg-slate-900/50 rounded-2xl border border-slate-800 overflow-hidden"
+              >
+                {/* Checklist Header */}
+                <div 
+                  className="p-5 cursor-pointer hover:bg-slate-800/50 transition-all"
+                  onClick={() => setActiveChecklist(activeChecklist === checklist.id ? null : checklist.id)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-white font-medium">{checklist.title}</h3>
+                      {checklist.service_date && (
+                        <p className="text-slate-400 text-sm mt-1">
+                          {new Date(checklist.service_date).toLocaleDateString('en-GB', { 
+                            weekday: 'short', day: 'numeric', month: 'short' 
+                          })}
+                        </p>
+                      )}
                     </div>
-                    <span className={`flex-1 text-sm ${item.completed ? 'text-green-400 line-through' : 'text-slate-300'}`}>
-                      {item.text}
-                    </span>
+                    <div className="text-right">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                        progress.percent === 100 ? 'bg-green-500/20 text-green-400' :
+                        progress.percent > 50 ? 'bg-blue-500/20 text-blue-400' :
+                        'bg-orange-500/20 text-orange-400'
+                      }`}>
+                        {progress.completed}/{progress.total}
+                      </span>
+                    </div>
                   </div>
-                ))}
-              </div>
+                  
+                  {/* Progress Bar */}
+                  <div className="mt-4 h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full transition-all ${
+                        progress.percent === 100 ? 'bg-green-500' : 'bg-gradient-to-r from-blue-500 to-purple-500'
+                      }`}
+                      style={{ width: `${progress.percent}%` }}
+                    />
+                  </div>
+                </div>
 
-              {/* Save Button */}
-              <button
-                onClick={saveChecklist}
-                data-testid="save-checklist-btn"
-                className="w-full px-6 py-4 bg-white text-slate-900 rounded-xl font-bold text-lg hover:bg-slate-100 transition-all shadow-lg"
-              >
-                ✅ Save Checklist ({completed}/{total} completed)
-              </button>
-            </div>
-          ) : (
-            <div className="text-center py-12 text-slate-500">
-              <p className="text-6xl mb-4">👈</p>
-              <p className="text-lg">Select a service to start the checklist</p>
-            </div>
-          )}
+                {/* Checklist Items (Expandable) */}
+                {activeChecklist === checklist.id && (
+                  <div className="border-t border-slate-800 p-4 space-y-2">
+                    {checklist.items?.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => toggleItem(checklist.id, item.id)}
+                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                          item.checked 
+                            ? 'bg-green-500/10 border border-green-500/30' 
+                            : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                          item.checked ? 'bg-green-500 border-green-500' : 'border-slate-500'
+                        }`}>
+                          {item.checked && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className={`text-left ${item.checked ? 'text-green-400 line-through' : 'text-white'}`}>
+                          {item.text}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
+      )}
     </div>
   );
 }
