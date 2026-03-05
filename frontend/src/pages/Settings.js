@@ -1,249 +1,181 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../App';
-import { toast } from 'sonner';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-function TemplateButton({ label, icon, fields, onClick }) {
-  return (
-    <button onClick={onClick} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700 flex items-center justify-between">
-      <span>{icon} {label}</span>
-      <span className="text-sm text-slate-400">{fields}</span>
-    </button>
-  );
-}
-
-function ExportButton({ label, icon, onClick }) {
-  return (
-    <button onClick={onClick} className="w-full px-4 py-3 bg-slate-800 text-white rounded-lg font-medium hover:bg-slate-700 transition-all text-left border border-slate-700">
-      {icon} {label}
-    </button>
-  );
-}
+import { supabase } from '../lib/supabase';
 
 export default function Settings() {
-  const { user, demoMode } = useAuth();
-  const isAdmin = user?.role === 'admin' || user?.role === 'director';
-  const [importCollection, setImportCollection] = useState('users');
-  const [csvData, setCsvData] = useState([]);
-  const [importing, setImporting] = useState(false);
-  const [whatsappStatus, setWhatsappStatus] = useState({ configured: false, loading: true });
+  const { profile, setProfile, demoMode } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState(null);
+  const [formData, setFormData] = useState({
+    name: profile?.name || '',
+    phone: profile?.phone || '',
+    unit: profile?.unit || '',
+    availability: profile?.availability || 'available'
+  });
 
-  useEffect(() => {
-    // Check WhatsApp status
-    fetch(`${BACKEND_URL}/api/whatsapp/test-connection`)
-      .then(res => res.json())
-      .then(data => setWhatsappStatus({ ...data, loading: false }))
-      .catch(() => setWhatsappStatus({ configured: false, loading: false, error: 'Failed to check' }));
-  }, []);
+  const handleSave = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setMessage(null);
 
-  const handleExport = (collection) => {
     if (demoMode) {
-      toast.info('Export not available in demo mode');
-      return;
-    }
-    window.open(`${BACKEND_URL}/api/data/export?collection=${collection}`, '_blank');
-  };
-
-  const handleDownloadTemplate = (collection) => {
-    if (demoMode) {
-      toast.info('Templates not available in demo mode');
-      return;
-    }
-    window.open(`${BACKEND_URL}/api/data/template/${collection}`, '_blank');
-    toast.success(`Downloading ${collection} template`);
-  };
-
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const text = event.target.result;
-      const lines = text.split('\n').filter(line => line.trim());
-      
-      if (lines.length < 2) {
-        toast.error('CSV file is empty');
-        return;
-      }
-
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-      const data = [];
-      
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-        const row = {};
-        headers.forEach((header, idx) => {
-          row[header] = values[idx] || '';
-        });
-        data.push(row);
-      }
-
-      setCsvData(data);
-      toast.success(`Loaded ${data.length} rows`);
-    };
-    reader.readAsText(file);
-  };
-
-  const handleImport = async () => {
-    if (demoMode) {
-      toast.info('Import not available in demo mode');
-      return;
-    }
-    if (csvData.length === 0) {
-      toast.error('Please upload a CSV file first');
+      setProfile({ ...profile, ...formData });
+      setMessage({ type: 'success', text: 'Profile updated (demo mode)' });
+      setLoading(false);
       return;
     }
 
-    setImporting(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/api/data/import-csv?collection=${importCollection}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ data: csvData })
-      });
+      const { error } = await supabase
+        .from('profiles')
+        .update(formData)
+        .eq('id', profile?.id);
 
-      if (res.ok) {
-        const result = await res.json();
-        toast.success(`Imported ${result.imported} of ${result.total} records`);
-        setCsvData([]);
-      } else {
-        toast.error('Import failed');
-      }
+      if (error) throw error;
+      
+      setProfile({ ...profile, ...formData });
+      setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (err) {
-      toast.error('Import failed');
+      console.error('Error updating profile:', err);
+      setMessage({ type: 'error', text: 'Failed to update profile' });
     } finally {
-      setImporting(false);
+      setLoading(false);
     }
   };
 
   return (
-    <div className="p-8" data-testid="settings-page">
-      <h1 className="text-4xl font-bold text-white mb-2">Settings</h1>
-      <p className="text-slate-400 mb-8">Manage data import and export</p>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-4">📋 Download Templates</h2>
-          <p className="text-sm text-slate-400 mb-4">Download CSV templates for data import</p>
-          <div className="space-y-3">
-            <TemplateButton label="Team Members" icon="👥" fields="name, email, role, phone, skills" onClick={() => handleDownloadTemplate('users')} />
-            <TemplateButton label="Services" icon="🗓️" fields="title, date, time, type" onClick={() => handleDownloadTemplate('services')} />
-            <TemplateButton label="Equipment" icon="🎥" fields="name, category, status, notes" onClick={() => handleDownloadTemplate('equipment')} />
-          </div>
-        </div>
+    <div className="space-y-6 max-w-2xl">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">Settings</h1>
+        <p className="text-slate-400 mt-1">Manage your profile and preferences</p>
+      </div>
 
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-4">📤 Export Data</h2>
-          <p className="text-sm text-slate-400 mb-4">Download your data as CSV files</p>
-          <div className="space-y-3">
-            <ExportButton label="Export Team Members" icon="👥" onClick={() => handleExport('users')} />
-            <ExportButton label="Export Services" icon="🗓️" onClick={() => handleExport('services')} />
-            <ExportButton label="Export Equipment" icon="🎥" onClick={() => handleExport('equipment')} />
-            <ExportButton label="Export Rotas" icon="📝" onClick={() => handleExport('rotas')} />
-          </div>
+      {/* Message */}
+      {message && (
+        <div className={`p-4 rounded-xl ${
+          message.type === 'success' 
+            ? 'bg-green-500/10 border border-green-500/30 text-green-400' 
+            : 'bg-red-500/10 border border-red-500/30 text-red-400'
+        }`}>
+          {message.text}
         </div>
+      )}
+
+      {/* Profile Section */}
+      <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+        <h2 className="text-lg font-semibold text-white mb-6">Profile Information</h2>
         
-        <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-xl font-bold text-white mb-4">📥 Import Data</h2>
-          <p className="text-sm text-slate-400 mb-4">Upload CSV files matching the template format</p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Select Data Type</label>
-                <select value={importCollection} onChange={(e) => setImportCollection(e.target.value)}
-                  className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white">
-                  <option value="users">Team Members</option>
-                  <option value="services">Services</option>
-                  <option value="equipment">Equipment</option>
-                </select>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Upload CSV File</label>
-                <div className="p-4 rounded-lg bg-slate-800 border border-slate-700 border-dashed">
-                  <input type="file" accept=".csv" onChange={handleFileUpload}
-                    className="block w-full text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-slate-700 file:text-white hover:file:bg-slate-600" />
-                </div>
-              </div>
-
-              <button onClick={handleImport} disabled={importing || csvData.length === 0}
-                className="w-full px-4 py-3 bg-white text-slate-900 rounded-lg font-medium hover:bg-slate-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                {importing ? '⏳ Importing...' : `📤 Import ${csvData.length} Records`}
-              </button>
-            </div>
-
-            <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
-              {csvData.length > 0 ? (
-                <div>
-                  <h3 className="text-sm font-bold text-white mb-2">Preview ({csvData.length} rows)</h3>
-                  <p className="text-xs text-slate-400">Ready to import</p>
-                </div>
-              ) : (
-                <p className="text-slate-500 text-sm text-center py-8">Upload a CSV to preview</p>
-              )}
-            </div>
+        <form onSubmit={handleSave} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Email</label>
+            <input
+              type="email"
+              value={profile?.email || ''}
+              disabled
+              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-slate-400 cursor-not-allowed"
+            />
+            <p className="text-slate-500 text-xs mt-1">Email cannot be changed</p>
           </div>
-          
-          {!isAdmin && (
-            <p className="mt-4 text-sm text-amber-400">⚠️ Admin privileges required for import</p>
-          )}
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Full Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Phone Number</label>
+            <input
+              type="tel"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500"
+              placeholder="+44 7xxx xxx xxx"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Unit</label>
+            <select
+              value={formData.unit}
+              onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="">Select Unit</option>
+              <option value="Sound">Sound</option>
+              <option value="Visuals">Visuals</option>
+              <option value="Camera">Camera</option>
+              <option value="Streaming">Streaming</option>
+              <option value="Lighting">Lighting</option>
+              <option value="Leadership">Leadership</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-300 mb-2">Availability</label>
+            <select
+              value={formData.availability}
+              onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+              className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500"
+            >
+              <option value="available">Available</option>
+              <option value="limited">Limited Availability</option>
+              <option value="unavailable">Unavailable</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all disabled:opacity-50"
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
+          </button>
+        </form>
+      </div>
+
+      {/* Team Info */}
+      <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">Team Information</h2>
+        <div className="space-y-3">
+          <div className="flex justify-between">
+            <span className="text-slate-400">Primary Team</span>
+            <span className="text-white capitalize">{profile?.primary_team?.replace('_', ' ') || 'Envoy Nation'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">Role</span>
+            <span className="text-white capitalize">{profile?.role?.replace('_', ' ') || 'Member'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-slate-400">Teams</span>
+            <span className="text-white">
+              {(profile?.teams || ['envoy_nation']).map(t => t.replace('_', ' ')).join(', ')}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4">📱 WhatsApp Notifications</h2>
-        <div className="flex items-center gap-4">
-          {whatsappStatus.loading ? (
-            <div className="flex items-center gap-2 text-slate-400">
-              <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
-              Checking status...
-            </div>
-          ) : whatsappStatus.success ? (
-            <>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-green-400 font-medium">Connected</span>
-              </div>
-              <div className="text-sm text-slate-400">
-                Account: {whatsappStatus.account_name} • Number: {whatsappStatus.whatsapp_number}
-              </div>
-            </>
-          ) : (
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-              <span className="text-red-400 font-medium">Not Configured</span>
-              <span className="text-sm text-slate-500">WhatsApp notifications are disabled</span>
-            </div>
-          )}
-        </div>
-        <p className="text-xs text-slate-500 mt-3">
-          WhatsApp notifications are sent automatically when team members are assigned to rotas.
-        </p>
-      </div>
-
-      <div className="mt-8 bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <h2 className="text-xl font-bold text-white mb-4">ℹ️ App Info</h2>
-        <div className="grid grid-cols-4 gap-4 text-sm">
-          <div>
-            <p className="text-slate-400">Version</p>
-            <p className="text-white font-medium">2.0.0</p>
-          </div>
-          <div>
-            <p className="text-slate-400">Mode</p>
-            <p className="text-white font-medium">{demoMode ? 'Demo' : 'Production'}</p>
-          </div>
-          <div>
-            <p className="text-slate-400">User</p>
-            <p className="text-white font-medium">{user?.name || 'Unknown'}</p>
-          </div>
-          <div>
-            <p className="text-slate-400">Role</p>
-            <p className="text-white font-medium capitalize">{user?.role?.replace('_', ' ') || 'Unknown'}</p>
-          </div>
+      {/* Notification Preferences */}
+      <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">Notifications</h2>
+        <div className="space-y-4">
+          <label className="flex items-center justify-between">
+            <span className="text-slate-300">Email Notifications</span>
+            <input type="checkbox" defaultChecked className="w-5 h-5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500" />
+          </label>
+          <label className="flex items-center justify-between">
+            <span className="text-slate-300">WhatsApp Notifications</span>
+            <input type="checkbox" defaultChecked className="w-5 h-5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500" />
+          </label>
+          <label className="flex items-center justify-between">
+            <span className="text-slate-300">Rota Reminders</span>
+            <input type="checkbox" defaultChecked className="w-5 h-5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500" />
+          </label>
         </div>
       </div>
     </div>
