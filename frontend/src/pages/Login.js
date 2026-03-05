@@ -29,6 +29,9 @@ export default function Login() {
     
     setError(null);
     setLoading(true);
+    
+    // Check if this user already completed onboarding (before clearing localStorage)
+    const previousOnboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
@@ -50,10 +53,17 @@ export default function Login() {
       // Clear demo mode
       localStorage.removeItem('demoMode');
       localStorage.removeItem('demoRole');
-      localStorage.removeItem('onboarding_complete');
-
-      // Redirect
-      window.location.href = '/onboarding';
+      
+      // Check if user has onboarding_completed flag from server
+      const userHasCompletedOnboarding = data.user?.onboarding_completed === true;
+      
+      // Redirect based on onboarding status
+      if (previousOnboardingComplete || userHasCompletedOnboarding) {
+        localStorage.setItem('onboarding_complete', 'true');
+        window.location.href = '/dashboard';
+      } else {
+        window.location.href = '/onboarding';
+      }
       
     } catch (err) {
       console.error('Login error:', err);
