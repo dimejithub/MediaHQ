@@ -46,6 +46,8 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 - [x] RLS policies (SELECT, INSERT, UPDATE, DELETE)
 - [x] Real seed data (23 Envoy Nation members, 16 services, rotas, checklists)
 - [x] Twilio WhatsApp Edge Function created
+- [x] Custom favicon (TEN logo)
+- [x] Updated for tenmediahq.com domain
 
 ## Deployment
 - Build: `cd frontend && yarn install && yarn build`

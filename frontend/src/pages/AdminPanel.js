@@ -111,8 +111,8 @@ export default function AdminPanel() {
 
   return (
     <div className="space-y-6" data-testid="admin-panel">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Admin Panel</h1>
+      <div className="animate-fadeIn">
+        <h1 className="text-2xl lg:text-3xl font-bold gradient-text">Admin Panel</h1>
         <p className="text-slate-400 mt-1">Manage team roles, units, and permissions</p>
       </div>
 
@@ -128,8 +128,8 @@ export default function AdminPanel() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
-        {['director', 'team_lead', 'assistant_lead', 'unit_head', 'member'].map(role => (
-          <div key={role} className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 text-center">
+        {['director', 'team_lead', 'assistant_lead', 'unit_head', 'member'].map((role, idx) => (
+          <div key={role} className="bg-slate-900/50 rounded-xl p-4 border border-slate-800 text-center stat-card animate-fadeInUp" style={{ animationDelay: `${idx * 0.05}s` }}>
             <div className="text-2xl font-bold text-white">{members.filter(m => m.role === role).length}</div>
             <div className="text-xs text-slate-400 capitalize mt-1">{role.replace(/_/g, ' ')}</div>
           </div>

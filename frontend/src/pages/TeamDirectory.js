@@ -103,8 +103,8 @@ export default function TeamDirectory() {
 
   return (
     <div className="space-y-6" data-testid="team-directory">
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">Team Directory</h1>
+      <div className="animate-fadeIn">
+        <h1 className="text-2xl lg:text-3xl font-bold gradient-text">Team Directory</h1>
         <p className="text-slate-400 mt-1">{members.length} team members across {units.length} units</p>
       </div>
 
@@ -153,11 +153,12 @@ export default function TeamDirectory() {
         </div>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredMembers.map((member) => (
+          {filteredMembers.map((member, idx) => (
             <div
               key={member.user_id || member.id}
               data-testid={`member-card-${member.user_id}`}
-              className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800 hover:border-slate-600 transition-all"
+              className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800 hover:border-slate-600 transition-all card-animate animate-fadeInUp"
+              style={{ animationDelay: `${idx * 0.05}s` }}
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
