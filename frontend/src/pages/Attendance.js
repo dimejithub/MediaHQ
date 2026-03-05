@@ -13,9 +13,8 @@ export default function Attendance() {
 
   const teamId = profile?.primary_team || 'envoy_nation';
 
-  useEffect(() => {
-    fetchData();
-  }, [demoMode, teamId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(); }, [demoMode, teamId]);
 
   const fetchData = async () => {
     if (demoMode) {

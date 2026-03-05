@@ -3,14 +3,14 @@ import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
 
 export default function Checklists() {
-  const { profile, demoMode } = useAuth();
+  const { demoMode } = useAuth();
   const [checklists, setChecklists] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeChecklist, setActiveChecklist] = useState(null);
 
   useEffect(() => {
     fetchChecklists();
-  }, [demoMode]);
+  }, [demoMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const fetchChecklists = async () => {
     if (demoMode) {

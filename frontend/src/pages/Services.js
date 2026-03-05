@@ -17,9 +17,8 @@ export default function Services() {
 
   const teamId = profile?.primary_team || 'envoy_nation';
 
-  useEffect(() => {
-    fetchServices();
-  }, [demoMode, teamId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchServices(); }, [demoMode, teamId]);
 
   const fetchServices = async () => {
     if (demoMode) {

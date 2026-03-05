@@ -17,9 +17,8 @@ export default function Equipment() {
 
   const teamId = profile?.primary_team || 'envoy_nation';
 
-  useEffect(() => {
-    fetchEquipment();
-  }, [demoMode, teamId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchEquipment(); }, [demoMode, teamId]);
 
   const fetchEquipment = async () => {
     if (demoMode) {

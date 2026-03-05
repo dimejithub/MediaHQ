@@ -7,9 +7,8 @@ export default function MyRotas() {
   const [rotas, setRotas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRotas();
-  }, [demoMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchRotas(); }, [demoMode]);
 
   const fetchRotas = async () => {
     if (demoMode) {

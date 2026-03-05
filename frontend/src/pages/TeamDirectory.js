@@ -9,7 +9,7 @@ export default function TeamDirectory() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
 
-  const teamId = profile?.primary_team || 'envoy_nation';
+  const teamId = profile?.primary_team || 'envoy_nation'; // eslint-disable-line no-unused-vars
 
   useEffect(() => {
     const fetchMembers = async () => {

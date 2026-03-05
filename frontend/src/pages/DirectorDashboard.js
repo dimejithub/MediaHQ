@@ -7,11 +7,10 @@ export default function DirectorDashboard() {
   const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
   const [members, setMembers] = useState([]);
-  const [attendanceData, setAttendanceData] = useState([]);
+  const [, setAttendanceData] = useState([]);
 
-  useEffect(() => {
-    fetchData();
-  }, [demoMode]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchData(); }, [demoMode]);
 
   const fetchData = async () => {
     if (demoMode) {
