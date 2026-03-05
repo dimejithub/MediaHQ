@@ -125,6 +125,7 @@ const navItems = [
   { path: '/calendar', label: 'Calendar', icon: 'CalendarDays', roles: ['all'] },
   { path: '/attendance', label: 'Attendance', icon: 'UserCheck', roles: ['all'] },
   { path: '/notifications', label: 'Notifications', icon: 'Bell', roles: ['all'] },
+  { path: '/director', label: 'Director View', icon: 'Crown', roles: ['director'] },
   { path: '/settings', label: 'Settings', icon: 'Settings', roles: ['all'] },
 ];
 
