@@ -4,7 +4,7 @@ import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
 
 export default function Onboarding() {
-  const { user } = useAuth();
+  const { user, profile, setProfile, demoMode } = useAuth();
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTeams, setSelectedTeams] = useState([]);
