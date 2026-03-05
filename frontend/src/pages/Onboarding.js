@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/App';
+import { useAuth } from '../App';
+import { supabase } from '../lib/supabase';
 
 export default function Onboarding() {
   const { user } = useAuth();
