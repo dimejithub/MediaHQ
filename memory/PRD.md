@@ -1,86 +1,70 @@
 # TEN MediaHQ - Product Requirements Document
 
 ## Overview
-Church media team management platform for Envoy Nation and E-Nation teams.
+Church media team management platform for Envoy Nation (and future E-Nation/TCE team).
 
 ## Tech Stack
 - **Frontend:** React.js, Tailwind CSS, Supabase Client
-- **Backend:** Supabase (Database + Auth + Storage)
-- **Database:** Supabase PostgreSQL
+- **Backend:** Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Auth:** Email Magic Link + Google OAuth (via Supabase Auth)
-- **Hosting:** Cloudflare Pages (frontend)
+- **Hosting:** Cloudflare Pages (frontend), Supabase (backend)
+- **Notifications:** Twilio WhatsApp (via Supabase Edge Function)
 
-## Supabase Project
-- **Project:** mediaHQ
-- **URL:** https://uctjdklqxvjxnxmsrnav.supabase.co
-- **Region:** eu-central-2
+## Teams
+- **Envoy Nation** — Leicester Blessing (Thursdays), Sunday Service, Connected with PMO (last Thursday/month)
+- **E-Nation (TCE)** — The Commissioned Envoy (data pending)
 
----
+## Units
+- Production, Photography, Projection & Livestream, Post-Production
 
-## Authentication
-1. **Email Magic Link** - Any email
-2. **Google OAuth** - Sign in with Google
-3. **Demo Mode** - Try without account
-
----
+## Roles
+- director, team_lead, assistant_lead, unit_head, member
 
 ## Database Tables
-- `profiles` - User profiles (linked to Supabase Auth)
-- `teams` - Team definitions
-- `services` - Service schedules
-- `equipment` - Equipment inventory
-- `attendance` - Attendance records
-- `rotas` - Duty assignments
-- `notifications` - User notifications
-- `checklists` - Service checklists
+profiles, services, equipment, attendance, rotas, notifications, checklists
 
 ---
 
 ## Completed Features
 - [x] Supabase migration (auth + data)
-- [x] Email + Google authentication
-- [x] Mobile-responsive dashboard
-- [x] Team directory
-- [x] Services management
-- [x] Equipment inventory
+- [x] Cloudflare deployment (yarn build, Node 20.19.0)
+- [x] Email Magic Link + Google OAuth
+- [x] Demo mode
+- [x] Onboarding with roster merge (Option C)
+- [x] Dashboard with real service types
+- [x] Team Directory with unit/role/search filters
+- [x] Services page (Sunday, Midweek, Special types)
+- [x] Equipment inventory with add/checkout
 - [x] Attendance tracking
 - [x] Calendar view
 - [x] Rotas management
-- [x] Notifications
-- [x] Onboarding flow
-- [x] Demo mode
-- [x] Cloudflare build fix (ajv dependency resolved via yarn)
-- [x] Seed data script (supabase_seed.sql)
-- [x] Deployment guide updated for Supabase architecture
-
----
+- [x] Checklists
+- [x] Notifications with real-time updates
+- [x] Admin Panel (role + unit management)
+- [x] Settings with phone number + WhatsApp config
+- [x] Real-time subscriptions (profiles, services, equipment, notifications)
+- [x] RLS policies (SELECT, INSERT, UPDATE, DELETE)
+- [x] Real seed data (23 Envoy Nation members, 16 services, rotas, checklists)
+- [x] Twilio WhatsApp Edge Function created
 
 ## Deployment
-- **Build command:** `cd frontend && yarn install && yarn build`
-- **Output:** `frontend/build`
-- **Node version:** 18.17.1 (via `.nvmrc`)
-- **CRITICAL:** Must use `yarn`, not `npm` (ajv dependency conflict)
-
-See `/app/CLOUDFLARE_DEPLOYMENT.md` for full guide.
+- Build: `cd frontend && yarn install && yarn build`
+- Node: 20.19.0, Yarn: 1.22.22 (via packageManager field)
+- Must use yarn (npm has ajv dependency conflict)
 
 ---
 
-## Pending Tasks
+## User Action Items
+- [ ] Run `supabase_rls_policies.sql` in SQL Editor
+- [ ] Run `supabase_schema_updates.sql` in SQL Editor (adds phone column + enables realtime)
+- [ ] Deploy Twilio Edge Function: `supabase functions deploy send-whatsapp`
+- [ ] Set Twilio secrets: `supabase secrets set TWILIO_ACCOUNT_SID=xxx TWILIO_AUTH_TOKEN=xxx TWILIO_WHATSAPP_NUMBER=xxx`
+- [ ] Share TCE team data for E-Nation seed
+- [ ] Save to GitHub and redeploy to Cloudflare
 
-### P0 - User Action Required
-- [ ] Update Cloudflare build command to use yarn
-- [ ] Run `supabase_seed.sql` in Supabase SQL Editor
-
-### P1 - Backend Logic & Security
-- [ ] Enhance RLS policies for team-based data segregation
-- [ ] Test all write operations with RLS enabled
-
-### P2 - Testing & Polish
-- [ ] End-to-end testing after deploy + seed
-- [ ] Twilio WhatsApp notification testing
-
-### Future
-- [ ] Real-time updates via Supabase subscriptions
+## Future
+- [ ] TCE team data seeding
 - [ ] Activity log
-- [ ] User notification preferences
 - [ ] Google Calendar sync
+- [ ] CSV/Excel import/export
+- [ ] Profile photo uploads
