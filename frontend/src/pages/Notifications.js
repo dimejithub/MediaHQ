@@ -36,6 +36,19 @@ export default function Notifications() {
     };
 
     fetchNotifications();
+
+    // Real-time subscription
+    if (!demoMode && profile?.user_id) {
+      const channel = supabase
+        .channel('notifications-changes')
+        .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, (payload) => {
+          if (payload.new.user_id === profile.user_id) {
+            setNotifications(prev => [payload.new, ...prev]);
+          }
+        })
+        .subscribe();
+      return () => { supabase.removeChannel(channel); };
+    }
   }, [profile, demoMode]);
 
   const markAsRead = async (id) => {

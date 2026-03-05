@@ -17,6 +17,7 @@ import Notifications from './pages/Notifications';
 import Settings from './pages/Settings';
 import AuthCallback from './pages/AuthCallback';
 import DirectorDashboard from './pages/DirectorDashboard';
+import AdminPanel from './pages/AdminPanel';
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -157,6 +158,7 @@ const navItems = [
   { path: '/attendance', label: 'Attendance', icon: 'UserCheck', roles: ['all'] },
   { path: '/notifications', label: 'Notifications', icon: 'Bell', roles: ['all'] },
   { path: '/director', label: 'Director View', icon: 'Crown', roles: ['director'] },
+  { path: '/admin', label: 'Admin', icon: 'Settings', roles: ['director', 'team_lead', 'assistant_lead'] },
   { path: '/settings', label: 'Settings', icon: 'Settings', roles: ['all'] },
 ];
 
@@ -347,6 +349,7 @@ function App() {
           <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/director" element={<ProtectedRoute><DirectorDashboard /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

@@ -20,14 +20,25 @@ export default function Services() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchServices(); }, [demoMode, teamId]);
 
+  useEffect(() => {
+    if (demoMode) return;
+    const channel = supabase
+      .channel('services-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'services' }, () => {
+        fetchServices();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [demoMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchServices = async () => {
     if (demoMode) {
       setServices([
-        { id: '1', service_id: 'svc_1', title: 'Sunday Morning Service', date: '2026-03-08', time: '11:00', type: 'sunday_service', team_id: 'envoy_nation' },
-        { id: '2', service_id: 'svc_2', title: 'Midweek Leicester Blessings', date: '2026-03-11', time: '18:30', type: 'midweek', team_id: 'envoy_nation' },
-        { id: '3', service_id: 'svc_3', title: 'Tuesday Standup Meeting', date: '2026-03-10', time: '20:00', type: 'standup', team_id: 'envoy_nation' },
-        { id: '4', service_id: 'svc_4', title: 'Sunday Morning Service', date: '2026-03-15', time: '11:00', type: 'sunday_service', team_id: 'envoy_nation' },
-        { id: '5', service_id: 'svc_5', title: 'The Commissioned Envoy Service', date: '2026-03-08', time: '14:00', type: 'sunday_service', team_id: 'e_nation' },
+        { id: '1', service_id: 'svc_1', title: 'Sunday Service', date: '2026-03-08', time: '11:00', type: 'sunday_service', team_id: 'envoy_nation' },
+        { id: '2', service_id: 'svc_2', title: 'Leicester Blessing', date: '2026-03-05', time: '18:30', type: 'midweek', team_id: 'envoy_nation' },
+        { id: '3', service_id: 'svc_3', title: 'Connected with PMO', date: '2026-03-26', time: '18:30', type: 'special', team_id: 'envoy_nation' },
+        { id: '4', service_id: 'svc_4', title: 'Sunday Service', date: '2026-03-15', time: '11:00', type: 'sunday_service', team_id: 'envoy_nation' },
+        { id: '5', service_id: 'svc_5', title: 'Leicester Blessing', date: '2026-03-12', time: '18:30', type: 'midweek', team_id: 'envoy_nation' },
       ]);
       setLoading(false);
       return;

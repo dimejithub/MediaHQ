@@ -20,6 +20,17 @@ export default function Equipment() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { fetchEquipment(); }, [demoMode, teamId]);
 
+  useEffect(() => {
+    if (demoMode) return;
+    const channel = supabase
+      .channel('equipment-changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'equipment' }, () => {
+        fetchEquipment();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [demoMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const fetchEquipment = async () => {
     if (demoMode) {
       setEquipment([

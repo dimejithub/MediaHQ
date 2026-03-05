@@ -24,14 +24,14 @@ export default function Dashboard() {
         setStats({
           total_members: 23,
           total_services: 5,
-          total_equipment: 6,
-          available_equipment: 4,
+          total_equipment: 0,
+          available_equipment: 0,
           pending_rotas: 2
         });
         setUpcomingServices([
-          { id: 1, title: 'Sunday Morning Service', date: '2026-03-08', time: '11:00', type: 'sunday_service' },
-          { id: 2, title: 'Midweek Leicester Blessings', date: '2026-03-11', time: '18:30', type: 'midweek' },
-          { id: 3, title: 'Tuesday Standup Meeting', date: '2026-03-10', time: '20:00', type: 'standup' },
+          { id: 1, title: 'Leicester Blessing', date: '2026-03-05', time: '18:30', type: 'midweek' },
+          { id: 2, title: 'Sunday Service', date: '2026-03-08', time: '11:00', type: 'sunday_service' },
+          { id: 3, title: 'Connected with PMO', date: '2026-03-26', time: '18:30', type: 'special' },
         ]);
         setLoading(false);
         return;
@@ -159,7 +159,7 @@ export default function Dashboard() {
                   className="flex items-center gap-4 p-4 bg-slate-800/50 rounded-xl hover:bg-slate-800 transition-all"
                 >
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-2xl">
-                    {service.type === 'sunday_service' ? '⛪' : service.type === 'standup' ? '🎤' : '🙏'}
+                    {service.type === 'sunday_service' ? '⛪' : service.type === 'special' ? '🌟' : '🙏'}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-white font-medium truncate">{service.title}</p>
@@ -167,10 +167,10 @@ export default function Dashboard() {
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
                     service.type === 'sunday_service' ? 'bg-blue-500/20 text-blue-400' :
-                    service.type === 'standup' ? 'bg-purple-500/20 text-purple-400' :
+                    service.type === 'special' ? 'bg-yellow-500/20 text-yellow-400' :
                     'bg-green-500/20 text-green-400'
                   }`}>
-                    {service.type.replace('_', ' ')}
+                    {service.type === 'sunday_service' ? 'Sunday' : service.type === 'special' ? 'Special' : 'Midweek'}
                   </span>
                 </div>
               ))}

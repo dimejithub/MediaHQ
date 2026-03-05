@@ -107,12 +107,12 @@ export default function Settings() {
               className="w-full px-4 py-3 bg-slate-800 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500"
             >
               <option value="">Select Unit</option>
-              <option value="Sound">Sound</option>
-              <option value="Visuals">Visuals</option>
-              <option value="Camera">Camera</option>
-              <option value="Streaming">Streaming</option>
-              <option value="Lighting">Lighting</option>
-              <option value="Leadership">Leadership</option>
+              <option value="Production">Production</option>
+              <option value="Photography">Photography</option>
+              <option value="Projection & Livestream">Projection & Livestream</option>
+              <option value="Post-Production">Post-Production</option>
+              <option value="Head">Head</option>
+              <option value="Lead">Lead</option>
             </select>
           </div>
 
@@ -176,6 +176,24 @@ export default function Settings() {
             <span className="text-slate-300">Rota Reminders</span>
             <input type="checkbox" defaultChecked className="w-5 h-5 rounded bg-slate-800 border-slate-600 text-blue-500 focus:ring-blue-500" />
           </label>
+        </div>
+      </div>
+
+      {/* WhatsApp Integration */}
+      <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">WhatsApp Integration</h2>
+        <div className="space-y-3">
+          <div className="flex items-center gap-3 p-3 bg-green-500/10 border border-green-500/20 rounded-xl">
+            <span className="text-2xl">💬</span>
+            <div>
+              <p className="text-green-400 font-medium text-sm">Connected</p>
+              <p className="text-slate-400 text-xs">Rota notifications and reminders via WhatsApp</p>
+            </div>
+          </div>
+          <p className="text-slate-500 text-xs">
+            Team members with phone numbers will receive WhatsApp notifications for rota assignments, 
+            equipment reminders, and service updates. Set your phone number above to receive messages.
+          </p>
         </div>
       </div>
     </div>
