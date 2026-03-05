@@ -247,52 +247,21 @@ export default function Onboarding() {
     return true;
   };
 
-  const handleNext = async () => {
+  const handleNext = () => {
     if (!canProceed()) return;
     
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // CRITICAL: Set localStorage FIRST before any async operation
+      // Simple: just save to localStorage and redirect
       localStorage.setItem('onboarding_complete', 'true');
       localStorage.setItem('selected_teams', JSON.stringify(selectedTeams));
-      
-      // Try to save to server (fire and forget - don't wait)
-      const sessionToken = localStorage.getItem('session_token');
-      if (sessionToken) {
-        fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionToken}`
-          },
-          credentials: 'include'
-        }).catch(() => {});
-      }
-      
-      // Hard redirect to dashboard
       window.location.href = '/dashboard';
     }
   };
 
   const handleSkip = () => {
-    // CRITICAL: Set localStorage FIRST
     localStorage.setItem('onboarding_complete', 'true');
-    
-    // Try to save to server (fire and forget)
-    const sessionToken = localStorage.getItem('session_token');
-    if (sessionToken) {
-      fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-complete`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionToken}`
-        },
-        credentials: 'include'
-      }).catch(() => {});
-    }
-    
-    // Hard redirect to dashboard
     window.location.href = '/dashboard';
   };
   };
