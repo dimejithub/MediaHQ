@@ -495,68 +495,8 @@ function Layout({ children }) {
 function ProtectedRoute({ children }) {
   const { user, loading, demoMode } = useAuth();
   const location = useLocation();
-  const [onboardingComplete, setOnboardingComplete] = useState(() => {
-    // Check localStorage immediately on mount
-    return localStorage.getItem('onboarding_complete') === 'true';
-  });
-  const [checking, setChecking] = useState(!onboardingComplete);
   
-  useEffect(() => {
-    // If already complete from localStorage, skip server check
-    if (onboardingComplete) {
-      setChecking(false);
-      return;
-    }
-    
-    const checkOnboarding = async () => {
-      const sessionToken = localStorage.getItem('session_token');
-      if (sessionToken && !demoMode) {
-        try {
-          const res = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/auth/onboarding-status`, {
-            headers: { 'Authorization': `Bearer ${sessionToken}` },
-            credentials: 'include'
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.completed) {
-              localStorage.setItem('onboarding_complete', 'true');
-              setOnboardingComplete(true);
-            }
-          }
-        } catch (err) {
-          console.log('Could not check onboarding status');
-        }
-      }
-      setChecking(false);
-    };
-    
-    if (user || demoMode) {
-      checkOnboarding();
-    } else {
-      setChecking(false);
-    }
-  }, [user, demoMode, onboardingComplete]);
-  
-  // Listen for localStorage changes (when onboarding completes)
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const complete = localStorage.getItem('onboarding_complete') === 'true';
-      if (complete) {
-        setOnboardingComplete(true);
-      }
-    };
-    
-    // Check periodically in case storage event doesn't fire (same tab)
-    const interval = setInterval(handleStorageChange, 500);
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-  
-  if (loading || checking) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-slate-950 flex items-center justify-center">
         <div className="text-white text-xl animate-pulse">Loading...</div>
@@ -568,6 +508,8 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
   
+  // Simple localStorage check for onboarding
+  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
   const isOnboardingPage = location.pathname === '/onboarding';
   
   // Redirect to onboarding if not completed (unless already on onboarding page)
