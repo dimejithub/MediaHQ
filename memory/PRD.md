@@ -3,113 +3,75 @@
 ## Overview
 Church media team management platform for Envoy Nation and E-Nation teams.
 
-## Tech Stack
-- **Frontend:** React.js, Tailwind CSS
-- **Backend:** FastAPI (Python)
-- **Database:** MongoDB Atlas
-- **Auth:** Simple email/password (firstname@tenmediahq.com / Envoy@2026)
+## Tech Stack (Updated March 2026)
+- **Frontend:** React.js, Tailwind CSS, Supabase Client
+- **Backend:** Supabase (Database + Auth + Storage)
+- **Database:** Supabase PostgreSQL
+- **Auth:** Email Magic Link + Google OAuth (via Supabase Auth)
+- **Hosting:** Cloudflare Pages (frontend)
 
-## Deployment
-- **Preview:** https://mediateam-2.preview.emergentagent.com
-- **Production Backend:** Railway
-- **Production Frontend:** Cloudflare Pages
+## Supabase Project
+- **Project:** mediaHQ
+- **URL:** https://uctjdklqxvjxnxmsrnav.supabase.co
+- **Region:** eu-central-2
+
+---
+
+## Authentication Options
+1. **Email Magic Link** - Any email (Gmail, Outlook, work email)
+2. **Google OAuth** - Sign in with Google
+3. **Demo Mode** - Try without account
+
+---
+
+## Database Schema
+Tables created:
+- `profiles` - User profiles (linked to Supabase Auth)
+- `teams` - Team definitions
+- `services` - Service schedules
+- `equipment` - Equipment inventory
+- `attendance` - Attendance records
+- `rotas` - Duty assignments
+- `notifications` - User notifications
+- `checklists` - Service checklists
 
 ---
 
 ## Core Features ✅
-
-### Authentication
-- Simple email/password login
-- 23 team members pre-configured
-- Session stored in localStorage
-
-### Onboarding
-- 6-step welcome flow for first-time users
-- Team selection
-- Stored in localStorage - shows only once per browser
-- Skip option available
-
-### Dashboard
-- Personalized greeting with user's name
-- KPI cards: Members, Services, Equipment, Pending
-- Upcoming services list
-- Quick action buttons
-
-### Team Management
-- Team directory with roles
-- Profile pictures
-- Contact information
-
-### Services
-- Service scheduling
-- Multiple service types (Sunday, Midweek, Standup)
-- Per-team filtering
-
-### Equipment
-- Inventory tracking
-- Check-out/return system
-- Status tracking
-
-### Attendance
-- Tuesday standup attendance tracking
-- Member attendance rates
-- Flagging system for absences
-
-### Calendar
-- Service calendar view
-- Availability management
-
-### Rotas
-- Assignment management
-- Lead rotation
+- [x] Email + Google authentication
+- [x] Mobile-responsive dashboard
+- [x] Team directory
+- [x] Services management
+- [x] Equipment inventory
+- [x] Attendance tracking
+- [x] Calendar view
+- [x] Rotas management
+- [x] Notifications
+- [x] Onboarding flow
+- [x] Demo mode
 
 ---
 
-## Test Credentials
-- **Email:** oladimeji@tenmediahq.com (or any team member's first name)
-- **Password:** Envoy@2026
+## Setup Required
+1. Run `/app/supabase_schema.sql` in Supabase SQL Editor
+2. Enable Google OAuth in Supabase Authentication settings
+3. Deploy frontend to Cloudflare Pages
 
----
-
-## Performance
-- In-memory caching (60s TTL)
-- Cache warmup on server start
-- Fast API responses (~50ms cached)
-
----
-
-## WhatsApp Integration
-- Twilio configured and working
-- Account: TEN MediaHQ
-- Ready for notifications
-
----
-
-## Pending Tasks
-
-### P1 (High Priority)
-- E-Nation team member data (need names from client)
-- End-to-end WhatsApp notification test
-
-### P2 (Medium Priority)
-- CSV/Excel import for events
-- Database-backed onboarding status (currently localStorage)
+See `/app/SUPABASE_SETUP.md` for detailed instructions.
 
 ---
 
 ## Changelog
 
-### March 5, 2026
-- Simplified onboarding flow - removed complex server checks
-- Fixed: Returning users now skip onboarding and go directly to dashboard
-- Fixed: First-time users see onboarding correctly
+### March 5, 2026 - Supabase Migration
+- Migrated from MongoDB + FastAPI to Supabase
+- Implemented Email Magic Link authentication
+- Added Google OAuth support
+- Created new database schema with RLS policies
+- Updated frontend to use Supabase client
+- Simplified architecture (no separate backend needed for most operations)
 
-### Feb 7, 2026
+### Previous Updates
 - Performance optimizations with caching
-- Fixed session data corruption
-- Simplified auth system
-
-### Feb 6, 2026
-- Deployed to Railway + Cloudflare
-- Replaced Google OAuth with email/password
-- Removed Emergent branding
+- Fixed session data issues
+- Onboarding flow improvements
