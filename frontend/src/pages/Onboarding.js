@@ -248,21 +248,61 @@ export default function Onboarding() {
     return true;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!canProceed()) return;
     
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     } else {
-      // Simple: just save to localStorage and redirect
+      // Save to localStorage first
       localStorage.setItem('onboarding_complete', 'true');
       localStorage.setItem('selected_teams', JSON.stringify(selectedTeams));
+      
+      // Save to Supabase if logged in (not demo mode)
+      if (user && !demoMode) {
+        try {
+          await supabase
+            .from('profiles')
+            .update({ 
+              onboarding_completed: true,
+              teams: selectedTeams.length > 0 ? selectedTeams : ['envoy_nation'],
+              primary_team: selectedTeams[0] || 'envoy_nation'
+            })
+            .eq('id', user.id);
+          
+          // Update local profile state
+          if (setProfile && profile) {
+            setProfile({
+              ...profile,
+              onboarding_completed: true,
+              teams: selectedTeams.length > 0 ? selectedTeams : ['envoy_nation'],
+              primary_team: selectedTeams[0] || 'envoy_nation'
+            });
+          }
+        } catch (err) {
+          console.log('Could not save onboarding to database:', err);
+        }
+      }
+      
       window.location.href = '/dashboard';
     }
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
     localStorage.setItem('onboarding_complete', 'true');
+    
+    // Save to Supabase if logged in
+    if (user && !demoMode) {
+      try {
+        await supabase
+          .from('profiles')
+          .update({ onboarding_completed: true })
+          .eq('id', user.id);
+      } catch (err) {
+        console.log('Could not save onboarding to database:', err);
+      }
+    }
+    
     window.location.href = '/dashboard';
   };
 
