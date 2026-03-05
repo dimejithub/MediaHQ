@@ -9,7 +9,6 @@ export default function Onboarding() {
   const [rosterMembers, setRosterMembers] = useState([]);
   const [selectedMember, setSelectedMember] = useState(null);
   const [searchName, setSearchName] = useState('');
-  const [animating, setAnimating] = useState(false);
 
   useEffect(() => {
     const fetchRoster = async () => {
@@ -28,8 +27,10 @@ export default function Onboarding() {
   }, [demoMode]);
 
   const toggleTeam = (teamId) => {
-    setSelectedTeams(prev =>
-      prev.includes(teamId) ? prev.filter(t => t !== teamId) : [...prev, teamId]
+    setSelectedTeams(prev => 
+      prev.includes(teamId) 
+        ? prev.filter(t => t !== teamId)
+        : [...prev, teamId]
     );
   };
 
@@ -37,196 +38,265 @@ export default function Onboarding() {
     m.name?.toLowerCase().includes(searchName.toLowerCase())
   );
 
+  const FindYourselfContent = () => (
+    <div className="space-y-4 text-left">
+      <div className="text-6xl animate-float text-center">🔍</div>
+      <p className="text-lg text-slate-300 leading-relaxed text-center">
+        Are you already on the team roster? Find and link your profile.
+      </p>
+      <input
+        type="text"
+        placeholder="Search your name..."
+        value={searchName}
+        onChange={(e) => setSearchName(e.target.value)}
+        data-testid="onboarding-name-search"
+        className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
+      />
+      <div className="max-h-48 overflow-y-auto space-y-2">
+        {filteredRoster.map((member, idx) => (
+          <button
+            key={member.id}
+            onClick={() => setSelectedMember(member)}
+            data-testid={`roster-pick-${member.user_id}`}
+            className={`w-full p-3 rounded-xl border-2 text-left transition-all duration-300 ${
+              selectedMember?.id === member.id
+                ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/20'
+                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                {member.name?.charAt(0)}
+              </div>
+              <div>
+                <p className="text-white font-medium text-sm">{member.name}</p>
+                <p className="text-slate-400 text-xs capitalize">{member.role?.replace(/_/g, ' ')} {member.unit ? `· ${member.unit}` : ''}</p>
+              </div>
+              {selectedMember?.id === member.id && (
+                <div className="ml-auto">
+                  <svg className="w-5 h-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              )}
+            </div>
+          </button>
+        ))}
+      </div>
+      <button
+        onClick={() => setSelectedMember({ id: 'new', name: 'new_member' })}
+        className={`w-full p-3 rounded-xl border-2 text-left transition-all duration-300 ${
+          selectedMember?.id === 'new'
+            ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
+            : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-lg font-bold">+</div>
+          <div>
+            <p className="text-white font-medium text-sm">I'm new to the team</p>
+            <p className="text-slate-400 text-xs">Set up a fresh profile</p>
+          </div>
+          {selectedMember?.id === 'new' && (
+            <div className="ml-auto">
+              <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+            </div>
+          )}
+        </div>
+      </button>
+    </div>
+  );
+
+  const TeamSelectionContent = () => (
+    <div className="space-y-6">
+      <div className="text-6xl animate-float">👥</div>
+      <p className="text-lg text-slate-300 leading-relaxed">
+        Which team(s) are you volunteering for? Select all that apply.
+      </p>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+        {/* Envoy Nation Team */}
+        <button
+          onClick={() => toggleTeam('envoy_nation')}
+          className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+            selectedTeams.includes('envoy_nation')
+              ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/20'
+              : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+              selectedTeams.includes('envoy_nation') ? 'bg-blue-500' : 'bg-slate-700'
+            }`}>
+              🔵
+            </div>
+            <div>
+              <h3 className="text-white font-semibold text-lg">Envoy Nation</h3>
+              <p className="text-slate-400 text-sm">Sunday Services</p>
+            </div>
+          </div>
+          <p className="text-slate-400 text-sm">
+            The main church media team serving Sunday morning worship services at 11:00 AM.
+          </p>
+          {selectedTeams.includes('envoy_nation') && (
+            <div className="mt-3 flex items-center gap-2 text-blue-400 text-sm">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Selected
+            </div>
+          )}
+        </button>
+
+        {/* The Commissioned Envoy Team */}
+        <button
+          onClick={() => toggleTeam('e_nation')}
+          className={`p-6 rounded-xl border-2 transition-all duration-300 text-left ${
+            selectedTeams.includes('e_nation')
+              ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/20'
+              : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
+          }`}
+        >
+          <div className="flex items-center gap-3 mb-3">
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xl ${
+              selectedTeams.includes('e_nation') ? 'bg-green-500' : 'bg-slate-700'
+            }`}>
+              🟢
+            </div>
+            <div>
+              <h3 className="text-white font-semibold text-lg">The Commissioned Envoy</h3>
+              <p className="text-slate-400 text-sm">Sunday Afternoon</p>
+            </div>
+          </div>
+          <p className="text-slate-400 text-sm">
+            E-Nation media team serving The Commissioned Envoy service at 2:00 PM on Sundays.
+          </p>
+          {selectedTeams.includes('e_nation') && (
+            <div className="mt-3 flex items-center gap-2 text-green-400 text-sm">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              Selected
+            </div>
+          )}
+        </button>
+      </div>
+
+      {selectedTeams.length === 2 && (
+        <div className="mt-4 p-4 bg-gradient-to-r from-blue-500/10 to-green-500/10 rounded-xl border border-blue-500/20">
+          <p className="text-slate-300 text-sm text-center">
+            🙏 <span className="font-semibold">Amazing!</span> Thank you for serving both teams. Your dedication is truly appreciated!
+          </p>
+        </div>
+      )}
+
+      {selectedTeams.length === 0 && (
+        <p className="text-slate-500 text-sm text-center mt-4">
+          Please select at least one team to continue
+        </p>
+      )}
+    </div>
+  );
+
   const steps = [
     {
       title: "Welcome to TEN MediaHQ",
-      subtitle: "Your church media command center",
-      icon: "⛪",
+      subtitle: "The Envoy Nation Media Hub",
       content: (
-        <div className="space-y-6 text-center">
-          <div className="text-7xl animate-float">{String.fromCodePoint(0x26EA)}</div>
-          <p className="text-lg text-slate-300 animate-fadeInUp stagger-2">
-            Manage your media team, equipment, schedules, and more — all in one place.
+        <div className="space-y-6">
+          <div className="text-6xl animate-float">🎬</div>
+          <p className="text-lg text-slate-300 leading-relaxed">
+            You are part of something extraordinary. TEN Media exists to capture, preserve, and share 
+            the moments where heaven touches earth in our services.
           </p>
-          <div className="flex justify-center gap-4 animate-fadeInUp stagger-3">
-            <div className="glass-light rounded-xl px-4 py-3 text-center">
-              <div className="text-2xl mb-1">👥</div>
-              <div className="text-xs text-slate-400">Team</div>
-            </div>
-            <div className="glass-light rounded-xl px-4 py-3 text-center">
-              <div className="text-2xl mb-1">📦</div>
-              <div className="text-xs text-slate-400">Equipment</div>
-            </div>
-            <div className="glass-light rounded-xl px-4 py-3 text-center">
-              <div className="text-2xl mb-1">📅</div>
-              <div className="text-xs text-slate-400">Rotas</div>
-            </div>
-            <div className="glass-light rounded-xl px-4 py-3 text-center">
-              <div className="text-2xl mb-1">✅</div>
-              <div className="text-xs text-slate-400">Checklists</div>
-            </div>
-          </div>
+          <p className="text-slate-400">
+            Every camera angle you choose, every sound you balance, every graphic you display - 
+            it all contributes to spreading the Gospel beyond our four walls.
+          </p>
         </div>
       )
     },
     {
       title: "Find Yourself",
-      subtitle: "Are you already on the team roster?",
-      icon: "🔍",
+      subtitle: "Link your profile",
+      content: <FindYourselfContent />,
+      requiresSelection: true,
+      checkSelection: () => selectedMember !== null
+    },
+    {
+      title: "Choose Your Team",
+      subtitle: "Where will you serve?",
+      content: <TeamSelectionContent />,
+      requiresSelection: true,
+      checkSelection: () => selectedTeams.length > 0
+    },
+    {
+      title: "Your Sacrifice Matters",
+      subtitle: "More than you know",
+      content: (
+        <div className="space-y-6">
+          <div className="text-6xl animate-float">💎</div>
+          <p className="text-lg text-slate-300 leading-relaxed">
+            While others worship, you serve. While others sit, you stand. While others rest, you work.
+            This is not just volunteering - this is <span className="text-blue-400 font-semibold">kingdom service</span>.
+          </p>
+          <div className="grid grid-cols-3 gap-4 mt-6">
+            <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-blue-400">1000+</p>
+              <p className="text-xs text-slate-400">Lives reached weekly</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-purple-400">50+</p>
+              <p className="text-xs text-slate-400">Countries watching</p>
+            </div>
+            <div className="bg-slate-800/50 rounded-xl p-4 text-center">
+              <p className="text-3xl font-bold text-green-400">∞</p>
+              <p className="text-xs text-slate-400">Eternal impact</p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Excellence is Our Standard",
+      subtitle: "Not perfection, but dedication",
+      content: (
+        <div className="space-y-6">
+          <div className="text-6xl animate-float">🏆</div>
+          <p className="text-lg text-slate-300 leading-relaxed">
+            We don't serve because we're the best at what we do. We become the best because of 
+            <span className="text-amber-400 font-semibold"> Who we serve</span>.
+          </p>
+          <div className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 rounded-xl p-6 border border-blue-500/20">
+            <p className="text-slate-300 italic text-lg">
+              "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters"
+            </p>
+            <p className="text-slate-500 text-sm mt-2">— Colossians 3:23</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Our Commitments",
+      subtitle: "What we promise to each other",
       content: (
         <div className="space-y-4">
-          <div className="animate-fadeInUp stagger-1">
-            <input
-              type="text"
-              placeholder="Search your name..."
-              value={searchName}
-              onChange={(e) => setSearchName(e.target.value)}
-              data-testid="onboarding-name-search"
-              className="w-full px-4 py-3 bg-slate-800/50 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all"
-            />
-          </div>
-          <div className="max-h-48 overflow-y-auto space-y-2 animate-fadeInUp stagger-2">
-            {filteredRoster.map((member, idx) => (
-              <button
-                key={member.id}
-                onClick={() => setSelectedMember(member)}
-                data-testid={`roster-pick-${member.user_id}`}
-                className={`w-full p-3 rounded-xl border-2 text-left transition-all hover-lift ${
-                  selectedMember?.id === member.id
-                    ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/10'
-                    : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-                }`}
-                style={{ animationDelay: `${idx * 0.03}s` }}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {member.name?.charAt(0)}
-                  </div>
-                  <div>
-                    <p className="text-white font-medium text-sm">{member.name}</p>
-                    <p className="text-slate-400 text-xs capitalize">{member.role?.replace(/_/g, ' ')} {member.unit ? `· ${member.unit}` : ''}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-          <button
-            onClick={() => setSelectedMember({ id: 'new', name: 'new_member' })}
-            className={`w-full p-3 rounded-xl border-2 text-left transition-all hover-lift animate-fadeInUp stagger-3 ${
-              selectedMember?.id === 'new'
-                ? 'border-green-500 bg-green-500/20 shadow-lg shadow-green-500/10'
-                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-white text-lg">+</div>
-              <div>
-                <p className="text-white font-medium text-sm">I'm new to the team</p>
-                <p className="text-slate-400 text-xs">Set up a fresh profile</p>
-              </div>
-            </div>
-          </button>
-        </div>
-      )
-    },
-    {
-      title: "Select Your Team",
-      subtitle: "Which team(s) are you part of?",
-      icon: "🏠",
-      content: (
-        <div className="space-y-4">
-          <button
-            onClick={() => toggleTeam('envoy_nation')}
-            className={`w-full p-5 rounded-xl border-2 transition-all text-left hover-lift card-animate animate-fadeInUp stagger-1 ${
-              selectedTeams.includes('envoy_nation')
-                ? 'border-blue-500 bg-blue-500/20 shadow-lg shadow-blue-500/10'
-                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-2xl shadow-lg">🔵</div>
-              <div>
-                <h3 className="text-white font-semibold text-lg">Envoy Nation</h3>
-                <p className="text-slate-400 text-sm">Leicester Blessing · Sunday Service · Connected with PMO</p>
-              </div>
-              {selectedTeams.includes('envoy_nation') && (
-                <div className="ml-auto text-blue-400 text-xl animate-scaleIn">✓</div>
-              )}
-            </div>
-          </button>
-          <button
-            onClick={() => toggleTeam('e_nation')}
-            className={`w-full p-5 rounded-xl border-2 transition-all text-left hover-lift card-animate animate-fadeInUp stagger-2 ${
-              selectedTeams.includes('e_nation')
-                ? 'border-purple-500 bg-purple-500/20 shadow-lg shadow-purple-500/10'
-                : 'border-slate-700 bg-slate-800/50 hover:border-slate-600'
-            }`}
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg">🟣</div>
-              <div>
-                <h3 className="text-white font-semibold text-lg">E-Nation (TCE)</h3>
-                <p className="text-slate-400 text-sm">The Commissioned Envoy</p>
-              </div>
-              {selectedTeams.includes('e_nation') && (
-                <div className="ml-auto text-purple-400 text-xl animate-scaleIn">✓</div>
-              )}
-            </div>
-          </button>
-        </div>
-      )
-    },
-    {
-      title: "Dashboard",
-      subtitle: "Your personalized overview",
-      icon: "📊",
-      content: (
-        <div className="space-y-6 text-center">
-          <div className="text-7xl animate-float">📊</div>
-          <p className="text-lg text-slate-300 animate-fadeInUp stagger-2">
-            See upcoming services, team stats, and quick actions at a glance.
-          </p>
-          <div className="grid grid-cols-3 gap-3 animate-fadeInUp stagger-3">
-            <div className="glass-light rounded-xl p-3"><div className="text-2xl font-bold text-white">23</div><div className="text-xs text-slate-400">Members</div></div>
-            <div className="glass-light rounded-xl p-3"><div className="text-2xl font-bold text-white">3</div><div className="text-xs text-slate-400">Services</div></div>
-            <div className="glass-light rounded-xl p-3"><div className="text-2xl font-bold text-white">4</div><div className="text-xs text-slate-400">Units</div></div>
-          </div>
-        </div>
-      )
-    },
-    {
-      title: "Equipment Tracking",
-      subtitle: "Manage your media gear",
-      icon: "📦",
-      content: (
-        <div className="space-y-6 text-center">
-          <div className="text-7xl animate-float">📦</div>
-          <p className="text-lg text-slate-300 animate-fadeInUp stagger-2">
-            Check out equipment, track who has what, and manage your inventory.
-          </p>
-          <div className="flex justify-center gap-3 animate-fadeInUp stagger-3">
-            <div className="glass-light rounded-xl px-4 py-2"><span className="text-xs text-green-400">Available</span></div>
-            <div className="glass-light rounded-xl px-4 py-2"><span className="text-xs text-orange-400">Checked Out</span></div>
-            <div className="glass-light rounded-xl px-4 py-2"><span className="text-xs text-red-400">Maintenance</span></div>
-          </div>
-        </div>
-      )
-    },
-    {
-      title: "Rotas & Scheduling",
-      subtitle: "Know when you're serving",
-      icon: "📅",
-      content: (
-        <div className="space-y-6 text-center">
-          <div className="text-7xl animate-float">📅</div>
-          <p className="text-lg text-slate-300 animate-fadeInUp stagger-2">
-            View your assignments, accept or decline rotas, and plan ahead.
-          </p>
-          <div className="space-y-2 animate-fadeInUp stagger-3 text-left">
-            {['PTZ Cam Op', 'Back Cam Op', 'Mixing Op', 'Photographer', 'Projection'].map((role, i) => (
-              <div key={role} className="glass-light rounded-lg px-4 py-2 flex items-center gap-3" style={{ animationDelay: `${i * 0.05}s` }}>
-                <div className="w-2 h-2 rounded-full bg-blue-500"></div>
-                <span className="text-sm text-slate-300">{role}</span>
+          <div className="text-5xl animate-float">🤝</div>
+          <div className="space-y-3 text-left max-w-md mx-auto">
+            {[
+              { icon: "✋", text: "Attend Tuesday standups - they keep us unified" },
+              { icon: "🎯", text: "Arrive 30 minutes before service starts" },
+              { icon: "📱", text: "Respond to rota assignments within 24 hours" },
+              { icon: "🔧", text: "Report equipment issues immediately" },
+              { icon: "📖", text: "Complete assigned training modules" },
+              { icon: "🙏", text: "Support and cover for each other" },
+              { icon: "⭐", text: "Give our best, every single time" }
+            ].map((item, idx) => (
+              <div key={idx} className="flex items-center gap-3 p-3 bg-slate-800/30 rounded-lg hover-lift animate-fadeInUp" style={{animationDelay: `${idx * 0.1}s`}}>
+                <span className="text-xl">{item.icon}</span>
+                <span className="text-slate-300 text-sm">{item.text}</span>
               </div>
             ))}
           </div>
@@ -234,22 +304,37 @@ export default function Onboarding() {
       )
     },
     {
-      title: "You're All Set!",
-      subtitle: "Let's get started",
-      icon: "🎉",
+      title: "Ready to Serve?",
+      subtitle: selectedMember && selectedMember.id !== 'new' ? `Welcome back, ${selectedMember.name?.split(' ')[0]}!` : "Let's go!",
       content: (
-        <div className="space-y-6 text-center">
-          <div className="text-7xl animate-bounce">🎉</div>
-          <p className="text-lg text-slate-300 animate-fadeInUp stagger-2">
+        <div className="space-y-6">
+          <div className="text-6xl animate-bounce">🚀</div>
+          <p className="text-lg text-slate-300 leading-relaxed">
             {selectedMember && selectedMember.id !== 'new'
-              ? `Welcome back, ${selectedMember.name}! Your profile has been linked.`
-              : "You're ready to use TEN MediaHQ. Click below to enter your dashboard."}
+              ? `Your profile has been linked. You are now part of the TEN Media family. Your sacrifice, your time, your talent — it all matters!`
+              : `You are now part of the TEN Media family. Your sacrifice, your time, your talent — it all matters. Welcome to the team!`
+            }
           </p>
-          <div className="animate-fadeInUp stagger-3">
-            <div className="inline-flex items-center gap-2 glass-light rounded-full px-6 py-2">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-              <span className="text-sm text-green-400">All systems ready</span>
-            </div>
+          
+          <div className="flex justify-center gap-3">
+            {selectedTeams.includes('envoy_nation') && (
+              <span className="px-4 py-2 bg-blue-500/20 text-blue-400 rounded-full text-sm font-medium border border-blue-500/30">
+                🔵 Envoy Nation
+              </span>
+            )}
+            {selectedTeams.includes('e_nation') && (
+              <span className="px-4 py-2 bg-green-500/20 text-green-400 rounded-full text-sm font-medium border border-green-500/30">
+                🟢 The Commissioned Envoy
+              </span>
+            )}
+          </div>
+          
+          <div className="bg-gradient-to-r from-green-500/20 to-blue-500/20 rounded-xl p-6 border border-green-500/30">
+            <p className="text-white font-semibold text-lg mb-2">Your Mission:</p>
+            <p className="text-slate-300">
+              Capture moments that change lives. Broadcast hope to the nations. 
+              Serve with excellence. Be the hands and feet of this commission.
+            </p>
           </div>
         </div>
       )
@@ -257,31 +342,25 @@ export default function Onboarding() {
   ];
 
   const canProceed = () => {
-    if (currentStep === 1) return selectedMember !== null;
-    if (currentStep === 2) return selectedTeams.length > 0;
+    const step = steps[currentStep];
+    if (step.checkSelection) return step.checkSelection();
+    if (step.requiresSelection) return selectedTeams.length > 0;
     return true;
-  };
-
-  const goToStep = (step) => {
-    setAnimating(true);
-    setTimeout(() => {
-      setCurrentStep(step);
-      setAnimating(false);
-    }, 200);
   };
 
   const handleNext = async () => {
     if (!canProceed()) return;
-
+    
     if (currentStep < steps.length - 1) {
-      goToStep(currentStep + 1);
+      setCurrentStep(currentStep + 1);
     } else {
       localStorage.setItem('onboarding_complete', 'true');
       localStorage.setItem('selected_teams', JSON.stringify(selectedTeams));
-
+      
       if (user && !demoMode) {
         try {
           if (selectedMember && selectedMember.id !== 'new') {
+            // Merge: link existing roster profile with auth account
             await supabase
               .from('profiles')
               .update({
@@ -306,123 +385,125 @@ export default function Onboarding() {
           } else {
             await supabase
               .from('profiles')
-              .update({
+              .update({ 
                 onboarding_completed: true,
                 teams: selectedTeams.length > 0 ? selectedTeams : ['envoy_nation'],
                 primary_team: selectedTeams[0] || 'envoy_nation'
               })
               .eq('id', user.id);
-
+            
             if (setProfile && profile) {
-              setProfile({ ...profile, onboarding_completed: true, teams: selectedTeams, primary_team: selectedTeams[0] || 'envoy_nation' });
+              setProfile({
+                ...profile,
+                onboarding_completed: true,
+                teams: selectedTeams.length > 0 ? selectedTeams : ['envoy_nation'],
+                primary_team: selectedTeams[0] || 'envoy_nation'
+              });
             }
           }
         } catch (err) {
           console.log('Could not save onboarding to database:', err);
         }
       }
-
+      
       window.location.href = '/dashboard';
     }
   };
 
   const handleSkip = async () => {
     localStorage.setItem('onboarding_complete', 'true');
+    
     if (user && !demoMode) {
       try {
-        await supabase.from('profiles').update({ onboarding_completed: true }).eq('id', user.id);
+        await supabase
+          .from('profiles')
+          .update({ onboarding_completed: true })
+          .eq('id', user.id);
       } catch (err) {
         console.log('Could not save onboarding to database:', err);
       }
     }
+    
     window.location.href = '/dashboard';
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 particles-bg">
-      {/* Animated background orbs */}
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 particles-bg overflow-hidden">
+      {/* Animated background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl animate-float" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl morph-bg"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl morph-bg" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 right-1/3 w-64 h-64 bg-green-500/5 rounded-full blur-2xl animate-float"></div>
       </div>
 
-      <div className="w-full max-w-lg relative z-10">
+      <div className="w-full max-w-2xl relative z-10">
         {/* Progress bar */}
         <div className="flex gap-2 mb-8">
           {steps.map((_, idx) => (
-            <div
-              key={idx}
+            <div 
+              key={idx} 
               className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
-                idx <= currentStep
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 shadow-sm shadow-blue-500/50'
-                  : 'bg-slate-700/50'
+                idx <= currentStep ? 'bg-gradient-to-r from-blue-500 to-purple-500' : 'bg-slate-800'
               }`}
             />
           ))}
         </div>
 
-        {/* Card */}
-        <div className={`glass rounded-2xl p-8 shadow-2xl transition-all duration-300 ${animating ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-          {/* Step indicator */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-slate-500 text-sm font-medium">
+        {/* Content Card */}
+        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-8 border border-slate-800 shadow-2xl animate-scaleIn">
+          <div className="text-center space-y-4 mb-8">
+            <p className="text-sm text-blue-400 uppercase tracking-wider font-medium">
               Step {currentStep + 1} of {steps.length}
-            </span>
-            <span className="text-2xl">{steps[currentStep].icon}</span>
+            </p>
+            <h1 className="text-3xl font-bold text-white gradient-text-shine">
+              {steps[currentStep].title}
+            </h1>
+            <p className="text-slate-400">{steps[currentStep].subtitle}</p>
           </div>
 
-          {/* Title with gradient */}
-          <h1 className="text-3xl font-bold gradient-text mb-2 animate-fadeIn">
-            {steps[currentStep].title}
-          </h1>
-          <p className="text-slate-400 mb-8 animate-fadeInUp stagger-1">
-            {steps[currentStep].subtitle}
-          </p>
-
-          {/* Content */}
-          <div className="mb-8" key={currentStep}>
-            {steps[currentStep].content}
+          <div className="text-center py-6 min-h-[300px] flex items-center justify-center">
+            <div className="animate-fadeIn w-full" key={currentStep}>
+              {steps[currentStep].content}
+            </div>
           </div>
 
-          {/* Buttons */}
-          <div className="flex gap-3">
-            {currentStep > 0 && (
-              <button
-                onClick={() => goToStep(currentStep - 1)}
-                className="px-6 py-3.5 bg-slate-800/80 text-slate-300 rounded-xl hover:bg-slate-700 transition-all btn-animate border border-slate-700"
-              >
-                Back
-              </button>
-            )}
-            <button
-              onClick={handleNext}
-              disabled={!canProceed()}
-              data-testid="onboarding-next-btn"
-              className={`flex-1 px-6 py-3.5 rounded-xl font-medium transition-all shadow-lg ${
-                canProceed()
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600 btn-animate btn-gradient shadow-blue-500/25'
-                  : 'bg-slate-700 text-slate-500 cursor-not-allowed'
-              }`}
-            >
-              {currentStep === steps.length - 1 ? 'Enter Dashboard ✨' : 'Continue →'}
-            </button>
-          </div>
-
-          {/* Skip */}
-          {currentStep < steps.length - 1 && (
+          {/* Navigation */}
+          <div className="flex items-center justify-between mt-8 pt-6 border-t border-slate-800">
             <button
               onClick={handleSkip}
-              className="w-full mt-4 text-slate-500 hover:text-slate-300 text-sm transition-all"
+              className="text-slate-500 hover:text-slate-300 transition-colors text-sm"
             >
-              Skip intro →
+              Skip intro
             </button>
-          )}
+            
+            <div className="flex gap-3">
+              {currentStep > 0 && (
+                <button
+                  onClick={() => setCurrentStep(currentStep - 1)}
+                  className="px-6 py-2.5 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-all"
+                >
+                  Back
+                </button>
+              )}
+              <button
+                onClick={handleNext}
+                disabled={!canProceed()}
+                data-testid="onboarding-next-btn"
+                className={`px-8 py-2.5 rounded-lg font-medium transition-all btn-animate hover-lift ${
+                  canProceed()
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white hover:from-blue-600 hover:to-purple-600'
+                    : 'bg-slate-700 text-slate-400 cursor-not-allowed'
+                }`}
+              >
+                {currentStep === steps.length - 1 ? "Enter Dashboard" : "Continue"}
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Logo */}
-        <div className="text-center mt-6 opacity-50 animate-fadeInUp" style={{animationDelay: '0.5s'}}>
-          <span className="text-white font-bold text-lg">TEN</span>
+        {/* TEN Logo */}
+        <div className="text-center mt-8 opacity-50">
+          <span className="text-white font-bold">TEN</span>
           <span className="text-slate-400 ml-1">MediaHQ</span>
         </div>
       </div>
