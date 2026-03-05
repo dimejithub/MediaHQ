@@ -3,7 +3,7 @@
 ## Overview
 Church media team management platform for Envoy Nation and E-Nation teams.
 
-## Tech Stack (Updated March 2026)
+## Tech Stack
 - **Frontend:** React.js, Tailwind CSS, Supabase Client
 - **Backend:** Supabase (Database + Auth + Storage)
 - **Database:** Supabase PostgreSQL
@@ -17,15 +17,14 @@ Church media team management platform for Envoy Nation and E-Nation teams.
 
 ---
 
-## Authentication Options
-1. **Email Magic Link** - Any email (Gmail, Outlook, work email)
+## Authentication
+1. **Email Magic Link** - Any email
 2. **Google OAuth** - Sign in with Google
 3. **Demo Mode** - Try without account
 
 ---
 
-## Database Schema
-Tables created:
+## Database Tables
 - `profiles` - User profiles (linked to Supabase Auth)
 - `teams` - Team definitions
 - `services` - Service schedules
@@ -37,7 +36,8 @@ Tables created:
 
 ---
 
-## Core Features ✅
+## Completed Features
+- [x] Supabase migration (auth + data)
 - [x] Email + Google authentication
 - [x] Mobile-responsive dashboard
 - [x] Team directory
@@ -49,29 +49,38 @@ Tables created:
 - [x] Notifications
 - [x] Onboarding flow
 - [x] Demo mode
+- [x] Cloudflare build fix (ajv dependency resolved via yarn)
+- [x] Seed data script (supabase_seed.sql)
+- [x] Deployment guide updated for Supabase architecture
 
 ---
 
-## Setup Required
-1. Run `/app/supabase_schema.sql` in Supabase SQL Editor
-2. Enable Google OAuth in Supabase Authentication settings
-3. Deploy frontend to Cloudflare Pages
+## Deployment
+- **Build command:** `cd frontend && yarn install && yarn build`
+- **Output:** `frontend/build`
+- **Node version:** 18.17.1 (via `.nvmrc`)
+- **CRITICAL:** Must use `yarn`, not `npm` (ajv dependency conflict)
 
-See `/app/SUPABASE_SETUP.md` for detailed instructions.
+See `/app/CLOUDFLARE_DEPLOYMENT.md` for full guide.
 
 ---
 
-## Changelog
+## Pending Tasks
 
-### March 5, 2026 - Supabase Migration
-- Migrated from MongoDB + FastAPI to Supabase
-- Implemented Email Magic Link authentication
-- Added Google OAuth support
-- Created new database schema with RLS policies
-- Updated frontend to use Supabase client
-- Simplified architecture (no separate backend needed for most operations)
+### P0 - User Action Required
+- [ ] Update Cloudflare build command to use yarn
+- [ ] Run `supabase_seed.sql` in Supabase SQL Editor
 
-### Previous Updates
-- Performance optimizations with caching
-- Fixed session data issues
-- Onboarding flow improvements
+### P1 - Backend Logic & Security
+- [ ] Enhance RLS policies for team-based data segregation
+- [ ] Test all write operations with RLS enabled
+
+### P2 - Testing & Polish
+- [ ] End-to-end testing after deploy + seed
+- [ ] Twilio WhatsApp notification testing
+
+### Future
+- [ ] Real-time updates via Supabase subscriptions
+- [ ] Activity log
+- [ ] User notification preferences
+- [ ] Google Calendar sync
