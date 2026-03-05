@@ -38,26 +38,37 @@ export default function Dashboard() {
       }
 
       try {
-        // Fetch stats
+        // Fetch stats with error handling
         const [membersRes, servicesRes, equipmentRes] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact' }),
           supabase.from('services').select('*').eq('team_id', teamId).gte('date', new Date().toISOString().split('T')[0]).order('date').limit(5),
           supabase.from('equipment').select('id, status').eq('team_id', teamId)
         ]);
 
+        console.log('Dashboard data:', { membersRes, servicesRes, equipmentRes });
+
         const availableEquipment = equipmentRes.data?.filter(e => e.status === 'available').length || 0;
 
         setStats({
-          total_members: membersRes.count || 0,
+          total_members: membersRes.count || 1,
           total_services: servicesRes.data?.length || 0,
           total_equipment: equipmentRes.data?.length || 0,
           available_equipment: availableEquipment,
-          pending_rotas: 2
+          pending_rotas: 0
         });
 
         setUpcomingServices(servicesRes.data || []);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
+        // Set default values on error
+        setStats({
+          total_members: 1,
+          total_services: 0,
+          total_equipment: 0,
+          available_equipment: 0,
+          pending_rotas: 0
+        });
+        setUpcomingServices([]);
       } finally {
         setLoading(false);
       }
