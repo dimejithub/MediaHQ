@@ -73,11 +73,26 @@ function AuthProvider({ children }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('Auth event:', event, session?.user?.email);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: profileData } = await getProfile(session.user.id);
-        setProfile(profileData);
+        const { data: profileData, error } = await getProfile(session.user.id);
+        console.log('Profile on auth change:', profileData, 'Error:', error);
+        
+        if (profileData) {
+          setProfile(profileData);
+        } else {
+          // Create a basic profile from user data
+          setProfile({
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
+            role: 'member',
+            primary_team: 'envoy_nation',
+            teams: ['envoy_nation']
+          });
+        }
       } else {
         setProfile(null);
       }
