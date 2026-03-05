@@ -1,220 +1,177 @@
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
-import { Link } from 'react-router-dom';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-function TeamCard({ summary, index }) {
-  const teamName = summary.team === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
-  const isEnvoy = summary.team === 'envoy_nation';
-  
-  return (
-    <div className={`bg-slate-900 rounded-xl p-6 border ${isEnvoy ? 'border-blue-500/30 hover:border-blue-500/50' : 'border-green-500/30 hover:border-green-500/50'} card-animate hover-lift animate-fadeInUp ${index === 0 ? 'stagger-1' : 'stagger-2'}`}>
-      <div className="flex items-center gap-3 mb-4">
-        <div className={`w-3 h-3 rounded-full ${isEnvoy ? 'bg-blue-500' : 'bg-green-500'} animate-pulse`}></div>
-        <h3 className={`text-xl font-bold ${isEnvoy ? 'text-blue-400' : 'text-green-400'}`}>{teamName}</h3>
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div className="p-3 bg-slate-800/50 rounded-lg">
-          <p className="text-sm text-slate-400">Members</p>
-          <p className="text-2xl font-bold text-white">{summary.total_members}</p>
-        </div>
-        <div className="p-3 bg-slate-800/50 rounded-lg">
-          <p className="text-sm text-slate-400">Services</p>
-          <p className="text-2xl font-bold text-white">{summary.total_services}</p>
-        </div>
-        <div className="p-3 bg-slate-800/50 rounded-lg">
-          <p className="text-sm text-slate-400">Rotas</p>
-          <p className="text-2xl font-bold text-white">{summary.total_rotas}</p>
-        </div>
-        <div className="p-3 bg-slate-800/50 rounded-lg">
-          <p className="text-sm text-slate-400">Reports</p>
-          <p className="text-2xl font-bold text-white">{summary.total_reports}</p>
-        </div>
-      </div>
-      <div className="mt-4 pt-4 border-t border-slate-800">
-        <div className="flex items-center justify-between">
-          <p className="text-sm text-slate-400">Upcoming Services</p>
-          <p className="text-lg font-bold text-amber-400 animate-pulse">{summary.upcoming_services}</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+import { supabase } from '../lib/supabase';
 
 export default function DirectorDashboard() {
-  const { demoMode, user } = useAuth();
-  const [data, setData] = useState(null);
+  const { profile, demoMode } = useAuth();
+  const [stats, setStats] = useState({});
   const [loading, setLoading] = useState(true);
-
-  const demoData = {
-    team_summaries: [
-      { team: 'envoy_nation', team_name: 'Envoy Nation', total_members: 8, total_services: 15, total_rotas: 12, total_reports: 10, upcoming_services: 3 },
-      { team: 'e_nation', team_name: 'E-Nation', total_members: 6, total_services: 12, total_rotas: 10, total_reports: 8, upcoming_services: 2 }
-    ],
-    combined_events: 4,
-    recent_reports: [
-      { report_id: 'demo_r1', service_id: 'demo_s1', attendees: ['u1', 'u2', 'u3'], created_at: '2026-02-08T10:00:00Z' },
-      { report_id: 'demo_r2', service_id: 'demo_s2', attendees: ['u1', 'u2'], created_at: '2026-02-05T10:00:00Z' }
-    ],
-    recent_handovers: [
-      { handover_id: 'demo_h1', equipment_id: 'eq1', from_team: 'envoy_nation', to_team: 'e_nation', condition_before: 'good', handover_date: '2026-02-07' }
-    ],
-    total_equipment: 25
-  };
+  const [members, setMembers] = useState([]);
+  const [attendanceData, setAttendanceData] = useState([]);
 
   useEffect(() => {
-    loadData();
+    fetchData();
   }, [demoMode]);
 
-  const loadData = async () => {
+  const fetchData = async () => {
     if (demoMode) {
-      setData(demoData);
+      setStats({
+        total_members: 23,
+        envoy_nation: 20,
+        e_nation: 3,
+        active_services: 5,
+        attendance_rate: 72
+      });
+      setMembers([
+        { name: 'Adeola Hilton', role: 'team_lead', attendance: 95 },
+        { name: 'Oladimeji Tiamiyu', role: 'assistant_lead', attendance: 88 },
+        { name: 'Michel Adimula', role: 'unit_head', attendance: 75 },
+        { name: 'Gabriel Mensah', role: 'member', attendance: 60 },
+        { name: 'Jasper Okonkwo', role: 'member', attendance: 45 },
+      ]);
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch(`${BACKEND_URL}/api/director/dashboard`, { credentials: 'include' });
-      if (res.ok) {
-        setData(await res.json());
-      } else {
-        setData(demoData);
-      }
+      const [profilesRes, servicesRes, attendanceRes] = await Promise.all([
+        supabase.from('profiles').select('*'),
+        supabase.from('services').select('*').gte('date', new Date().toISOString().split('T')[0]),
+        supabase.from('attendance').select('*').order('date', { ascending: false }).limit(10)
+      ]);
+
+      const profiles = profilesRes.data || [];
+      
+      setStats({
+        total_members: profiles.length,
+        envoy_nation: profiles.filter(p => p.primary_team === 'envoy_nation').length,
+        e_nation: profiles.filter(p => p.primary_team === 'e_nation').length,
+        active_services: servicesRes.data?.length || 0,
+        attendance_rate: 75
+      });
+
+      setMembers(profiles.slice(0, 10));
+      setAttendanceData(attendanceRes.data || []);
     } catch (err) {
-      console.error(err);
-      setData(demoData);
+      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const isDirector = user?.role === 'director' || user?.role === 'admin';
-
-  if (!isDirector) {
+  if (profile?.role !== 'director' && !demoMode) {
     return (
-      <div className="p-8 flex items-center justify-center h-full">
+      <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
-          <p className="text-5xl mb-4">🔒</p>
-          <h2 className="text-2xl font-bold text-white mb-2">Access Restricted</h2>
-          <p className="text-slate-400">Director dashboard is only available to directors and administrators.</p>
+          <div className="text-4xl mb-4">🔒</div>
+          <p className="text-white text-xl">Director Access Only</p>
+          <p className="text-slate-400 mt-2">You don't have permission to view this page</p>
         </div>
       </div>
     );
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-full"><div className="text-xl text-slate-400 animate-pulse">Loading...</div></div>;
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-white text-xl animate-pulse">Loading director dashboard...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="p-8" data-testid="director-dashboard">
-      <div className="mb-8 animate-fadeIn">
-        <h1 className="text-4xl font-bold text-white mb-2 gradient-text">Director Dashboard</h1>
-        <p className="text-slate-400">Overview of all teams and activities</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">Director Dashboard</h1>
+        <p className="text-slate-400 mt-1">Team overview and analytics</p>
       </div>
 
-      {/* Team Summaries */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {data?.team_summaries?.map((summary, idx) => (
-          <TeamCard key={summary.team} summary={summary} index={idx} />
-        ))}
-      </div>
-
-      {/* Overall Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-3">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-pink-500/10 flex items-center justify-center text-2xl animate-float">🤝</div>
-            <div>
-              <p className="text-sm text-slate-400">Combined Events</p>
-              <p className="text-2xl font-bold text-white">{data?.combined_events || 0}</p>
-            </div>
-          </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-2xl p-5 border border-purple-500/30">
+          <p className="text-purple-400 text-sm">Total Members</p>
+          <p className="text-3xl font-bold text-white mt-1">{stats.total_members}</p>
         </div>
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-purple-500/10 flex items-center justify-center text-2xl animate-float">🎥</div>
-            <div>
-              <p className="text-sm text-slate-400">Total Equipment</p>
-              <p className="text-2xl font-bold text-white">{data?.total_equipment || 0}</p>
-            </div>
-          </div>
+        <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/20 rounded-2xl p-5 border border-blue-500/30">
+          <p className="text-blue-400 text-sm">Envoy Nation</p>
+          <p className="text-3xl font-bold text-white mt-1">{stats.envoy_nation}</p>
         </div>
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 card-animate hover-lift animate-fadeInUp stagger-5">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-lg bg-amber-500/10 flex items-center justify-center text-2xl animate-float">📊</div>
-            <div>
-              <p className="text-sm text-slate-400">Total Members</p>
-              <p className="text-2xl font-bold text-white">
-                {(data?.team_summaries?.reduce((acc, t) => acc + t.total_members, 0)) || 0}
-              </p>
-            </div>
-          </div>
+        <div className="bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 rounded-2xl p-5 border border-cyan-500/30">
+          <p className="text-cyan-400 text-sm">E-Nation</p>
+          <p className="text-3xl font-bold text-white mt-1">{stats.e_nation}</p>
+        </div>
+        <div className="bg-gradient-to-br from-green-500/20 to-green-600/20 rounded-2xl p-5 border border-green-500/30">
+          <p className="text-green-400 text-sm">Active Services</p>
+          <p className="text-3xl font-bold text-white mt-1">{stats.active_services}</p>
+        </div>
+        <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/20 rounded-2xl p-5 border border-orange-500/30">
+          <p className="text-orange-400 text-sm">Attendance Rate</p>
+          <p className="text-3xl font-bold text-white mt-1">{stats.attendance_rate}%</p>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Recent Reports */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInLeft glass">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">📄 Recent Service Reports</h2>
-          {data?.recent_reports && data.recent_reports.length > 0 ? (
-            <div className="space-y-3">
-              {data.recent_reports.slice(0, 5).map((report, idx) => (
-                <div key={report.report_id} className="p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all hover-scale">
-                  <p className="text-sm text-white">Service Report</p>
-                  <p className="text-xs text-slate-400">{report.attendees?.length || 0} attendees</p>
-                  <p className="text-xs text-slate-500">{new Date(report.created_at).toLocaleDateString()}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm text-center py-4">No recent reports</p>
-          )}
-          <Link to="/reports" className="block mt-4 text-center text-sm text-blue-400 hover:text-blue-300 transition-colors">View All Reports →</Link>
-        </div>
-
-        {/* Recent Handovers */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInRight glass">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">🔄 Recent Equipment Handovers</h2>
-          {data?.recent_handovers && data.recent_handovers.length > 0 ? (
-            <div className="space-y-3">
-              {data.recent_handovers.slice(0, 5).map((handover, idx) => (
-                <div key={handover.handover_id} className="p-3 rounded-lg bg-slate-800 border border-slate-700 hover:border-slate-600 transition-all hover-scale">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-white">{handover.from_team} → {handover.to_team}</p>
-                      <p className="text-xs text-slate-400">Condition: {handover.condition_before}</p>
-                    </div>
-                    <span className="text-xs text-slate-500">{handover.handover_date}</span>
+      {/* Content Grid */}
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Team Performance */}
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-800">
+          <div className="p-5 border-b border-slate-800">
+            <h2 className="text-lg font-semibold text-white">Team Performance</h2>
+          </div>
+          <div className="divide-y divide-slate-800">
+            {members.slice(0, 5).map((member, idx) => (
+              <div key={idx} className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm">
+                    {member.name?.charAt(0)}
+                  </div>
+                  <div>
+                    <p className="text-white font-medium">{member.name}</p>
+                    <p className="text-slate-400 text-xs capitalize">{member.role?.replace('_', ' ')}</p>
                   </div>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-slate-500 text-sm text-center py-4">No recent handovers</p>
-          )}
-          <Link to="/equipment" className="block mt-4 text-center text-sm text-blue-400 hover:text-blue-300 transition-colors">View Equipment →</Link>
+                <div className="flex items-center gap-3">
+                  <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
+                    <div 
+                      className={`h-full ${
+                        member.attendance >= 75 ? 'bg-green-500' :
+                        member.attendance >= 50 ? 'bg-yellow-500' : 'bg-red-500'
+                      }`}
+                      style={{ width: `${member.attendance || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-slate-400 text-sm w-10">{member.attendance || 0}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Quick Actions */}
-      <div className="mt-8 bg-slate-900 rounded-xl p-6 border border-slate-800 animate-fadeInUp glass">
-        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">⚡ Quick Actions</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Link to="/calendar" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
-            📅 View Calendar
-          </Link>
-          <Link to="/performance" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
-            📈 Performance
-          </Link>
-          <Link to="/team" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
-            👥 All Members
-          </Link>
-          <Link to="/lead-rotation" className="px-4 py-3 bg-slate-800 text-white rounded-lg text-center hover:bg-slate-700 transition-all border border-slate-700 btn-animate hover-lift">
-            🔄 Lead Rotation
-          </Link>
+        {/* Quick Actions */}
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+          <h2 className="text-lg font-semibold text-white mb-6">Quick Actions</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <button className="p-4 bg-slate-800/50 rounded-xl text-left hover:bg-slate-800 transition-all">
+              <span className="text-2xl">📊</span>
+              <p className="text-white font-medium mt-2">Generate Report</p>
+              <p className="text-slate-400 text-xs">Export team analytics</p>
+            </button>
+            <button className="p-4 bg-slate-800/50 rounded-xl text-left hover:bg-slate-800 transition-all">
+              <span className="text-2xl">📧</span>
+              <p className="text-white font-medium mt-2">Send Reminder</p>
+              <p className="text-slate-400 text-xs">Notify team members</p>
+            </button>
+            <button className="p-4 bg-slate-800/50 rounded-xl text-left hover:bg-slate-800 transition-all">
+              <span className="text-2xl">📋</span>
+              <p className="text-white font-medium mt-2">Manage Rotas</p>
+              <p className="text-slate-400 text-xs">Assign duties</p>
+            </button>
+            <button className="p-4 bg-slate-800/50 rounded-xl text-left hover:bg-slate-800 transition-all">
+              <span className="text-2xl">⚙️</span>
+              <p className="text-white font-medium mt-2">Team Settings</p>
+              <p className="text-slate-400 text-xs">Configure teams</p>
+            </button>
+          </div>
         </div>
       </div>
     </div>
