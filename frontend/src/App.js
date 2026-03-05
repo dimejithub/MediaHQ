@@ -1,499 +1,273 @@
-import { BrowserRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
+import { BrowserRouter, Routes, Route, Link, useNavigate, Navigate, useLocation } from 'react-router-dom';
 import { createContext, useContext, useState, useEffect } from 'react';
-import Dashboard from '@/pages/Dashboard';
-import TeamDirectory from '@/pages/TeamDirectory';
-import Services from '@/pages/Services';
-import AssignRotas from '@/pages/AssignRotas';
-import MyRotas from '@/pages/MyRotas';
-import Equipment from '@/pages/Equipment';
-import Checklists from '@/pages/Checklists';
-import ServiceReports from '@/pages/ServiceReports';
-import Training from '@/pages/Training';
-import Settings from '@/pages/Settings';
-import Login from '@/pages/Login';
-import LeadRotation from '@/pages/LeadRotation';
-import Performance from '@/pages/Performance';
-import Calendar from '@/pages/Calendar';
-import DirectorDashboard from '@/pages/DirectorDashboard';
-import Attendance from '@/pages/Attendance';
-import Onboarding from '@/pages/Onboarding';
-import '@/App.css';
+import { supabase, getProfile, signOut } from './lib/supabase';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+// Pages
+import Login from './pages/Login';
+import Onboarding from './pages/Onboarding';
+import Dashboard from './pages/Dashboard';
+import Team from './pages/Team';
+import Services from './pages/Services';
+import Equipment from './pages/Equipment';
+import Rotas from './pages/Rotas';
+import Checklists from './pages/Checklists';
+import Calendar from './pages/Calendar';
+import Attendance from './pages/Attendance';
+import Notifications from './pages/Notifications';
+import DirectorDashboard from './pages/DirectorDashboard';
+import Settings from './pages/Settings';
+import AuthCallback from './pages/AuthCallback';
 
 // Auth Context
 const AuthContext = createContext(null);
-
 export const useAuth = () => useContext(AuthContext);
 
 function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [selectedTeam, setSelectedTeam] = useState(() => {
-    return localStorage.getItem('selectedTeam') || 'envoy_nation';
-  });
-  const [demoMode, setDemoMode] = useState(() => {
-    return localStorage.getItem('demoMode') === 'true';
-  });
-  const [demoRole, setDemoRole] = useState(() => {
-    return localStorage.getItem('demoRole') || 'director';
-  });
-
-  // Role-based access configuration
-  // Weekly lead is dynamic - members get checklist access when assigned as lead
-  // Calendar is accessible to everyone for availability planning
-  const roleAccess = {
-    director: ['all'], // Access to everything
-    admin: ['all'],
-    team_lead: ['dashboard', 'calendar', 'attendance', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
-    assistant_lead: ['dashboard', 'calendar', 'attendance', 'team', 'services', 'assign-rotas', 'my-rotas', 'lead-rotation', 'equipment', 'checklists', 'reports', 'performance', 'training', 'settings'],
-    unit_head: ['dashboard', 'calendar', 'attendance', 'team', 'services', 'assign-rotas', 'my-rotas', 'equipment', 'checklists', 'reports', 'training'],
-    member: ['dashboard', 'calendar', 'attendance', 'team', 'my-rotas', 'training', 'performance', 'reports']
-  };
-
-  // Check if member is assigned as weekly lead (gives them checklist access)
-  const [isWeeklyLead, setIsWeeklyLead] = useState(false);
-
-  const hasAccess = (path) => {
-    const userRole = user?.role || 'member';
-    let access = roleAccess[userRole] || roleAccess.member;
-    
-    // If member is assigned as weekly lead, add checklists access
-    if (userRole === 'member' && isWeeklyLead) {
-      access = [...access, 'checklists'];
-    }
-    
-    if (access.includes('all')) return true;
-    const cleanPath = path.replace('/', '').replace('/','');
-    return access.includes(cleanPath) || cleanPath === '' || cleanPath === 'login';
-  };
-
-  // Check weekly lead status for demo mode
-  const checkWeeklyLeadStatus = () => {
-    // In demo mode, simulate that Jasper Eromon is this week's lead
-    if (demoMode && demoRole === 'member') {
-      // Demo: member is weekly lead this week
-      setIsWeeklyLead(true);
-    }
-  };
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
-    // First check if there's a real session token (takes priority over demo)
-    const sessionToken = localStorage.getItem('session_token');
-    
-    if (sessionToken && !demoMode) {
-      // Real user - check auth from backend
-      checkAuth();
-    } else if (demoMode) {
-      // Demo mode
-      const roleNames = {
-        director: 'Dr. Adebowale Owoseni',
-        team_lead: 'Adeola Hilton',
-        assistant_lead: 'Oladimeji Tiamiyu',
-        unit_head: 'Michel Adimula',
-        member: 'Jasper Eromon'
-      };
-      setUser({ 
-        user_id: `demo_${demoRole}`, 
-        name: roleNames[demoRole] || 'Demo User', 
-        email: 'demo@mediahq.com', 
-        role: demoRole,
-        teams: ['envoy_nation', 'e_nation'],
+    // Check for demo mode
+    const isDemoMode = localStorage.getItem('demoMode') === 'true';
+    if (isDemoMode) {
+      setDemoMode(true);
+      setProfile({
+        name: 'Demo User',
+        email: 'demo@tenmediahq.com',
+        role: localStorage.getItem('demoRole') || 'member',
         primary_team: 'envoy_nation',
-        skills: ['Camera', 'Sound', 'Lighting'],
-        isWeeklyLead: demoRole === 'member' // Demo: member is weekly lead
+        teams: ['envoy_nation']
       });
-      // In demo, if role is member, they're the weekly lead
-      setIsWeeklyLead(demoRole === 'member');
-      setLoading(false);
-    } else {
-      // No session, no demo - check if there's a cookie session
-      checkAuth();
-    }
-  }, [demoRole, demoMode]);
-
-  const checkAuth = async () => {
-    const sessionToken = localStorage.getItem('session_token');
-    const storedUser = localStorage.getItem('user');
-    
-    // Immediately use stored user if available (optimistic loading)
-    if (storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-        setLoading(false);
-        
-        // Clear demo mode if we have a real user session
-        if (sessionToken) {
-          localStorage.removeItem('demoMode');
-          localStorage.removeItem('demoRole');
-          setDemoMode(false);
-        }
-      } catch {
-        localStorage.removeItem('user');
-      }
-    }
-    
-    // If no stored user and no session, stop loading
-    if (!sessionToken && !storedUser) {
       setLoading(false);
       return;
     }
-    
-    // Background refresh from API (don't block UI)
-    if (sessionToken) {
-      try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5s timeout
-        
-        const res = await fetch(`${BACKEND_URL}/api/auth/me`, { 
-          credentials: 'include',
-          headers: { 'Authorization': `Bearer ${sessionToken}` },
-          signal: controller.signal
-        });
-        
-        clearTimeout(timeoutId);
-        
-        if (res.ok) {
-          const userData = await res.json();
-          setUser(userData);
-          localStorage.setItem('user', JSON.stringify(userData));
-          localStorage.removeItem('demoMode');
-          localStorage.removeItem('demoRole');
-          setDemoMode(false);
-        } else if (res.status === 401) {
-          // Session expired - clear everything
-          localStorage.removeItem('session_token');
-          localStorage.removeItem('user');
-          setUser(null);
-        }
-      } catch (err) {
-        // Network error - keep using stored user
-        console.log('Auth refresh failed, using cached user');
+
+    // Get initial session
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const { data: profileData } = await getProfile(session.user.id);
+        setProfile(profileData);
       }
-    }
-    
-    setLoading(false);
-  };
+      
+      setLoading(false);
+    });
 
-  const logout = async () => {
-    localStorage.removeItem('demoMode');
-    localStorage.removeItem('demoRole');
-    localStorage.removeItem('session_token');
-    localStorage.removeItem('user');
-    setDemoMode(false);
-    try {
-      await fetch(`${BACKEND_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
-    } catch (err) {
-      console.error('Logout error');
-    }
-    setUser(null);
-    window.location.href = '/login';
-  };
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user ?? null);
+      
+      if (session?.user) {
+        const { data: profileData } = await getProfile(session.user.id);
+        setProfile(profileData);
+      } else {
+        setProfile(null);
+      }
+      
+      if (event === 'SIGNED_OUT') {
+        localStorage.removeItem('demoMode');
+        localStorage.removeItem('demoRole');
+        localStorage.removeItem('onboarding_complete');
+      }
+    });
 
-  const enableDemoMode = (role = 'director') => {
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const enableDemoMode = (role = 'member') => {
     localStorage.setItem('demoMode', 'true');
     localStorage.setItem('demoRole', role);
     setDemoMode(true);
-    setDemoRole(role);
-    const roleNames = {
-      director: 'Dr. Adebowale Owoseni',
-      team_lead: 'Adeola Hilton',
-      assistant_lead: 'Oladimeji Tiamiyu',
-      unit_head: 'Michel Adimula',
-      member: 'Jasper Eromon'
-    };
-    setUser({ 
-      user_id: `demo_${role}`, 
-      name: roleNames[role] || 'Demo User', 
-      email: 'demo@mediahq.com', 
+    setProfile({
+      name: 'Demo User',
+      email: 'demo@tenmediahq.com',
       role: role,
-      teams: ['envoy_nation', 'e_nation'],
       primary_team: 'envoy_nation',
-      skills: ['Camera', 'Sound', 'Lighting']
+      teams: ['envoy_nation']
     });
-    // Set demo notifications
-    setNotifications([
-      { notification_id: 'demo_n1', title: 'New Rota Assignment', message: 'You have been assigned to Sunday Service this week', type: 'rota_assignment', read: false },
-      { notification_id: 'demo_n2', title: 'Service Reminder', message: 'Midweek Service (Leicester Blessings) starts in 24 hours', type: 'service_reminder', read: true },
-      { notification_id: 'demo_n3', title: 'Standup Meeting', message: 'Tuesday Standup at 7pm - Attendance required', type: 'meeting', read: false },
-      { notification_id: 'demo_n4', title: 'Training Update', message: 'New training material available: Camera Basics', type: 'training', read: true }
-    ]);
-    setUnreadCount(2);
   };
 
-  const switchDemoRole = (role) => {
-    localStorage.setItem('demoRole', role);
-    setDemoRole(role);
-    enableDemoMode(role);
-  };
-
-  const switchTeam = (teamId) => {
-    localStorage.setItem('selectedTeam', teamId);
-    setSelectedTeam(teamId);
-  };
-
-  const fetchNotifications = async () => {
-    if (demoMode || !user) return;
-    try {
-      const [notifRes, countRes] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/notifications`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/api/notifications/unread-count`, { credentials: 'include' })
-      ]);
-      if (notifRes.ok) setNotifications(await notifRes.json());
-      if (countRes.ok) {
-        const data = await countRes.json();
-        setUnreadCount(data.unread_count);
-      }
-    } catch (err) {
-      console.error('Failed to fetch notifications');
-    }
-  };
-
-  const markAllRead = async () => {
-    if (demoMode) {
-      setNotifications(notifications.map(n => ({ ...n, read: true })));
-      setUnreadCount(0);
-      return;
-    }
-    try {
-      await fetch(`${BACKEND_URL}/api/notifications/read-all`, { method: 'PUT', credentials: 'include' });
-      fetchNotifications();
-    } catch (err) {
-      console.error('Failed to mark as read');
-    }
+  const handleSignOut = async () => {
+    localStorage.removeItem('demoMode');
+    localStorage.removeItem('demoRole');
+    localStorage.removeItem('onboarding_complete');
+    setDemoMode(false);
+    setProfile(null);
+    setUser(null);
+    await signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout, demoMode, enableDemoMode, checkAuth, notifications, unreadCount, fetchNotifications, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole, isWeeklyLead }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      profile, 
+      loading, 
+      demoMode,
+      enableDemoMode,
+      signOut: handleSignOut,
+      setProfile
+    }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-function Layout({ children }) {
-  const location = useLocation();
-  const { user, logout, demoMode, notifications, unreadCount, markAllRead, selectedTeam, switchTeam, hasAccess, switchDemoRole, isWeeklyLead } = useAuth();
-  const [showNotifications, setShowNotifications] = useState(false);
-  const [showRoleSelector, setShowRoleSelector] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+// Navigation items with role-based access
+const navItems = [
+  { path: '/dashboard', label: 'Dashboard', icon: 'LayoutDashboard', roles: ['all'] },
+  { path: '/team', label: 'Team', icon: 'Users', roles: ['all'] },
+  { path: '/services', label: 'Services', icon: 'Calendar', roles: ['all'] },
+  { path: '/equipment', label: 'Equipment', icon: 'Package', roles: ['all'] },
+  { path: '/rotas', label: 'Rotas', icon: 'ClipboardList', roles: ['all'] },
+  { path: '/checklists', label: 'Checklists', icon: 'CheckSquare', roles: ['all'] },
+  { path: '/calendar', label: 'Calendar', icon: 'CalendarDays', roles: ['all'] },
+  { path: '/attendance', label: 'Attendance', icon: 'UserCheck', roles: ['all'] },
+  { path: '/notifications', label: 'Notifications', icon: 'Bell', roles: ['all'] },
+  { path: '/director', label: 'Director View', icon: 'Crown', roles: ['director'] },
+  { path: '/settings', label: 'Settings', icon: 'Settings', roles: ['all'] },
+];
 
-  const isDirector = user?.role === 'director' || user?.role === 'admin';
-
-  // Role labels for display
-  const roleLabels = {
-    director: 'Director',
-    team_lead: 'Team Lead',
-    assistant_lead: 'Assistant Lead',
-    unit_head: 'Unit Head',
-    member: 'Member'
+// Icon component
+function Icon({ name, className = "w-5 h-5" }) {
+  const icons = {
+    LayoutDashboard: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>,
+    Users: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>,
+    Calendar: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    Package: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>,
+    ClipboardList: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>,
+    CheckSquare: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
+    CalendarDays: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>,
+    UserCheck: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>,
+    Bell: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>,
+    Crown: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7l3-7z" /></svg>,
+    Settings: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+    Menu: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>,
+    X: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>,
+    LogOut: <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>,
   };
+  return icons[name] || null;
+}
 
-  // All possible nav items with access requirements
-  const allNavItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: '📊', access: 'dashboard' },
-    { name: 'Director View', path: '/director', icon: '👁️', access: 'director', directorOnly: true },
-    { name: 'Calendar', path: '/calendar', icon: '📅', access: 'calendar' },
-    { name: 'Attendance', path: '/attendance', icon: '✋', access: 'attendance' },
-    { name: 'Team', path: '/team', icon: '👥', access: 'team' },
-    { name: 'Services', path: '/services', icon: '🗓️', access: 'services' },
-    { name: 'Assign Rotas', path: '/assign-rotas', icon: '📝', access: 'assign-rotas' },
-    { name: 'My Rotas', path: '/my-rotas', icon: '✅', access: 'my-rotas' },
-    { name: 'Lead Rotation', path: '/lead-rotation', icon: '🔄', access: 'lead-rotation' },
-    { name: 'Equipment', path: '/equipment', icon: '🎥', access: 'equipment' },
-    { name: 'Checklists', path: '/checklists', icon: '📋', access: 'checklists' },
-    { name: 'Reports', path: '/reports', icon: '📄', access: 'reports' },
-    { name: 'Performance', path: '/performance', icon: '📈', access: 'performance' },
-    { name: 'Training', path: '/training', icon: '🎓', access: 'training' },
-    { name: 'Our Mission', path: '/onboarding', icon: '💫', access: 'dashboard' },
-    { name: 'Settings', path: '/settings', icon: '⚙️', access: 'settings' }
-  ];
+// Layout component with sidebar
+function Layout({ children }) {
+  const { profile, signOut, demoMode } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  // Filter nav items based on role
-  const navItems = allNavItems.filter(item => {
-    if (item.directorOnly && !isDirector) return false;
-    return hasAccess(item.access);
-  });
+  const userRole = profile?.role || 'member';
+  const filteredNavItems = navItems.filter(item => 
+    item.roles.includes('all') || item.roles.includes(userRole)
+  );
 
-  // Close sidebar when navigating on mobile
-  const handleNavClick = () => {
-    setSidebarOpen(false);
+  const handleLogout = async () => {
+    await signOut();
+    navigate('/login');
   };
 
   return (
-    <div className="flex h-screen bg-slate-950">
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white p-2 -ml-2" data-testid="mobile-menu-btn">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={sidebarOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
-            </svg>
-          </button>
-          <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center font-bold text-sm text-slate-900">TEN</div>
-          <span className="font-bold text-white">MediaHQ</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button onClick={() => setShowNotifications(!showNotifications)} className="relative p-2 text-white" data-testid="mobile-notification-btn">
-            <span className="text-xl">🔔</span>
-            {unreadCount > 0 && <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>}
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-950 flex">
+      {/* Mobile menu button */}
+      <button
+        onClick={() => setSidebarOpen(!sidebarOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 bg-slate-800 rounded-lg text-white"
+      >
+        <Icon name={sidebarOpen ? 'X' : 'Menu'} />
+      </button>
 
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} />
-      )}
-
-      {/* Sidebar - Desktop always visible, Mobile slide-in */}
-      <div className={`
-        fixed lg:static inset-y-0 left-0 z-50
-        w-64 bg-slate-900 border-r border-slate-800 flex flex-col shadow-2xl
+      {/* Sidebar */}
+      <aside className={`
+        fixed lg:static inset-y-0 left-0 z-40
+        w-64 bg-slate-900 border-r border-slate-800
         transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
-        {/* Logo - Fixed */}
-        <div className="flex-shrink-0 p-5 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center font-bold text-lg text-slate-900">TEN</div>
-            <div>
-              <h1 className="font-bold text-lg text-white">MediaHQ</h1>
-              <p className="text-xs text-slate-400">Church Media System</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Team Selector & Notifications - Fixed */}
-        <div className="flex-shrink-0 px-4 pt-4 space-y-2">
-          {/* Team Selector */}
-          <select
-            value={selectedTeam}
-            onChange={(e) => switchTeam(e.target.value)}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white text-sm focus:ring-2 focus:ring-blue-500"
-            data-testid="team-selector"
-          >
-            <option value="envoy_nation">🔵 Envoy Nation</option>
-            <option value="e_nation">🟢 E-Nation</option>
-          </select>
-
-          {/* Notification Bell */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="w-full flex items-center justify-between px-3 py-2 bg-slate-800 rounded-lg hover:bg-slate-700 transition-all"
-              data-testid="notification-bell"
-            >
-              <span className="text-sm text-slate-300">🔔 Notifications</span>
-              {unreadCount > 0 && (
-                <span className="px-2 py-0.5 text-xs bg-red-500 text-white rounded-full">{unreadCount}</span>
-              )}
-            </button>
-            
-            {showNotifications && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-50 max-h-64 overflow-y-auto">
-                <div className="p-3 border-b border-slate-700 flex items-center justify-between">
-                  <span className="text-sm font-medium text-white">Notifications</span>
-                  {unreadCount > 0 && (
-                    <button onClick={markAllRead} className="text-xs text-blue-400 hover:text-blue-300">Mark all read</button>
-                  )}
-                </div>
-                {notifications && notifications.length > 0 ? (
-                  notifications.slice(0, 5).map(n => (
-                    <div key={n.notification_id} className={`p-3 border-b border-slate-700 last:border-0 ${!n.read ? 'bg-slate-700/50' : ''}`}>
-                      <p className="text-sm font-medium text-white">{n.title}</p>
-                      <p className="text-xs text-slate-400 mt-1">{n.message}</p>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-4 text-center text-slate-500 text-sm">No notifications</div>
-                )}
+        <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="p-6 border-b border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-white to-slate-200 flex items-center justify-center text-slate-900 font-bold text-lg">
+                TEN
               </div>
-            )}
+              <div>
+                <span className="font-bold text-white block">MediaHQ</span>
+                <span className="text-xs text-slate-400">Church Media System</span>
+              </div>
+            </div>
           </div>
 
-          {/* Demo Mode Banner with Role Selector */}
-          {demoMode && (
-            <div className="relative">
-              <button 
-                onClick={() => setShowRoleSelector(!showRoleSelector)}
-                className="w-full px-3 py-2 bg-amber-500/20 border border-amber-500/30 rounded-lg hover:bg-amber-500/30 transition-all"
-              >
-                <p className="text-xs text-amber-400 font-medium text-center">Demo: {roleLabels[user?.role] || 'Director'} ▼</p>
-              </button>
-              {showRoleSelector && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-slate-800 rounded-lg border border-slate-700 shadow-xl z-50">
-                  <p className="px-3 py-2 text-xs text-slate-400 border-b border-slate-700">Switch Demo Role:</p>
-                  {Object.entries(roleLabels).map(([role, label]) => (
-                    <button
-                      key={role}
-                      onClick={() => { switchDemoRole(role); setShowRoleSelector(false); }}
-                      className={`w-full px-3 py-2 text-left text-sm hover:bg-slate-700 transition-all ${user?.role === role ? 'bg-slate-700 text-white' : 'text-slate-300'}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Navigation - Scrollable */}
-        <nav className="flex-1 p-3 space-y-1 overflow-y-auto min-h-0">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path || (location.pathname === '/' && item.path === '/dashboard');
-            return (
+          {/* Navigation */}
+          <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+            {filteredNavItems.map(item => (
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={handleNavClick}
-                data-testid={`nav-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'bg-white text-slate-900 shadow-lg'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`}
+                onClick={() => setSidebarOpen(false)}
+                data-testid={`nav-${item.path.slice(1)}`}
+                className={`
+                  flex items-center gap-3 px-4 py-3 rounded-xl transition-all
+                  ${location.pathname === item.path 
+                    ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 text-white border border-blue-500/30' 
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+                `}
               >
-                <span className="text-lg">{item.icon}</span>
-                <span className="font-medium text-sm">{item.name}</span>
+                <Icon name={item.icon} />
+                <span>{item.label}</span>
               </Link>
-            );
-          })}
-        </nav>
+            ))}
+          </nav>
 
-        {/* User Info & Logout - Fixed */}
-        <div className="flex-shrink-0 p-4 border-t border-slate-800">
-          {user && (
-            <div className="mb-2">
-              <p className="text-sm font-medium text-white truncate">{user.name}</p>
-              <p className="text-xs text-slate-400 capitalize">{user.role}</p>
+          {/* User info */}
+          <div className="p-4 border-t border-slate-800">
+            {demoMode && (
+              <div className="mb-2 px-3 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full text-center">
+                Demo Mode
+              </div>
+            )}
+            <div className="flex items-center gap-3 px-3 py-2">
+              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-sm font-medium">
+                {profile?.name?.charAt(0) || 'U'}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-white truncate">{profile?.name || 'User'}</p>
+                <p className="text-xs text-slate-400 capitalize">{userRole.replace('_', ' ')}</p>
+              </div>
             </div>
-          )}
-          <button
-            onClick={logout}
-            data-testid="logout-btn"
-            className="w-full px-3 py-1.5 text-sm text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all text-left"
-          >
-            Logout
-          </button>
-          <div className="mt-2 text-xs text-slate-600 text-center">
-            © 2026 TEN MediaHQ
+            <button
+              onClick={handleLogout}
+              className="mt-2 w-full flex items-center justify-center gap-2 px-4 py-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition-all"
+            >
+              <Icon name="LogOut" className="w-4 h-4" />
+              Logout
+            </button>
           </div>
         </div>
-      </div>
+      </aside>
 
-      {/* Main Content - Add padding for mobile header */}
-      <main className="flex-1 overflow-auto bg-slate-950 lg:ml-0 pt-16 lg:pt-0">{children}</main>
+      {/* Overlay for mobile */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Main content */}
+      <main className="flex-1 min-h-screen overflow-x-hidden">
+        <div className="p-4 lg:p-8 pt-16 lg:pt-8">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
 
+// Protected route wrapper
 function ProtectedRoute({ children }) {
-  const { user, loading, demoMode } = useAuth();
+  const { user, loading, demoMode, profile } = useAuth();
   const location = useLocation();
   
   if (loading) {
@@ -509,7 +283,7 @@ function ProtectedRoute({ children }) {
   }
   
   // Simple localStorage check for onboarding
-  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true';
+  const onboardingComplete = localStorage.getItem('onboarding_complete') === 'true' || profile?.onboarding_completed;
   const isOnboardingPage = location.pathname === '/onboarding';
   
   // Redirect to onboarding if not completed (unless already on onboarding page)
@@ -527,33 +301,28 @@ function ProtectedRoute({ children }) {
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
-            <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/director" element={<ProtectedRoute><DirectorDashboard /></ProtectedRoute>} />
-            <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
-            <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
-            <Route path="/team" element={<ProtectedRoute><TeamDirectory /></ProtectedRoute>} />
-            <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
-            <Route path="/assign-rotas" element={<ProtectedRoute><AssignRotas /></ProtectedRoute>} />
-            <Route path="/my-rotas" element={<ProtectedRoute><MyRotas /></ProtectedRoute>} />
-            <Route path="/lead-rotation" element={<ProtectedRoute><LeadRotation /></ProtectedRoute>} />
-            <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
-            <Route path="/checklists" element={<ProtectedRoute><Checklists /></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute><ServiceReports /></ProtectedRoute>} />
-            <Route path="/performance" element={<ProtectedRoute><Performance /></ProtectedRoute>} />
-            <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-      <Toaster position="top-right" />
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+          <Route path="/onboarding" element={<ProtectedRoute><Onboarding /></ProtectedRoute>} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/team" element={<ProtectedRoute><Team /></ProtectedRoute>} />
+          <Route path="/services" element={<ProtectedRoute><Services /></ProtectedRoute>} />
+          <Route path="/equipment" element={<ProtectedRoute><Equipment /></ProtectedRoute>} />
+          <Route path="/rotas" element={<ProtectedRoute><Rotas /></ProtectedRoute>} />
+          <Route path="/checklists" element={<ProtectedRoute><Checklists /></ProtectedRoute>} />
+          <Route path="/calendar" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+          <Route path="/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/director" element={<ProtectedRoute><DirectorDashboard /></ProtectedRoute>} />
+          <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
