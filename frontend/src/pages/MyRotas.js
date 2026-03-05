@@ -1,141 +1,184 @@
-import { useEffect, useState } from 'react';
-import { toast } from 'sonner';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
-
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+import { supabase } from '../lib/supabase';
 
 export default function MyRotas() {
-  const { demoMode, user } = useAuth();
+  const { profile, demoMode } = useAuth();
   const [rotas, setRotas] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const demoRotas = [
-    { 
-      rota_id: 'demo_rota_1', 
-      service: { title: 'Sunday Morning Service', date: '2026-02-09', time: '10:00' },
-      my_assignment: { assignment_id: 'demo_assign_1', role: 'Camera Operator', status: 'pending' }
-    },
-    { 
-      rota_id: 'demo_rota_2', 
-      service: { title: 'Worship Night', date: '2026-02-12', time: '19:00' },
-      my_assignment: { assignment_id: 'demo_assign_2', role: 'Sound Engineer', status: 'confirmed' }
-    }
-  ];
-
   useEffect(() => {
+    fetchRotas();
+  }, [demoMode]);
+
+  const fetchRotas = async () => {
     if (demoMode) {
-      setRotas(demoRotas);
+      setRotas([
+        { 
+          id: '1', 
+          service: { title: 'Sunday Morning Service', date: '2026-03-08', time: '11:00' },
+          role: 'Camera Operator',
+          status: 'confirmed'
+        },
+        { 
+          id: '2', 
+          service: { title: 'Tuesday Standup', date: '2026-03-10', time: '20:00' },
+          role: 'Sound Engineer',
+          status: 'pending'
+        },
+        { 
+          id: '3', 
+          service: { title: 'Sunday Morning Service', date: '2026-03-15', time: '11:00' },
+          role: 'Visuals',
+          status: 'confirmed'
+        },
+      ]);
       setLoading(false);
       return;
     }
 
-    fetch(`${BACKEND_URL}/api/rotas/my-rotas`, { credentials: 'include' })
-      .then(res => {
-        if (!res.ok) throw new Error('Failed to load');
-        return res.json();
-      })
-      .then(data => {
-        setRotas(data.length > 0 ? data : demoRotas);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setRotas(demoRotas);
-        setLoading(false);
-      });
-  }, [demoMode]);
-
-  const handleConfirm = async (rotaId, assignmentId, status) => {
-    if (demoMode) {
-      setRotas(rotas.map(r => 
-        r.rota_id === rotaId 
-          ? { ...r, my_assignment: { ...r.my_assignment, status } }
-          : r
-      ));
-      toast.success(`Assignment ${status === 'confirmed' ? 'confirmed' : 'declined'}`);
-      return;
-    }
-
     try {
-      const res = await fetch(`${BACKEND_URL}/api/rotas/${rotaId}/assignments/${assignmentId}/confirm`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ status })
-      });
+      const { data, error } = await supabase
+        .from('rotas')
+        .select(`
+          *,
+          services (title, date, time)
+        `)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
       
-      if (res.ok) {
-        setRotas(rotas.map(r => 
-          r.rota_id === rotaId 
-            ? { ...r, my_assignment: { ...r.my_assignment, status } }
-            : r
-        ));
-        toast.success(`Assignment ${status === 'confirmed' ? 'confirmed' : 'declined'}`);
-      }
+      // Transform data to match expected format
+      const transformedData = (data || []).map(rota => {
+        const myAssignment = rota.assignments?.find(
+          a => a.user_id === profile?.user_id || a.user_id === profile?.id
+        );
+        return {
+          id: rota.id,
+          service: rota.services,
+          role: myAssignment?.role || 'Team Member',
+          status: myAssignment?.status || 'pending'
+        };
+      }).filter(r => r.service);
+
+      setRotas(transformedData);
     } catch (err) {
-      toast.error('Failed to update assignment');
+      console.error('Error fetching rotas:', err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const formatDate = (dateStr) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+  };
+
+  const handleAccept = (rotaId) => {
+    setRotas(rotas.map(r => 
+      r.id === rotaId ? { ...r, status: 'confirmed' } : r
+    ));
+  };
+
+  const handleDecline = (rotaId) => {
+    setRotas(rotas.map(r => 
+      r.id === rotaId ? { ...r, status: 'declined' } : r
+    ));
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-xl text-slate-400 animate-pulse">Loading your rotas...</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-white text-xl animate-pulse">Loading rotas...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-8" data-testid="my-rotas-page">
-      <h1 className="text-4xl font-bold text-white mb-2">My Rotas</h1>
-      <p className="text-slate-400 mb-8">View and confirm your assignments</p>
-      
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">My Rotas</h1>
+        <p className="text-slate-400 mt-1">Your upcoming duty assignments</p>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800">
+          <p className="text-slate-400 text-sm">Total</p>
+          <p className="text-2xl font-bold text-white mt-1">{rotas.length}</p>
+        </div>
+        <div className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800">
+          <p className="text-slate-400 text-sm">Confirmed</p>
+          <p className="text-2xl font-bold text-green-400 mt-1">
+            {rotas.filter(r => r.status === 'confirmed').length}
+          </p>
+        </div>
+        <div className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800">
+          <p className="text-slate-400 text-sm">Pending</p>
+          <p className="text-2xl font-bold text-orange-400 mt-1">
+            {rotas.filter(r => r.status === 'pending').length}
+          </p>
+        </div>
+      </div>
+
+      {/* Rotas List */}
       {rotas.length === 0 ? (
-        <div className="bg-slate-900 rounded-xl p-12 text-center border border-slate-800">
-          <p className="text-5xl mb-4">📋</p>
-          <p className="text-slate-400 text-lg">No rotas assigned yet</p>
+        <div className="bg-slate-900/50 rounded-2xl p-12 border border-slate-800 text-center">
+          <div className="text-4xl mb-4">📋</div>
+          <p className="text-slate-400">No rotas assigned yet</p>
         </div>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {rotas.map((rota) => (
-            <div key={rota.rota_id} className="bg-slate-900 border border-slate-800 rounded-xl p-6 hover:border-slate-700 transition-all" data-testid={`rota-${rota.rota_id}`}>
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                  <h3 className="text-xl font-bold text-white mb-1">{rota.service?.title || 'Service'}</h3>
-                  <p className="text-sm text-slate-400">{rota.service?.date} at {rota.service?.time}</p>
-                </div>
+            <div
+              key={rota.id}
+              className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800"
+            >
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <span className="text-sm text-slate-400">Your Role:</span>
-                    <p className="font-medium text-white">{rota.my_assignment?.role}</p>
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-2xl">
+                    ⛪
                   </div>
-                  <span className={`px-3 py-1 text-sm font-medium rounded-full ${
-                    rota.my_assignment?.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
-                    rota.my_assignment?.status === 'declined' ? 'bg-red-500/20 text-red-400' :
-                    'bg-amber-500/20 text-amber-400'
-                  }`}>
-                    {rota.my_assignment?.status}
-                  </span>
+                  <div>
+                    <h3 className="text-white font-medium">{rota.service?.title}</h3>
+                    <p className="text-slate-400 text-sm">
+                      {formatDate(rota.service?.date)} • {rota.service?.time}
+                    </p>
+                  </div>
                 </div>
+                <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                  rota.status === 'confirmed' ? 'bg-green-500/20 text-green-400' :
+                  rota.status === 'declined' ? 'bg-red-500/20 text-red-400' :
+                  'bg-orange-500/20 text-orange-400'
+                }`}>
+                  {rota.status}
+                </span>
               </div>
-              {rota.my_assignment?.status === 'pending' && (
-                <div className="flex gap-3 mt-4 pt-4 border-t border-slate-800">
-                  <button 
-                    onClick={() => handleConfirm(rota.rota_id, rota.my_assignment.assignment_id, 'confirmed')} 
-                    data-testid={`confirm-${rota.rota_id}`}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all"
-                  >
-                    ✅ Confirm
-                  </button>
-                  <button 
-                    onClick={() => handleConfirm(rota.rota_id, rota.my_assignment.assignment_id, 'declined')} 
-                    data-testid={`decline-${rota.rota_id}`}
-                    className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-all"
-                  >
-                    ❌ Decline
-                  </button>
+              
+              <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between">
+                <div>
+                  <p className="text-slate-400 text-sm">Your Role</p>
+                  <p className="text-white font-medium">{rota.role}</p>
                 </div>
-              )}
+                
+                {rota.status === 'pending' && (
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDecline(rota.id)}
+                      className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all"
+                    >
+                      Decline
+                    </button>
+                    <button
+                      onClick={() => handleAccept(rota.id)}
+                      className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30 transition-all"
+                    >
+                      Accept
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
