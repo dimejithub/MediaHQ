@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useAuth } from '@/App';
+import { useAuth } from '../App';
 import { toast } from 'sonner';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];

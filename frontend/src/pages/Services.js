@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/App';
+import { useAuth } from '../App';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 
