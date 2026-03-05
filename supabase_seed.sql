@@ -1,4 +1,4 @@
--- TEN MediaHQ Seed Data
+-- TEN MediaHQ Seed Data (Safe Version)
 -- Run this in Supabase SQL Editor AFTER the schema has been created
 -- (Dashboard → SQL Editor → New Query → Paste & Run)
 
@@ -72,7 +72,7 @@ INSERT INTO checklists (service_id, team_id, items) VALUES
     ]'::jsonb);
 
 -- =====================
--- SEED NOTIFICATIONS
+-- SEED NOTIFICATIONS (generic, not tied to profiles)
 -- =====================
 INSERT INTO notifications (user_id, title, message, type, read) VALUES
     ('user_adebowale', 'Welcome to TEN MediaHQ', 'Your church media management platform is ready.', 'info', false),
@@ -82,122 +82,37 @@ INSERT INTO notifications (user_id, title, message, type, read) VALUES
     ('user_joshua', 'Equipment Reminder', 'You currently have MacBook Pro M2 checked out. Please return after service.', 'equipment', false);
 
 -- =====================
--- NOTE ON PROFILES
+-- ADD RLS INSERT POLICIES
 -- =====================
--- Profiles are created automatically when users sign up via Supabase Auth
--- (via the handle_new_user() trigger in the schema).
---
--- To add the 23 predefined team members, they need to sign up through the app.
--- Alternatively, an admin can manually insert profiles for testing:
---
--- IMPORTANT: Only run the block below if you want test profiles
--- These won't have matching auth.users entries, so they're for display only
--- (Team Directory, Rotas display, etc.)
-
-INSERT INTO profiles (id, user_id, email, name, role, primary_team, teams, skills, availability, onboarding_completed)
-VALUES
-    (gen_random_uuid(), 'user_adebowale', 'adebowale@tenmediahq.com', 'Adebowale Owoseni', 'director', 'envoy_nation', ARRAY['envoy_nation', 'e_nation'], ARRAY['Leadership', 'Vision'], 'available', true),
-    (gen_random_uuid(), 'user_adeola', 'adeola@tenmediahq.com', 'Adeola Hilton', 'team_lead', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Camera', 'Directing'], 'available', true),
-    (gen_random_uuid(), 'user_oladimeji', 'oladimeji@tenmediahq.com', 'Oladimeji Tiamiyu', 'assistant_lead', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Sound', 'Livestream'], 'available', true),
-    (gen_random_uuid(), 'user_michel', 'michel@tenmediahq.com', 'Michel Adimula', 'unit_head', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Graphics', 'ProPresenter'], 'available', true),
-    (gen_random_uuid(), 'user_oluseye', 'oluseye@tenmediahq.com', 'Oluseye Ogunleye', 'unit_head', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Camera', 'Video'], 'available', true),
-    (gen_random_uuid(), 'user_oladipupo', 'oladipupo@tenmediahq.com', 'Oladipupo Hilton', 'unit_head', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Lighting', 'Stage'], 'available', true),
-    (gen_random_uuid(), 'user_jasper', 'jasper@tenmediahq.com', 'Jasper Eromon', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Camera'], 'available', true),
-    (gen_random_uuid(), 'user_gabriel', 'gabriel@tenmediahq.com', 'Gabriel Oladipo', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Sound'], 'available', true),
-    (gen_random_uuid(), 'user_joshua', 'joshua@tenmediahq.com', 'Joshua Awojide', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Livestream'], 'available', true),
-    (gen_random_uuid(), 'user_boluwatife', 'boluwatife@tenmediahq.com', 'Boluwatife Akinola', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Graphics'], 'available', true),
-    (gen_random_uuid(), 'user_damilola', 'damilola@tenmediahq.com', 'Damilola Oyeleke', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['ProPresenter'], 'available', true),
-    (gen_random_uuid(), 'user_emmanuel', 'emmanuel@tenmediahq.com', 'Emmanuel Adeyemi', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Camera'], 'available', true),
-    (gen_random_uuid(), 'user_david', 'david@tenmediahq.com', 'David Oluwaseun', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Sound'], 'available', true),
-    (gen_random_uuid(), 'user_samuel', 'samuel@tenmediahq.com', 'Samuel Okonkwo', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Lighting'], 'available', true),
-    (gen_random_uuid(), 'user_peter', 'peter@tenmediahq.com', 'Peter Adeleke', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Camera'], 'available', true),
-    (gen_random_uuid(), 'user_john', 'john@tenmediahq.com', 'John Okafor', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Sound'], 'available', true),
-    (gen_random_uuid(), 'user_michael', 'michael@tenmediahq.com', 'Michael Eze', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Livestream'], 'available', true),
-    (gen_random_uuid(), 'user_andrew', 'andrew@tenmediahq.com', 'Andrew Nnamdi', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Graphics'], 'available', true),
-    (gen_random_uuid(), 'user_philip', 'philip@tenmediahq.com', 'Philip Chukwu', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Camera'], 'available', true),
-    (gen_random_uuid(), 'user_stephen', 'stephen@tenmediahq.com', 'Stephen Obiora', 'member', 'envoy_nation', ARRAY['envoy_nation'], ARRAY['Sound'], 'available', true),
-    (gen_random_uuid(), 'user_daniel', 'daniel@tenmediahq.com', 'Daniel Amaechi', 'member', 'e_nation', ARRAY['e_nation'], ARRAY['Camera'], 'available', true),
-    (gen_random_uuid(), 'user_matthew', 'matthew@tenmediahq.com', 'Matthew Ikenna', 'member', 'e_nation', ARRAY['e_nation'], ARRAY['Sound'], 'available', true),
-    (gen_random_uuid(), 'user_mark', 'mark@tenmediahq.com', 'Mark Chibueze', 'member', 'e_nation', ARRAY['e_nation'], ARRAY['Livestream'], 'available', true)
-ON CONFLICT (user_id) DO NOTHING;
-
--- =====================
--- ADD RLS INSERT POLICY FOR PROFILES
--- =====================
--- Allow new users to insert their own profile (needed for onboarding)
 DO $$
 BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can insert own profile'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can insert own profile') THEN
         CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT TO authenticated WITH CHECK (auth.uid() = id);
     END IF;
-END $$;
-
--- Allow admins to insert services
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'services' AND policyname = 'Admins can insert services'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'services' AND policyname = 'Admins can insert services') THEN
         CREATE POLICY "Admins can insert services" ON services FOR INSERT TO authenticated WITH CHECK (
             EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('director', 'team_lead', 'assistant_lead'))
         );
     END IF;
-END $$;
-
--- Allow admins to insert equipment
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'equipment' AND policyname = 'Admins can insert equipment'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'equipment' AND policyname = 'Admins can insert equipment') THEN
         CREATE POLICY "Admins can insert equipment" ON equipment FOR INSERT TO authenticated WITH CHECK (
             EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('director', 'team_lead', 'assistant_lead'))
         );
     END IF;
-END $$;
-
--- Allow admins to insert attendance
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'attendance' AND policyname = 'Admins can insert attendance'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'attendance' AND policyname = 'Admins can insert attendance') THEN
         CREATE POLICY "Admins can insert attendance" ON attendance FOR INSERT TO authenticated WITH CHECK (
             EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('director', 'team_lead', 'assistant_lead', 'unit_head'))
         );
     END IF;
-END $$;
-
--- Allow admins to insert rotas
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'rotas' AND policyname = 'Admins can insert rotas'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'rotas' AND policyname = 'Admins can insert rotas') THEN
         CREATE POLICY "Admins can insert rotas" ON rotas FOR INSERT TO authenticated WITH CHECK (
             EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('director', 'team_lead', 'assistant_lead'))
         );
     END IF;
-END $$;
-
--- Allow inserting notifications
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'System can insert notifications'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'notifications' AND policyname = 'System can insert notifications') THEN
         CREATE POLICY "System can insert notifications" ON notifications FOR INSERT TO authenticated WITH CHECK (true);
     END IF;
-END $$;
-
--- Allow inserting checklists
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_policies WHERE tablename = 'checklists' AND policyname = 'Users can insert checklists'
-    ) THEN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'checklists' AND policyname = 'Users can insert checklists') THEN
         CREATE POLICY "Users can insert checklists" ON checklists FOR INSERT TO authenticated WITH CHECK (true);
     END IF;
 END $$;
