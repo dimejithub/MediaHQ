@@ -1,50 +1,141 @@
--- TEN MediaHQ Seed Data
+-- TEN MediaHQ - REAL Seed Data (Envoy Nation)
 -- Run this in Supabase SQL Editor
+-- Step 1: First run this to clear old fake data
+-- Step 2: Seeds real team, services, and equipment
 
--- SEED SERVICES
+-- =====================
+-- CLEAR OLD FAKE DATA
+-- =====================
+DELETE FROM notifications;
+DELETE FROM checklists;
+DELETE FROM rotas;
+DELETE FROM attendance;
+DELETE FROM equipment;
+DELETE FROM services;
+-- Don't delete profiles that are linked to auth users
+DELETE FROM profiles WHERE id NOT IN (SELECT id FROM auth.users);
+
+-- =====================
+-- STEP 1: Allow profiles without auth.users link (for Option C hybrid)
+-- =====================
+ALTER TABLE profiles DROP CONSTRAINT IF EXISTS profiles_id_fkey;
+
+-- =====================
+-- STEP 2: Update handle_new_user trigger to merge with existing roster
+-- When someone signs up, if their name matches an existing profile, update it
+-- Otherwise create a new one
+-- =====================
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+DECLARE
+    existing_profile_id UUID;
+BEGIN
+    -- Check if a profile with this email already exists (seeded member)
+    SELECT id INTO existing_profile_id FROM public.profiles WHERE email = NEW.email;
+    
+    IF existing_profile_id IS NOT NULL THEN
+        -- Merge: update existing profile with auth user ID
+        UPDATE public.profiles SET
+            id = NEW.id,
+            email = NEW.email,
+            name = COALESCE(NEW.raw_user_meta_data->>'name', profiles.name)
+        WHERE id = existing_profile_id;
+    ELSE
+        -- New user: create fresh profile
+        INSERT INTO public.profiles (id, email, name, user_id, role, primary_team, teams)
+        VALUES (
+            NEW.id,
+            NEW.email,
+            COALESCE(NEW.raw_user_meta_data->>'name', split_part(NEW.email, '@', 1)),
+            'user_' || substr(md5(NEW.id::text), 1, 8),
+            'member',
+            'envoy_nation',
+            ARRAY['envoy_nation']
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- =====================
+-- SEED REAL TEAM MEMBERS (Envoy Nation)
+-- =====================
+INSERT INTO profiles (id, user_id, email, name, role, primary_team, teams, unit, skills, availability, onboarding_completed)
+VALUES
+    -- Leadership
+    (gen_random_uuid(), 'user_adebowale', 'adebowale@tenmediahq.com', 'Dr. Adebowale Owoseni', 'director', 'envoy_nation', ARRAY['envoy_nation'], 'Head', ARRAY['Leadership', 'Vision'], 'available', true),
+    (gen_random_uuid(), 'user_adeola', 'adeola@tenmediahq.com', 'Adeola Hilton', 'team_lead', 'envoy_nation', ARRAY['envoy_nation'], 'Lead', ARRAY['Leadership', 'Directing'], 'available', true),
+    (gen_random_uuid(), 'user_oladimeji', 'oladimeji@tenmediahq.com', 'Oladimeji Tiamiyu', 'assistant_lead', 'envoy_nation', ARRAY['envoy_nation'], 'Lead', ARRAY['Leadership', 'Production', 'Video Editing'], 'available', true),
+    -- Sub-Unit Heads
+    (gen_random_uuid(), 'user_oladipupo', 'oladipupo@tenmediahq.com', 'Oladipupo Hilton', 'unit_head', 'envoy_nation', ARRAY['envoy_nation'], 'Photography', ARRAY['Photography', 'Photo Editing'], 'available', true),
+    (gen_random_uuid(), 'user_oluseye', 'oluseye@tenmediahq.com', 'Bro Oluseye', 'unit_head', 'envoy_nation', ARRAY['envoy_nation'], 'Projection & Livestream', ARRAY['Projection', 'Livestream'], 'available', true),
+    (gen_random_uuid(), 'user_michel', 'michel@tenmediahq.com', 'Michel Adimula', 'unit_head', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation', 'Mixing'], 'available', true),
+    -- Projection & Livestream Unit
+    (gen_random_uuid(), 'user_peter_n', 'peter.ndiparya@tenmediahq.com', 'Peter Ndiparya', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Projection & Livestream', ARRAY['Support', 'Projection'], 'available', true),
+    (gen_random_uuid(), 'user_jemima', 'jemima@tenmediahq.com', 'Jemima Eromon', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Projection & Livestream', ARRAY['Projection Operator'], 'available', true),
+    (gen_random_uuid(), 'user_tobi', 'tobi@tenmediahq.com', 'Bro Tobi', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Projection & Livestream', ARRAY['Projection Operator'], 'available', true),
+    -- Production Unit
+    (gen_random_uuid(), 'user_jasper', 'jasper@tenmediahq.com', 'Jasper Eromon', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation', 'Mixing'], 'available', true),
+    (gen_random_uuid(), 'user_olukunle', 'olukunle@tenmediahq.com', 'Olukunle Ogunniran', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation', 'Mixing'], 'available', true),
+    (gen_random_uuid(), 'user_wade', 'wade@tenmediahq.com', 'Wade Osunmakinde', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation', 'Mixing'], 'available', true),
+    (gen_random_uuid(), 'user_favour_o', 'favour.olusanya@tenmediahq.com', 'Favour Olusanya', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation', 'PTZ'], 'available', true),
+    (gen_random_uuid(), 'user_favour_a', 'favour.anwo@tenmediahq.com', 'Favour Anwo', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation'], 'available', true),
+    (gen_random_uuid(), 'user_damilare', 'damilare@tenmediahq.com', 'Damilare Akeredolu', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation', 'Mixing'], 'available', true),
+    (gen_random_uuid(), 'user_adeleke', 'adeleke@tenmediahq.com', 'Adeleke Matanmi', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Camera Operation'], 'available', true),
+    (gen_random_uuid(), 'user_abiodun', 'abiodun@tenmediahq.com', 'Abiodun Durojaiye', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Production', ARRAY['Support'], 'available', true),
+    -- Photography Unit
+    (gen_random_uuid(), 'user_seun', 'seun@tenmediahq.com', 'Seun Morenikeji', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Photography', ARRAY['Photography'], 'available', true),
+    (gen_random_uuid(), 'user_chase', 'chase@tenmediahq.com', 'Chase Hadley', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Photography', ARRAY['Photography', 'Photo Editing'], 'available', true),
+    (gen_random_uuid(), 'user_onose', 'onose@tenmediahq.com', 'Onose Thompson', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Photography', ARRAY['Photography'], 'available', true),
+    (gen_random_uuid(), 'user_precious', 'precious@tenmediahq.com', 'Precious Achudume', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Photography', ARRAY['Support', 'Photography'], 'available', true),
+    (gen_random_uuid(), 'user_oladeinde', 'oladeinde@tenmediahq.com', 'Oladeinde Omidiji', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Photography', ARRAY['Photography', 'Camera Operation'], 'available', true),
+    -- Post-Production Unit
+    (gen_random_uuid(), 'user_temidayo', 'temidayo@tenmediahq.com', 'Temidayo Peters', 'member', 'envoy_nation', ARRAY['envoy_nation'], 'Post-Production', ARRAY['Video Editing'], 'available', true)
+ON CONFLICT (user_id) DO NOTHING;
+
+-- =====================
+-- SEED RECURRING SERVICES (Envoy Nation)
+-- =====================
+-- Current and upcoming services for March 2026
 INSERT INTO services (service_id, title, date, time, type, team_id, description) VALUES
-    ('svc_sunday_main', 'Sunday Morning Service', '2026-02-08', '11:00', 'sunday_service', 'envoy_nation', 'Main Sunday worship service'),
-    ('svc_sunday_tce', 'The Commissioned Envoy Service', '2026-02-08', '14:00', 'sunday_service', 'e_nation', 'TCE afternoon service'),
-    ('svc_midweek', 'Midweek Leicester Blessings', '2026-02-11', '18:30', 'midweek', 'envoy_nation', 'Wednesday midweek service'),
-    ('svc_tuesday', 'Tuesday Standup Meeting', '2026-02-10', '20:00', 'standup', 'envoy_nation', 'Weekly team standup'),
-    ('svc_rehearsal', 'Technical Rehearsal', '2026-02-07', '17:00', 'rehearsal', 'envoy_nation', 'Equipment and tech rehearsal')
+    -- March 2026 Leicester Blessings (Thursdays)
+    ('svc_lb_mar06', 'Leicester Blessing', '2026-03-05', '18:30', 'midweek', 'envoy_nation', 'Midweek service - Thursday'),
+    ('svc_lb_mar13', 'Leicester Blessing', '2026-03-12', '18:30', 'midweek', 'envoy_nation', 'Midweek service - Thursday'),
+    ('svc_lb_mar20', 'Leicester Blessing', '2026-03-19', '18:30', 'midweek', 'envoy_nation', 'Midweek service - Thursday'),
+    ('svc_cwpmo_mar', 'Connected with PMO', '2026-03-26', '18:30', 'special', 'envoy_nation', 'Last Thursday of the month - Connected with PMO'),
+    -- March 2026 Sunday Services
+    ('svc_sun_mar08', 'Sunday Service', '2026-03-08', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    ('svc_sun_mar15', 'Sunday Service', '2026-03-15', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    ('svc_sun_mar22', 'Sunday Service', '2026-03-22', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    ('svc_sun_mar29', 'Sunday Service', '2026-03-29', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    -- April 2026 Leicester Blessings (Thursdays)
+    ('svc_lb_apr02', 'Leicester Blessing', '2026-04-02', '18:30', 'midweek', 'envoy_nation', 'Midweek service - Thursday'),
+    ('svc_lb_apr09', 'Leicester Blessing', '2026-04-09', '18:30', 'midweek', 'envoy_nation', 'Midweek service - Thursday'),
+    ('svc_lb_apr16', 'Leicester Blessing', '2026-04-16', '18:30', 'midweek', 'envoy_nation', 'Midweek service - Thursday'),
+    ('svc_cwpmo_apr', 'Connected with PMO', '2026-04-30', '18:30', 'special', 'envoy_nation', 'Last Thursday of the month - Connected with PMO'),
+    -- April 2026 Sunday Services
+    ('svc_sun_apr05', 'Sunday Service', '2026-04-05', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    ('svc_sun_apr12', 'Sunday Service', '2026-04-12', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    ('svc_sun_apr19', 'Sunday Service', '2026-04-19', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service'),
+    ('svc_sun_apr26', 'Sunday Service', '2026-04-26', '11:00', 'sunday_service', 'envoy_nation', 'Sunday worship service')
 ON CONFLICT (service_id) DO NOTHING;
 
--- SEED EQUIPMENT
-INSERT INTO equipment (equipment_id, name, category, status, team_id, notes, checked_out_by) VALUES
-    ('equip_001', 'Sony PTZ Camera 1', 'camera', 'available', 'envoy_nation', 'Main pulpit camera', NULL),
-    ('equip_002', 'Sony PTZ Camera 2', 'camera', 'available', 'envoy_nation', 'Wide angle camera', NULL),
-    ('equip_003', 'Blackmagic ATEM Mini Pro', 'video_switcher', 'available', 'envoy_nation', 'Main video switcher', NULL),
-    ('equip_004', 'Shure SM58 Microphone', 'audio', 'checked_out', 'envoy_nation', 'Handheld mic', 'user_gabriel'),
-    ('equip_005', 'Behringer X32 Mixer', 'audio', 'available', 'envoy_nation', 'Main audio mixer', NULL),
-    ('equip_006', 'MacBook Pro M2', 'computer', 'checked_out', 'envoy_nation', 'Livestream computer', 'user_joshua')
-ON CONFLICT (equipment_id) DO NOTHING;
-
--- SEED ROTAS
+-- =====================
+-- SEED SAMPLE ROTAS (Based on real Notion data patterns)
+-- =====================
 INSERT INTO rotas (service_id, team_id, assignments, status) VALUES
-    ('svc_sunday_main', 'envoy_nation', '[{"role":"Camera 1","assigned_to":"user_jasper","name":"Jasper Eromon","status":"confirmed"},{"role":"Camera 2","assigned_to":"user_emmanuel","name":"Emmanuel Adeyemi","status":"confirmed"},{"role":"Sound","assigned_to":"user_gabriel","name":"Gabriel Oladipo","status":"pending"},{"role":"Livestream","assigned_to":"user_joshua","name":"Joshua Awojide","status":"confirmed"},{"role":"Graphics","assigned_to":"user_boluwatife","name":"Boluwatife Akinola","status":"pending"},{"role":"Lighting","assigned_to":"user_samuel","name":"Samuel Okonkwo","status":"confirmed"}]'::jsonb, 'published'),
-    ('svc_sunday_tce', 'e_nation', '[{"role":"Camera","assigned_to":"user_daniel","name":"Daniel Amaechi","status":"confirmed"},{"role":"Sound","assigned_to":"user_matthew","name":"Matthew Ikenna","status":"pending"},{"role":"Livestream","assigned_to":"user_mark","name":"Mark Chibueze","status":"confirmed"}]'::jsonb, 'published'),
-    ('svc_midweek', 'envoy_nation', '[{"role":"Camera 1","assigned_to":"user_peter","name":"Peter Adeleke","status":"pending"},{"role":"Sound","assigned_to":"user_john","name":"John Okafor","status":"pending"},{"role":"Livestream","assigned_to":"user_michael","name":"Michael Eze","status":"pending"}]'::jsonb, 'draft');
+    ('svc_sun_mar08', 'envoy_nation', '[{"role":"PTZ Cam Op","assigned_to":"user_favour_o","name":"Favour Olusanya","status":"pending"},{"role":"Back Cam Op 1","assigned_to":"user_olukunle","name":"Olukunle Ogunniran","status":"pending"},{"role":"Roam Cam Op","assigned_to":"user_michel","name":"Michel Adimula","status":"pending"},{"role":"Side Cam Op","assigned_to":"user_damilare","name":"Damilare Akeredolu","status":"pending"},{"role":"Mixing Op","assigned_to":"user_wade","name":"Wade Osunmakinde","status":"pending"},{"role":"Projection Operator","assigned_to":"user_tobi","name":"Bro Tobi","status":"pending"},{"role":"Photographer","assigned_to":"user_oladipupo","name":"Oladipupo Hilton","status":"pending"},{"role":"Photo Editor","assigned_to":"user_chase","name":"Chase Hadley","status":"pending"},{"role":"Video Editor","assigned_to":"user_temidayo","name":"Temidayo Peters","status":"pending"}]'::jsonb, 'draft'),
+    ('svc_lb_mar06', 'envoy_nation', '[{"role":"Back Cam Op 1","assigned_to":"user_olukunle","name":"Olukunle Ogunniran","status":"pending"},{"role":"Mixing Op","assigned_to":"user_jasper","name":"Jasper Eromon","status":"pending"},{"role":"Projection Operator","assigned_to":"user_jemima","name":"Jemima Eromon","status":"pending"},{"role":"Photographer","assigned_to":"user_oladipupo","name":"Oladipupo Hilton","status":"pending"},{"role":"Video Editor","assigned_to":"user_oladimeji","name":"Oladimeji Tiamiyu","status":"pending"}]'::jsonb, 'draft');
 
--- SEED ATTENDANCE
-INSERT INTO attendance (date, team_id, attendees, notes) VALUES
-    ('2026-02-01', 'envoy_nation', ARRAY['user_adebowale','user_adeola','user_oladimeji','user_michel','user_jasper','user_gabriel','user_joshua','user_boluwatife','user_damilola','user_emmanuel','user_david','user_samuel','user_peter'], 'Good turnout for standup'),
-    ('2026-02-08', 'envoy_nation', ARRAY['user_adebowale','user_adeola','user_oladimeji','user_oluseye','user_oladipupo','user_jasper','user_gabriel','user_joshua','user_boluwatife','user_damilola','user_emmanuel','user_david','user_samuel','user_peter','user_john','user_michael','user_andrew','user_philip','user_stephen'], 'Full team present')
-ON CONFLICT (date, team_id) DO NOTHING;
-
--- SEED CHECKLISTS
+-- =====================
+-- SEED CHECKLIST TEMPLATE
+-- =====================
 INSERT INTO checklists (service_id, team_id, items) VALUES
-    ('svc_sunday_main', 'envoy_nation', '[{"id":"chk_1","text":"Test all cameras and PTZ controls","checked":false,"category":"camera"},{"id":"chk_2","text":"Check audio levels and mic batteries","checked":false,"category":"audio"},{"id":"chk_3","text":"Start livestream software and test connection","checked":false,"category":"livestream"},{"id":"chk_4","text":"Load ProPresenter slides for service","checked":false,"category":"graphics"},{"id":"chk_5","text":"Test stage lighting presets","checked":false,"category":"lighting"},{"id":"chk_6","text":"Confirm all rota members are present","checked":false,"category":"general"},{"id":"chk_7","text":"Set recording destinations and check storage","checked":false,"category":"recording"},{"id":"chk_8","text":"Test video switcher transitions","checked":false,"category":"video"}]'::jsonb);
+    ('svc_sun_mar08', 'envoy_nation', '[{"id":"chk_1","text":"Test PTZ cameras and controls","checked":false,"category":"production"},{"id":"chk_2","text":"Check back cameras are positioned correctly","checked":false,"category":"production"},{"id":"chk_3","text":"Test audio levels and mixing board","checked":false,"category":"production"},{"id":"chk_4","text":"Start projection software and load slides","checked":false,"category":"projection"},{"id":"chk_5","text":"Test livestream connection and quality","checked":false,"category":"projection"},{"id":"chk_6","text":"Camera batteries charged and cards formatted","checked":false,"category":"photography"},{"id":"chk_7","text":"Confirm all rota members are present","checked":false,"category":"general"},{"id":"chk_8","text":"Test video switcher transitions","checked":false,"category":"production"},{"id":"chk_9","text":"Set recording destinations and check storage","checked":false,"category":"post-production"},{"id":"chk_10","text":"Roam cam and side cam positions confirmed","checked":false,"category":"production"}]'::jsonb);
 
--- SEED NOTIFICATIONS
-INSERT INTO notifications (user_id, title, message, type, read) VALUES
-    ('user_adebowale', 'Welcome to TEN MediaHQ', 'Your church media management platform is ready.', 'info', false),
-    ('user_adebowale', 'New Rota Published', 'Sunday Morning Service rota has been published.', 'rota', false),
-    ('user_jasper', 'Rota Assignment', 'You have been assigned Camera 1 for Sunday Morning Service.', 'rota', false),
-    ('user_gabriel', 'Equipment Reminder', 'You currently have Shure SM58 Microphone checked out.', 'equipment', false),
-    ('user_joshua', 'Equipment Reminder', 'You currently have MacBook Pro M2 checked out.', 'equipment', false);
-
--- ADD RLS INSERT POLICIES
+-- =====================
+-- RLS INSERT POLICIES
+-- =====================
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename = 'profiles' AND policyname = 'Users can insert own profile') THEN
