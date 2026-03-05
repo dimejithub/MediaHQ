@@ -6,17 +6,16 @@ import { supabase, getProfile, signOut } from './lib/supabase';
 import Login from './pages/Login';
 import Onboarding from './pages/Onboarding';
 import Dashboard from './pages/Dashboard';
-import Team from './pages/Team';
+import TeamDirectory from './pages/TeamDirectory';
 import Services from './pages/Services';
 import Equipment from './pages/Equipment';
-import Rotas from './pages/Rotas';
+import MyRotas from './pages/MyRotas';
 import Checklists from './pages/Checklists';
 import Calendar from './pages/Calendar';
 import Attendance from './pages/Attendance';
-import Notifications from './pages/Notifications';
-import DirectorDashboard from './pages/DirectorDashboard';
 import Settings from './pages/Settings';
 import AuthCallback from './pages/AuthCallback';
+import DirectorDashboard from './pages/DirectorDashboard';
 
 // Auth Context
 const AuthContext = createContext(null);
