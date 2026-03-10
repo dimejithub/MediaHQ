@@ -4,7 +4,7 @@
 Church media team management platform for Envoy Nation (and future E-Nation/TCE team).
 
 ## Tech Stack
-- **Frontend:** React.js, Tailwind CSS, Supabase Client
+- **Frontend:** React.js, Tailwind CSS, Supabase Client, Framer Motion
 - **Backend:** Supabase (PostgreSQL + Auth + Storage + Realtime)
 - **Auth:** Email Magic Link + Google OAuth (via Supabase Auth)
 - **Hosting:** Cloudflare Pages (frontend), Supabase (backend)
@@ -21,7 +21,7 @@ Church media team management platform for Envoy Nation (and future E-Nation/TCE 
 - director, team_lead, assistant_lead, unit_head, member
 
 ## Database Tables
-profiles, services, equipment, attendance, rotas, notifications, checklists
+profiles, services, equipment, attendance, rotas, notifications, checklists, activity_logs
 
 ---
 
@@ -38,8 +38,8 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 - [x] Attendance tracking
 - [x] Calendar view
 - [x] Rotas management (My Rotas view)
-- [x] **Assign Rotas page** (fixed: migrated from deprecated BACKEND_URL to Supabase client) — Feb 2026
-- [x] **Checklists** (fixed: updated to 29 items in 5 sections matching docx) — Feb 2026
+- [x] Assign Rotas page (Supabase client) — Feb 2026
+- [x] Checklists (29 items, 5 sections from docx) — Feb 2026
 - [x] Notifications with real-time updates
 - [x] Admin Panel (role + unit management)
 - [x] Settings with phone number + WhatsApp config
@@ -48,7 +48,11 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 - [x] Real seed data (23 Envoy Nation members, 16 services, rotas, checklists)
 - [x] Twilio WhatsApp Edge Function created
 - [x] Custom favicon (TEN logo)
-- [x] Updated for tenmediahq.com domain
+- [x] **Rota WhatsApp Notifications** — Auto-creates in-app notifications + calls Twilio Edge Function — Feb 2026
+- [x] **Activity Log** — Dashboard shows recent activity (rota created, checklist completed, attendance, etc.) — Feb 2026
+- [x] **Google Calendar Integration** — "Add to Calendar" button on each service — Feb 2026
+- [x] **CSV Export** — Export buttons on Team Directory, Services, Attendance, Rotas pages — Feb 2026
+- [x] **Profile Photo Uploads** — Upload via Supabase Storage on Settings page, display in Team Directory — Feb 2026
 
 ## Deployment
 - Build: `cd frontend && yarn install && yarn build`
@@ -59,21 +63,21 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 
 ## User Action Items
 - [ ] Run `supabase_update_checklists.sql` in SQL Editor (updates checklist to 29 items)
+- [ ] Run `supabase_activity_logs.sql` in SQL Editor (creates activity_logs table)
+- [ ] Set up Supabase Storage bucket (see STORAGE_SETUP.md)
 - [ ] Run `supabase_rls_policies.sql` in SQL Editor
-- [ ] Run `supabase_schema_updates.sql` in SQL Editor (adds phone column + enables realtime)
 - [ ] Deploy Twilio Edge Function: `supabase functions deploy send-whatsapp`
 - [ ] Set Twilio secrets: `supabase secrets set TWILIO_ACCOUNT_SID=xxx TWILIO_AUTH_TOKEN=xxx TWILIO_WHATSAPP_NUMBER=xxx`
 - [ ] Share TCE team data for E-Nation seed
 - [ ] Save to GitHub and redeploy to Cloudflare
 
 ## Upcoming Tasks
-- [ ] Twilio Edge Function deployment guidance
+- [ ] Deploy to Cloudflare (Save to GitHub → redeploy)
+- [ ] Twilio Edge Function deployment
 - [ ] Custom domain setup (tenmediahq.com) with Cloudflare Pages
 - [ ] TCE team data seeding
 
 ## Future/Backlog
-- [ ] Activity log
-- [ ] Google Calendar sync
-- [ ] CSV/Excel import/export
-- [ ] Profile photo uploads
-- [ ] User notification preferences
+- [ ] CSV Import (upload team members via CSV)
+- [ ] Google Calendar full API sync
+- [ ] Notification user preferences persistence
