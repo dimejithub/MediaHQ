@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
+import { Link } from 'react-router-dom';
 
 export default function MyRotas() {
   const { profile, demoMode } = useAuth();
@@ -96,9 +97,20 @@ export default function MyRotas() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl lg:text-3xl font-bold text-white">My Rotas</h1>
-        <p className="text-slate-400 mt-1">Your upcoming duty assignments</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold text-white">My Rotas</h1>
+          <p className="text-slate-400 mt-1">Your upcoming duty assignments</p>
+        </div>
+        {['director', 'team_lead', 'assistant_lead'].includes(profile?.role) && (
+          <Link
+            to="/assign-rotas"
+            data-testid="assign-rotas-link"
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all"
+          >
+            + Assign Rotas
+          </Link>
+        )}
       </div>
 
       {/* Stats */}

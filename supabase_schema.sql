@@ -139,6 +139,7 @@ CREATE TABLE IF NOT EXISTS checklists (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     service_id TEXT REFERENCES services(service_id),
     team_id TEXT REFERENCES teams(team_id),
+    title TEXT,
     items JSONB DEFAULT '[]'::JSONB,
     completed_by TEXT,
     completed_at TIMESTAMPTZ,

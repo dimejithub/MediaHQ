@@ -18,6 +18,7 @@ import Settings from './pages/Settings';
 import AuthCallback from './pages/AuthCallback';
 import DirectorDashboard from './pages/DirectorDashboard';
 import AdminPanel from './pages/AdminPanel';
+import AssignRotas from './pages/AssignRotas';
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -152,7 +153,8 @@ const navItems = [
   { path: '/team', label: 'Team', icon: 'Users', roles: ['all'] },
   { path: '/services', label: 'Services', icon: 'Calendar', roles: ['all'] },
   { path: '/equipment', label: 'Equipment', icon: 'Package', roles: ['all'] },
-  { path: '/rotas', label: 'Rotas', icon: 'ClipboardList', roles: ['all'] },
+  { path: '/rotas', label: 'My Rotas', icon: 'ClipboardList', roles: ['all'] },
+  { path: '/assign-rotas', label: 'Assign Rotas', icon: 'ClipboardList', roles: ['director', 'team_lead', 'assistant_lead'] },
   { path: '/checklists', label: 'Checklists', icon: 'CheckSquare', roles: ['all'] },
   { path: '/calendar', label: 'Calendar', icon: 'CalendarDays', roles: ['all'] },
   { path: '/attendance', label: 'Attendance', icon: 'UserCheck', roles: ['all'] },
@@ -350,6 +352,7 @@ function App() {
           <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
           <Route path="/director" element={<ProtectedRoute><DirectorDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
+          <Route path="/assign-rotas" element={<ProtectedRoute><AssignRotas /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />

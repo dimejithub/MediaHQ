@@ -17,25 +17,38 @@ export default function Checklists() {
       setChecklists([
         {
           id: '1',
-          title: 'Sunday Service Setup',
+          title: 'Sunday Service Checklist',
           service_date: '2026-03-08',
           items: [
-            { id: 'i1', text: 'Test all microphones', checked: true },
-            { id: 'i2', text: 'Check camera batteries', checked: true },
-            { id: 'i3', text: 'Setup streaming software', checked: false },
-            { id: 'i4', text: 'Test projector connection', checked: false },
-            { id: 'i5', text: 'Sound check with worship team', checked: false },
-          ]
-        },
-        {
-          id: '2',
-          title: 'Post-Service Checklist',
-          service_date: '2026-03-08',
-          items: [
-            { id: 'i1', text: 'Backup recordings', checked: false },
-            { id: 'i2', text: 'Return all equipment', checked: false },
-            { id: 'i3', text: 'Power off all systems', checked: false },
-            { id: 'i4', text: 'Lock media room', checked: false },
+            { id: 'i1', text: 'Ensure all team members are present', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i2', text: 'Check the rota to ensure all unit members officiating are present, if yes tick and if no have reached out?', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i3', text: 'Assign specific roles and responsibilities', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i4', text: 'Turn on all sockets, media appliances, screens including LED screen', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i5', text: 'Inspect that all equipments are properly connected', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i6', text: 'Verify cameras, switchers, and monitors', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i7', text: 'Confirm HDMI cables are working', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i8', text: 'Check battery levels and replace if needed', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i9', text: 'Ensure proper camera angles and framing', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i10', text: 'Confirm pulpit camera is properly placed', checked: false, section: 'PRE-SERVICE SETUP' },
+            { id: 'i11', text: 'Check communication headsets for clear audio', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i12', text: 'Ensure livestream feed audio is clear', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i13', text: 'Set up laptop/system for projection and livestream', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i14', text: 'Download images/videos/lyrics from WhatsApp or Drive', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i15', text: 'Verify slides, lyrics, and video cues', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i16', text: 'Run short cue test for smooth transitions', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i17', text: 'Start streaming 5 mins before service start time', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i18', text: 'Confirm overlays/lower-thirds are working', checked: false, section: 'TECHNICAL RUN-THROUGH' },
+            { id: 'i19', text: 'Ensure smooth camera switching and transitions', checked: false, section: 'LIVE PRODUCTION MONITORING' },
+            { id: 'i20', text: 'Monitor video quality and adjust as needed', checked: false, section: 'LIVE PRODUCTION MONITORING' },
+            { id: 'i21', text: 'Stay in sync with presentation and sound teams', checked: false, section: 'LIVE PRODUCTION MONITORING' },
+            { id: 'i22', text: 'Be ready to troubleshoot issues quickly', checked: false, section: 'LIVE PRODUCTION MONITORING' },
+            { id: 'i23', text: 'Document conflicts/challenges faced during service', checked: false, section: 'LIVE PRODUCTION MONITORING' },
+            { id: 'i24', text: 'List all equipment collected after first service', checked: false, section: 'EQUIPMENT HANDOVER' },
+            { id: 'i25', text: 'Ensure proper handover to second service team', checked: false, section: 'EQUIPMENT HANDOVER' },
+            { id: 'i26', text: 'Second Service Lead signs off confirming equipment is intact', checked: false, section: 'EQUIPMENT HANDOVER' },
+            { id: 'i27', text: 'Discuss what went well and issues faced', checked: false, section: 'DEBRIEF & FEEDBACK' },
+            { id: 'i28', text: 'Note any equipment needing maintenance (to be done by sub unit head)', checked: false, section: 'DEBRIEF & FEEDBACK' },
+            { id: 'i29', text: 'Plan improvements for the next service [during weekly standup]', checked: false, section: 'DEBRIEF & FEEDBACK' },
           ]
         },
       ]);
@@ -159,31 +172,46 @@ export default function Checklists() {
 
                 {/* Checklist Items (Expandable) */}
                 {activeChecklist === checklist.id && (
-                  <div className="border-t border-slate-800 p-4 space-y-2">
-                    {checklist.items?.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => toggleItem(checklist.id, item.id)}
-                        className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
-                          item.checked 
-                            ? 'bg-green-500/10 border border-green-500/30' 
-                            : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
-                          item.checked ? 'bg-green-500 border-green-500' : 'border-slate-500'
-                        }`}>
-                          {item.checked && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
+                  <div className="border-t border-slate-800 p-4 space-y-4">
+                    {(() => {
+                      const sections = {};
+                      checklist.items?.forEach(item => {
+                        const sec = item.section || 'General';
+                        if (!sections[sec]) sections[sec] = [];
+                        sections[sec].push(item);
+                      });
+                      return Object.entries(sections).map(([sectionName, items]) => (
+                        <div key={sectionName}>
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{sectionName}</p>
+                          <div className="space-y-1">
+                            {items.map((item) => (
+                              <button
+                                key={item.id}
+                                onClick={() => toggleItem(checklist.id, item.id)}
+                                className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${
+                                  item.checked 
+                                    ? 'bg-green-500/10 border border-green-500/30' 
+                                    : 'bg-slate-800/50 border border-slate-700 hover:border-slate-600'
+                                }`}
+                              >
+                                <div className={`w-5 h-5 rounded border-2 flex items-center justify-center flex-shrink-0 ${
+                                  item.checked ? 'bg-green-500 border-green-500' : 'border-slate-500'
+                                }`}>
+                                  {item.checked && (
+                                    <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </div>
+                                <span className={`text-left text-sm ${item.checked ? 'text-green-400 line-through' : 'text-white'}`}>
+                                  {item.text}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                        <span className={`text-left ${item.checked ? 'text-green-400 line-through' : 'text-white'}`}>
-                          {item.text}
-                        </span>
-                      </button>
-                    ))}
+                      ));
+                    })()}
                   </div>
                 )}
               </div>

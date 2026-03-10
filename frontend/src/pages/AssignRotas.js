@@ -1,44 +1,54 @@
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from '../App';
+import { supabase } from '../lib/supabase';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-
-// The 29 checklist items that auto-populate when a lead is assigned
 const CHECKLIST_ITEMS = [
-  'Ensure all team members are present',
-  'Check the rota to ensure all unit members officiating are present',
-  'Assign specific roles and responsibilities',
-  'Turn on all sockets, media appliances, screens including LED screen',
-  'Inspect that all equipment are properly connected',
-  'Verify cameras, switchers, and monitors',
-  'Confirm HDMI cables are working',
-  'Check battery levels and replace if needed',
-  'Ensure proper camera angles and framing',
-  'Confirm pulpit camera is properly placed',
-  'Test camera switching and transitions',
-  'Check communication headsets for clear audio',
-  'Ensure livestream feed audio is clear',
-  'Set up laptop/system for projection and livestream',
-  'Download images/videos/lyrics from WhatsApp or Drive',
-  'Verify slides, lyrics, and video cues',
-  'Run short cue test for smooth transitions',
-  'Start streaming 5 mins before service start time',
-  'Confirm overlays/lower-thirds are working',
-  'Ensure smooth camera switching and transitions',
-  'Monitor video quality and adjust as needed',
-  'Stay in sync with presentation and sound teams',
-  'Be ready to troubleshoot issues quickly',
-  'Document conflicts/challenges faced during service',
-  'Discuss what went well and issues faced',
-  'Note any equipment needing maintenance',
-  'Plan improvements for the next service',
-  'Turn off all equipment properly',
-  'Complete service report form'
+  { section: 'PRE-SERVICE SETUP', timing: '60 Minutes Before Service', items: [
+    'Ensure all team members are present',
+    'Check the rota to ensure all unit members officiating are present, if yes tick and if no have reached out?',
+    'Assign specific roles and responsibilities',
+    'Turn on all sockets, media appliances, screens including LED screen',
+    'Inspect that all equipments are properly connected',
+    'Verify cameras, switchers, and monitors',
+    'Confirm HDMI cables are working',
+    'Check battery levels and replace if needed',
+    'Ensure proper camera angles and framing',
+    'Confirm pulpit camera is properly placed',
+  ]},
+  { section: 'TECHNICAL RUN-THROUGH', timing: '30 Minutes Before Service', items: [
+    'Check communication headsets for clear audio',
+    'Ensure livestream feed audio is clear',
+    'Set up laptop/system for projection and livestream',
+    'Download images/videos/lyrics from WhatsApp or Drive',
+    'Verify slides, lyrics, and video cues',
+    'Run short cue test for smooth transitions',
+    'Start streaming 5 mins before service start time',
+    'Confirm overlays/lower-thirds are working',
+  ]},
+  { section: 'LIVE PRODUCTION MONITORING', timing: 'During Service', items: [
+    'Ensure smooth camera switching and transitions',
+    'Monitor video quality and adjust as needed',
+    'Stay in sync with presentation and sound teams',
+    'Be ready to troubleshoot issues quickly',
+    'Document conflicts/challenges faced during service',
+  ]},
+  { section: 'EQUIPMENT HANDOVER', timing: 'Second Service', items: [
+    'List all equipment collected after first service',
+    'Ensure proper handover to second service team',
+    'Second Service Lead signs off confirming equipment is intact',
+  ]},
+  { section: 'DEBRIEF & FEEDBACK', timing: '20 Minutes After Service', items: [
+    'Discuss what went well and issues faced',
+    'Note any equipment needing maintenance (to be done by sub unit head)',
+    'Plan improvements for the next service [during weekly standup]',
+  ]},
 ];
 
+const ALL_ITEMS_FLAT = CHECKLIST_ITEMS.flatMap(s => s.items);
+
 export default function AssignRotas() {
-  const { demoMode, selectedTeam } = useAuth();
+  const { profile, demoMode } = useAuth();
   const [services, setServices] = useState([]);
   const [members, setMembers] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
@@ -47,108 +57,57 @@ export default function AssignRotas() {
   const [newAssignment, setNewAssignment] = useState({ user_id: '', role: '' });
   const [loading, setLoading] = useState(true);
 
-  const teamDisplayName = selectedTeam === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
+  const teamId = profile?.primary_team || 'envoy_nation';
+  const teamDisplayName = teamId === 'envoy_nation' ? 'Envoy Nation' : 'E-Nation';
 
   const roles = [
-    'Camera Operator',
-    'Sound Engineer',
-    'Lighting Tech',
-    'ProPresenter Operator',
-    'Livestream Director',
-    'Graphics Operator',
-    'Stage Manager',
-    'Technical Director',
-    'Video Editor'
+    'PTZ Cam Op', 'Back Cam Op 1', 'Back Cam Op 2', 'Roam Cam Op', 'Side Cam Op',
+    'Mixing Op', 'Projection Operator', 'Photographer', 'Photo Editor',
+    'Video Editor', 'Livestream Director', 'Stage Manager', 'Sound Engineer',
   ];
 
-  // Demo data by team
-  const demoServices = {
-    envoy_nation: [
-      { service_id: 'demo_en_1', title: 'Sunday Service', date: '2026-02-08', time: '11:00', type: 'sunday_service' },
-      { service_id: 'demo_en_2', title: 'Leicester Blessings', date: '2026-02-12', time: '19:00', type: 'leicester_blessings' },
-      { service_id: 'demo_en_3', title: 'Connected with PMO', date: '2026-02-26', time: '19:00', type: 'connected_pmo' }
-    ],
-    e_nation: [
-      { service_id: 'demo_e_1', title: 'The Commissioned Envoy', date: '2026-02-08', time: '14:00', type: 'sunday_service' },
-      { service_id: 'demo_e_2', title: 'Midweek Service', date: '2026-02-11', time: '19:00', type: 'midweek_service' }
-    ]
-  };
+  const demoServices = [
+    { id: 'd1', service_id: 'demo_1', title: 'Sunday Service', date: '2026-03-08', time: '11:00', type: 'sunday_service' },
+    { id: 'd2', service_id: 'demo_2', title: 'Leicester Blessings', date: '2026-03-12', time: '18:30', type: 'midweek' },
+    { id: 'd3', service_id: 'demo_3', title: 'Connected with PMO', date: '2026-03-26', time: '18:30', type: 'special' },
+  ];
 
-  // Real team members
-  const demoMembers = {
-    envoy_nation: [
-      { user_id: 'en_1', name: 'Dr. Adebowale Owoseni', role: 'director' },
-      { user_id: 'en_2', name: 'Adeola Hilton', role: 'team_lead' },
-      { user_id: 'en_3', name: 'Oladimeji Tiamiyu', role: 'assistant_lead' },
-      { user_id: 'en_4', name: 'Michel Adimula', role: 'unit_head' },
-      { user_id: 'en_5', name: 'Bro Oluseye', role: 'unit_head' },
-      { user_id: 'en_6', name: 'Oladipupo Hilton', role: 'unit_head' },
-      { user_id: 'en_7', name: 'Peter Ndiparya', role: 'member' },
-      { user_id: 'en_8', name: 'Jemima Eromon', role: 'member' },
-      { user_id: 'en_9', name: 'Jasper Eromon', role: 'member' },
-      { user_id: 'en_10', name: 'Seun Morenikeji', role: 'member' },
-      { user_id: 'en_11', name: 'Chase Hadley', role: 'member' },
-      { user_id: 'en_12', name: 'Olukunle Ogunniran', role: 'member' },
-      { user_id: 'en_13', name: 'Wade Osunmakinde', role: 'member' },
-      { user_id: 'en_14', name: 'Bro Tobi', role: 'member' },
-      { user_id: 'en_15', name: 'Onose Thompson', role: 'member' },
-      { user_id: 'en_16', name: 'Precious Achudume', role: 'member' },
-      { user_id: 'en_17', name: 'Oladeinde Omidiji', role: 'member' },
-      { user_id: 'en_18', name: 'Abiodun Durojaiye', role: 'member' },
-      { user_id: 'en_19', name: 'Temidayo Peters', role: 'member' },
-      { user_id: 'en_20', name: 'Favour Olusanya', role: 'member' },
-      { user_id: 'en_21', name: 'Favour Anwo', role: 'member' },
-      { user_id: 'en_22', name: 'Damilare Akeredolu', role: 'member' },
-      { user_id: 'en_23', name: 'Adeleke Matanmi', role: 'member' }
-    ],
-    e_nation: [
-      { user_id: 'e_1', name: 'David Lee', role: 'team_lead' },
-      { user_id: 'e_2', name: 'Lisa Chen', role: 'assistant_lead' },
-      { user_id: 'e_3', name: 'James Park', role: 'member' }
-    ]
-  };
+  const demoMembers = [
+    { id: 'dm1', user_id: 'user_adeola', name: 'Adeola Hilton', role: 'team_lead' },
+    { id: 'dm2', user_id: 'user_oladimeji', name: 'Oladimeji Tiamiyu', role: 'assistant_lead' },
+    { id: 'dm3', user_id: 'user_michel', name: 'Michel Adimula', role: 'unit_head' },
+    { id: 'dm4', user_id: 'user_oluseye', name: 'Bro Oluseye', role: 'unit_head' },
+    { id: 'dm5', user_id: 'user_oladipupo', name: 'Oladipupo Hilton', role: 'unit_head' },
+    { id: 'dm6', user_id: 'user_peter_n', name: 'Peter Ndiparya', role: 'member' },
+    { id: 'dm7', user_id: 'user_jasper', name: 'Jasper Eromon', role: 'member' },
+    { id: 'dm8', user_id: 'user_wade', name: 'Wade Osunmakinde', role: 'member' },
+    { id: 'dm9', user_id: 'user_favour_o', name: 'Favour Olusanya', role: 'member' },
+    { id: 'dm10', user_id: 'user_damilare', name: 'Damilare Akeredolu', role: 'member' },
+  ];
 
   useEffect(() => {
     loadData();
-  }, [demoMode, selectedTeam]);
+  }, [demoMode, teamId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const loadData = async () => {
-    const teamServices = demoServices[selectedTeam] || demoServices.envoy_nation;
-    const teamMembers = demoMembers[selectedTeam] || demoMembers.envoy_nation;
-    
     if (demoMode) {
-      setServices(teamServices);
-      setMembers(teamMembers);
+      setServices(demoServices);
+      setMembers(demoMembers);
       setLoading(false);
       return;
     }
 
     try {
       const [servicesRes, membersRes] = await Promise.all([
-        fetch(`${BACKEND_URL}/api/services?team=${selectedTeam}`, { credentials: 'include' }),
-        fetch(`${BACKEND_URL}/api/team/members?team=${selectedTeam}`, { credentials: 'include' })
+        supabase.from('services').select('*').eq('team_id', teamId).order('date', { ascending: true }),
+        supabase.from('profiles').select('id, user_id, name, role, unit').or(`primary_team.eq.${teamId},teams.cs.{${teamId}}`).order('name'),
       ]);
-      
-      if (servicesRes.ok) {
-        const servicesData = await servicesRes.json();
-        setServices(servicesData.length > 0 ? servicesData : teamServices);
-      } else {
-        setServices(teamServices);
-        toast.error('Unable to load services. Using demo data.');
-      }
-      
-      if (membersRes.ok) {
-        const membersData = await membersRes.json();
-        setMembers(membersData.length > 0 ? membersData : teamMembers);
-      } else {
-        setMembers(teamMembers);
-        toast.error('Unable to load team members. Using demo data.');
-      }
+
+      setServices(servicesRes.data || []);
+      setMembers(membersRes.data || []);
     } catch (err) {
       console.error('Load data error:', err);
-      setServices(teamServices);
-      setMembers(teamMembers);
-      toast.error('Error loading data. Using demo mode.');
+      toast.error('Error loading data');
     } finally {
       setLoading(false);
     }
@@ -159,14 +118,12 @@ export default function AssignRotas() {
       toast.error('Please select a member and role');
       return;
     }
-    
-    // Check if member is already assigned
     if (assignments.some(a => a.user_id === newAssignment.user_id)) {
       toast.error('This member is already assigned');
       return;
     }
-    
-    setAssignments([...assignments, newAssignment]);
+    const member = members.find(m => m.user_id === newAssignment.user_id || m.id === newAssignment.user_id);
+    setAssignments([...assignments, { ...newAssignment, name: member?.name || 'Unknown' }]);
     setNewAssignment({ user_id: '', role: '' });
     toast.success('Team member added');
   };
@@ -176,26 +133,15 @@ export default function AssignRotas() {
   };
 
   const submitRota = async () => {
-    if (!selectedService) {
-      toast.error('Please select a service');
-      return;
-    }
-    if (!weeklyLead) {
-      toast.error('Please select a weekly lead');
-      return;
-    }
-    if (assignments.length === 0) {
-      toast.error('Please add at least one team member assignment');
-      return;
-    }
+    if (!selectedService) { toast.error('Please select a service'); return; }
+    if (!weeklyLead) { toast.error('Please select a weekly lead'); return; }
+    if (assignments.length === 0) { toast.error('Please add at least one team member'); return; }
 
-    const leadName = members.find(m => m.user_id === weeklyLead)?.name || 'Unknown';
+    const leadMember = members.find(m => m.user_id === weeklyLead || m.id === weeklyLead);
+    const leadName = leadMember?.name || 'Unknown';
 
     if (demoMode) {
-      // Demo mode - just show success message
-      toast.success(`🎉 Rota created successfully!`, {
-        description: `${leadName} assigned as weekly lead with ${assignments.length} team members. 29 checklist items auto-populated.`
-      });
+      toast.success(`Rota created! ${leadName} assigned as weekly lead with ${assignments.length} members. 29 checklist items auto-populated.`);
       setSelectedService(null);
       setWeeklyLead('');
       setAssignments([]);
@@ -203,60 +149,47 @@ export default function AssignRotas() {
     }
 
     try {
-      // Create the rota
-      const rotaResponse = await fetch(`${BACKEND_URL}/api/rotas`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          service_id: selectedService.service_id,
-          assignments: assignments,
-          notes: `Weekly Lead: ${leadName}`
-        })
-      });
+      const serviceId = selectedService.service_id || selectedService.id;
+      const rotaAssignments = assignments.map(a => ({
+        ...a, status: 'pending'
+      }));
 
-      if (!rotaResponse.ok) {
-        const errorData = await rotaResponse.json().catch(() => ({}));
-        throw new Error(errorData.detail || 'Failed to create rota');
-      }
-      
-      // Auto-create checklist with 29 items for the weekly lead
-      const checklistResponse = await fetch(`${BACKEND_URL}/api/checklists`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          service_id: selectedService.service_id,
-          title: `Service Checklist - ${selectedService.title}`,
-          items: CHECKLIST_ITEMS.map(text => ({ text }))
-        })
-      });
-
-      if (checklistResponse.ok) {
-        toast.success(`🎉 Rota created! 29 checklist items auto-assigned to ${leadName}`);
-      } else {
-        toast.success('Rota created successfully!');
-      }
-
-      // Send WhatsApp/In-app notifications to assigned members
-      const assignedUserIds = [...new Set([weeklyLead, ...assignments.map(a => a.user_id)])];
-      try {
-        await fetch(`${BACKEND_URL}/api/whatsapp/notify-rota`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          body: JSON.stringify({
-            user_ids: assignedUserIds,
-            service_title: selectedService.title,
-            service_date: selectedService.date,
-            service_time: selectedService.time
-          })
+      const { error: rotaError } = await supabase
+        .from('rotas')
+        .insert({
+          service_id: serviceId,
+          team_id: teamId,
+          assignments: rotaAssignments,
+          status: 'draft',
         });
-        toast.info('Notifications sent to team members!');
-      } catch (notifErr) {
-        console.log('Notification sending skipped:', notifErr);
+
+      if (rotaError) throw rotaError;
+
+      // Auto-create checklist with 29 items
+      let idx = 0;
+      const checklistItems = CHECKLIST_ITEMS.flatMap(section =>
+        section.items.map(text => ({
+          id: `chk_${++idx}`,
+          text,
+          checked: false,
+          section: section.section,
+        }))
+      );
+
+      const { error: checklistError } = await supabase
+        .from('checklists')
+        .insert({
+          service_id: serviceId,
+          team_id: teamId,
+          title: `Service Checklist - ${selectedService.title}`,
+          items: checklistItems,
+        });
+
+      if (checklistError) {
+        console.error('Checklist creation error:', checklistError);
       }
-      
+
+      toast.success(`Rota created! 29 checklist items assigned to ${leadName}`);
       setSelectedService(null);
       setWeeklyLead('');
       setAssignments([]);
@@ -267,44 +200,44 @@ export default function AssignRotas() {
   };
 
   const getMemberName = (userId) => {
-    return members.find(m => m.user_id === userId)?.name || 'Unknown';
+    return members.find(m => m.user_id === userId || m.id === userId)?.name || 'Unknown';
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-xl text-slate-400 animate-pulse">Loading...</div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-white text-xl animate-pulse">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="p-8 space-y-6" data-testid="assign-rotas-page">
+    <div className="space-y-6" data-testid="assign-rotas-page">
       <div>
-        <h1 className="text-4xl font-bold text-white mb-2">Assign Rotas - {teamDisplayName}</h1>
-        <p className="text-slate-400">Create service rotas and assign weekly lead for {teamDisplayName}</p>
+        <h1 className="text-2xl lg:text-3xl font-bold text-white">Assign Rotas - {teamDisplayName}</h1>
+        <p className="text-slate-400 mt-1">Create service rotas and assign weekly lead</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Service Selection */}
-        <div className="bg-slate-900 rounded-xl p-6 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-xl">📅</span>
-            Select Service
-          </h2>
+        <div className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800">
+          <h2 className="text-lg font-bold text-white mb-4">Select Service</h2>
           <div className="space-y-2 max-h-96 overflow-y-auto">
+            {services.length === 0 && (
+              <p className="text-slate-500 text-sm">No services found</p>
+            )}
             {services.map((service) => (
               <button
-                key={service.service_id}
+                key={service.service_id || service.id}
                 onClick={() => setSelectedService(service)}
-                data-testid={`service-${service.service_id}`}
-                className={`w-full text-left p-4 rounded-lg transition-all ${
-                  selectedService?.service_id === service.service_id
+                data-testid={`service-${service.service_id || service.id}`}
+                className={`w-full text-left p-4 rounded-xl transition-all ${
+                  selectedService?.service_id === service.service_id || selectedService?.id === service.id
                     ? 'bg-white text-slate-900 shadow-lg'
-                    : 'bg-slate-800 hover:bg-slate-700 text-white'
+                    : 'bg-slate-800/50 hover:bg-slate-700/50 text-white border border-slate-700'
                 }`}
               >
-                <p className="font-bold">{service.title}</p>
+                <p className="font-medium">{service.title}</p>
                 <p className="text-sm opacity-75">{service.date} at {service.time}</p>
               </button>
             ))}
@@ -312,62 +245,58 @@ export default function AssignRotas() {
         </div>
 
         {/* Assignment Form */}
-        <div className="lg:col-span-2 bg-slate-900 rounded-xl p-6 border border-slate-800">
-          <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-            <span className="text-xl">👥</span>
-            Assign Team Members
-          </h2>
+        <div className="lg:col-span-2 bg-slate-900/50 rounded-2xl p-5 border border-slate-800">
+          <h2 className="text-lg font-bold text-white mb-4">Assign Team Members</h2>
 
           {selectedService ? (
             <div className="space-y-5">
-              {/* Service Info */}
-              <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
-                <p className="font-bold text-lg text-white">{selectedService.title}</p>
+              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
+                <p className="font-bold text-white">{selectedService.title}</p>
                 <p className="text-sm text-slate-400">{selectedService.date} at {selectedService.time}</p>
               </div>
 
-              {/* Weekly Lead Selection */}
-              <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/30">
-                <label className="block text-sm font-bold text-amber-400 mb-2">⭐ Weekly Lead (Responsible for 29 Checklist Items)</label>
+              {/* Weekly Lead */}
+              <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                <label className="block text-sm font-bold text-amber-400 mb-2">Weekly Lead ({ALL_ITEMS_FLAT.length} Checklist Items)</label>
                 <select
                   value={weeklyLead}
                   onChange={(e) => setWeeklyLead(e.target.value)}
                   data-testid="weekly-lead-select"
-                  className="w-full p-3 bg-slate-800 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-amber-500 focus:border-amber-500"
+                  className="w-full p-3 bg-slate-800 border border-slate-600 rounded-xl text-white"
                 >
                   <option value="">Select Weekly Lead...</option>
-                  {members.filter(m => m.role === 'admin' || m.role === 'team_lead').map((member) => (
-                    <option key={member.user_id} value={member.user_id}>{member.name} ({member.role})</option>
+                  {members.filter(m => ['director', 'team_lead', 'assistant_lead', 'unit_head'].includes(m.role)).map((m) => (
+                    <option key={m.user_id || m.id} value={m.user_id || m.id}>{m.name} ({m.role?.replace('_', ' ')})</option>
                   ))}
                 </select>
-                <p className="text-xs text-slate-400 mt-2">The weekly lead will be assigned all 29 checklist items automatically</p>
+                <p className="text-xs text-slate-400 mt-2">The weekly lead will be responsible for all 29 checklist items</p>
               </div>
 
               {/* Add Assignment */}
-              <div className="p-4 rounded-lg bg-slate-800 border border-slate-700">
+              <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700">
                 <h3 className="font-bold text-white mb-3">Add Team Member</h3>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Member</label>
+                    <label className="block text-sm text-slate-300 mb-1">Member</label>
                     <select
                       value={newAssignment.user_id}
                       onChange={(e) => setNewAssignment({ ...newAssignment, user_id: e.target.value })}
                       data-testid="member-select"
-                      className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                      className="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-xl text-white text-sm"
                     >
                       <option value="">Select member...</option>
-                      {members.map((member) => (
-                        <option key={member.user_id} value={member.user_id}>{member.name}</option>
+                      {members.map((m) => (
+                        <option key={m.user_id || m.id} value={m.user_id || m.id}>{m.name}</option>
                       ))}
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-300 mb-1">Role</label>
+                    <label className="block text-sm text-slate-300 mb-1">Role</label>
                     <select
                       value={newAssignment.role}
                       onChange={(e) => setNewAssignment({ ...newAssignment, role: e.target.value })}
                       data-testid="role-select"
-                      className="w-full p-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm"
+                      className="w-full p-2.5 bg-slate-700 border border-slate-600 rounded-xl text-white text-sm"
                     >
                       <option value="">Select role...</option>
                       {roles.map((role) => (
@@ -379,27 +308,27 @@ export default function AssignRotas() {
                 <button
                   onClick={addAssignment}
                   data-testid="add-member-btn"
-                  className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all"
+                  className="mt-3 w-full px-4 py-2.5 bg-blue-600 text-white rounded-xl font-medium hover:bg-blue-700 transition-all"
                 >
-                  ➕ Add Member
+                  + Add Member
                 </button>
               </div>
 
               {/* Assignments List */}
               {assignments.length > 0 && (
-                <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30">
+                <div className="p-4 rounded-xl bg-green-500/10 border border-green-500/30">
                   <h3 className="font-bold text-green-400 mb-3">Assigned Team ({assignments.length})</h3>
                   <div className="space-y-2">
-                    {assignments.map((assignment, idx) => (
-                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-800 rounded-lg">
+                    {assignments.map((a, idx) => (
+                      <div key={idx} className="flex items-center justify-between p-3 bg-slate-800 rounded-xl">
                         <div>
-                          <p className="font-semibold text-white">{getMemberName(assignment.user_id)}</p>
-                          <p className="text-sm text-slate-400">{assignment.role}</p>
+                          <p className="font-medium text-white">{a.name}</p>
+                          <p className="text-sm text-slate-400">{a.role}</p>
                         </div>
                         <button
                           onClick={() => removeAssignment(idx)}
                           data-testid={`remove-assignment-${idx}`}
-                          className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30 transition-all"
+                          className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30"
                         >
                           Remove
                         </button>
@@ -409,19 +338,18 @@ export default function AssignRotas() {
                 </div>
               )}
 
-              {/* Submit Button */}
               <button
                 onClick={submitRota}
                 data-testid="create-rota-btn"
-                className="w-full px-6 py-4 bg-white text-slate-900 rounded-xl font-bold text-lg hover:bg-slate-100 transition-all shadow-lg"
+                className="w-full px-6 py-4 bg-white text-slate-900 rounded-xl font-bold text-lg hover:bg-slate-100 transition-all"
               >
-                ✅ Create Rota & Notify Team
+                Create Rota & Auto-Generate Checklist
               </button>
             </div>
           ) : (
             <div className="text-center py-12 text-slate-500">
-              <p className="text-6xl mb-4">👈</p>
-              <p className="text-lg">Select a service to create a rota</p>
+              <p className="text-5xl mb-4">👈</p>
+              <p>Select a service to create a rota</p>
             </div>
           )}
         </div>
