@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
+import { uploadProfilePhoto } from '../lib/helpers';
 
 export default function Settings() {
   const { profile, setProfile, demoMode } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [photoLoading, setPhotoLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [formData, setFormData] = useState({
     name: profile?.name || '',
@@ -61,6 +63,50 @@ export default function Settings() {
           {message.text}
         </div>
       )}
+
+      {/* Profile Photo */}
+      <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">
+        <h2 className="text-lg font-semibold text-white mb-4">Profile Photo</h2>
+        <div className="flex items-center gap-6">
+          {profile?.profile_picture_url ? (
+            <img src={profile.profile_picture_url} alt="Profile" className="w-20 h-20 rounded-full object-cover" />
+          ) : (
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-2xl">
+              {profile?.name?.charAt(0) || 'U'}
+            </div>
+          )}
+          <div>
+            <label className="px-4 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm hover:bg-slate-700 transition-all cursor-pointer inline-block">
+              {photoLoading ? 'Uploading...' : 'Upload Photo'}
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                data-testid="photo-upload-input"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  if (file.size > 5 * 1024 * 1024) { setMessage({ type: 'error', text: 'Photo must be under 5MB' }); return; }
+                  if (demoMode) { setMessage({ type: 'success', text: 'Photo upload simulated (demo mode)' }); return; }
+                  setPhotoLoading(true);
+                  try {
+                    const url = await uploadProfilePhoto(file, profile?.id);
+                    await supabase.from('profiles').update({ profile_picture_url: url }).eq('id', profile?.id);
+                    setProfile({ ...profile, profile_picture_url: url });
+                    setMessage({ type: 'success', text: 'Photo uploaded successfully!' });
+                  } catch (err) {
+                    console.error('Upload error:', err);
+                    setMessage({ type: 'error', text: 'Upload failed. Make sure the storage bucket is set up (see STORAGE_SETUP.md)' });
+                  } finally {
+                    setPhotoLoading(false);
+                  }
+                }}
+              />
+            </label>
+            <p className="text-slate-500 text-xs mt-2">JPG, PNG under 5MB</p>
+          </div>
+        </div>
+      </div>
 
       {/* Profile Section */}
       <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-6">

@@ -13,6 +13,7 @@ export default function Dashboard() {
     pending_rotas: 0
   });
   const [upcomingServices, setUpcomingServices] = useState([]);
+  const [recentActivity, setRecentActivity] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const teamId = profile?.primary_team || 'envoy_nation';
@@ -20,35 +21,31 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchData = async () => {
       if (demoMode) {
-        // Demo data
-        setStats({
-          total_members: 23,
-          total_services: 5,
-          total_equipment: 0,
-          available_equipment: 0,
-          pending_rotas: 2
-        });
+        setStats({ total_members: 23, total_services: 5, total_equipment: 0, available_equipment: 0, pending_rotas: 2 });
         setUpcomingServices([
           { id: 1, title: 'Leicester Blessing', date: '2026-03-05', time: '18:30', type: 'midweek' },
           { id: 2, title: 'Sunday Service', date: '2026-03-08', time: '11:00', type: 'sunday_service' },
           { id: 3, title: 'Connected with PMO', date: '2026-03-26', time: '18:30', type: 'special' },
+        ]);
+        setRecentActivity([
+          { id: 1, action: 'rota_created', details: 'Rota for Sunday Service - Lead: Adeola Hilton, 9 members', created_at: new Date(Date.now() - 3600000).toISOString() },
+          { id: 2, action: 'checklist_completed', details: 'Sunday Service checklist completed', created_at: new Date(Date.now() - 7200000).toISOString() },
+          { id: 3, action: 'attendance_marked', details: 'Tuesday standup - 5 of 7 present', created_at: new Date(Date.now() - 86400000).toISOString() },
+          { id: 4, action: 'member_joined', details: 'New member joined: Temidayo Peters', created_at: new Date(Date.now() - 172800000).toISOString() },
         ]);
         setLoading(false);
         return;
       }
 
       try {
-        // Fetch stats with error handling
-        const [membersRes, servicesRes, equipmentRes] = await Promise.all([
+        const [membersRes, servicesRes, equipmentRes, activityRes] = await Promise.all([
           supabase.from('profiles').select('id', { count: 'exact' }),
           supabase.from('services').select('*').eq('team_id', teamId).gte('date', new Date().toISOString().split('T')[0]).order('date').limit(5),
-          supabase.from('equipment').select('id, status').eq('team_id', teamId)
+          supabase.from('equipment').select('id, status').eq('team_id', teamId),
+          supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(5),
         ]);
 
-        console.log('Dashboard data:', { membersRes, servicesRes, equipmentRes });
-
         const availableEquipment = equipmentRes.data?.filter(e => e.status === 'available').length || 0;
-
         setStats({
           total_members: membersRes.count || 1,
           total_services: servicesRes.data?.length || 0,
@@ -56,19 +53,13 @@ export default function Dashboard() {
           available_equipment: availableEquipment,
           pending_rotas: 0
         });
-
         setUpcomingServices(servicesRes.data || []);
+        setRecentActivity(activityRes.data || []);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        // Set default values on error
-        setStats({
-          total_members: 1,
-          total_services: 0,
-          total_equipment: 0,
-          available_equipment: 0,
-          pending_rotas: 0
-        });
+        setStats({ total_members: 1, total_services: 0, total_equipment: 0, available_equipment: 0, pending_rotas: 0 });
         setUpcomingServices([]);
+        setRecentActivity([]);
       } finally {
         setLoading(false);
       }
@@ -190,8 +181,51 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Recent Activity */}
+      {recentActivity.length > 0 && (
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-800" data-testid="activity-log">
+          <div className="p-5 border-b border-slate-800">
+            <h2 className="text-lg font-semibold text-white">Recent Activity</h2>
+          </div>
+          <div className="divide-y divide-slate-800">
+            {recentActivity.map((item) => (
+              <div key={item.id} className="px-5 py-3 flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm shrink-0 ${getActivityStyle(item.action).bg}`}>
+                  {getActivityStyle(item.action).icon}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-white truncate">{item.details}</p>
+                  <p className="text-xs text-slate-500">{timeAgo(item.created_at)}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function getActivityStyle(action) {
+  const styles = {
+    rota_created: { icon: '📋', bg: 'bg-blue-500/20' },
+    checklist_completed: { icon: '✅', bg: 'bg-green-500/20' },
+    attendance_marked: { icon: '✓', bg: 'bg-purple-500/20' },
+    member_joined: { icon: '👤', bg: 'bg-cyan-500/20' },
+    equipment_checkout: { icon: '📦', bg: 'bg-orange-500/20' },
+  };
+  return styles[action] || { icon: '📝', bg: 'bg-slate-500/20' };
+}
+
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
 }
 
 function StatCard({ label, value, subtext, icon, color }) {

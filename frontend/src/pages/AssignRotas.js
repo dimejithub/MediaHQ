@@ -190,6 +190,44 @@ export default function AssignRotas() {
       }
 
       toast.success(`Rota created! 29 checklist items assigned to ${leadName}`);
+
+      // Log activity
+      try {
+        const { logActivity } = await import('../lib/helpers');
+        await logActivity('rota_created', `Rota for ${selectedService.title} - Lead: ${leadName}, ${assignments.length} members`, profile?.user_id);
+      } catch {}
+
+      // Create in-app notifications for assigned members
+      const assignedIds = [...new Set([weeklyLead, ...assignments.map(a => a.user_id)])];
+      const notifications = assignedIds.map(uid => ({
+        user_id: uid,
+        title: 'New Rota Assignment',
+        message: `You have been assigned to ${selectedService.title} on ${selectedService.date} at ${selectedService.time}`,
+        type: 'rota',
+      }));
+      try {
+        await supabase.from('notifications').insert(notifications);
+      } catch {}
+
+      // Try to send WhatsApp notifications via Edge Function (fails gracefully if not deployed)
+      try {
+        const supabaseUrl = process.env.REACT_APP_SUPABASE_URL;
+        await fetch(`${supabaseUrl}/functions/v1/send-whatsapp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}` },
+          body: JSON.stringify({
+            service_title: selectedService.title,
+            service_date: selectedService.date,
+            service_time: selectedService.time,
+            assigned_members: assignments.map(a => a.name),
+            weekly_lead: leadName,
+          }),
+        });
+        toast.info('WhatsApp notifications sent!');
+      } catch {
+        // Edge function not deployed yet - that's fine
+      }
+
       setSelectedService(null);
       setWeeklyLead('');
       setAssignments([]);

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
+import { exportToCSV } from '../lib/helpers';
 
 export default function TeamDirectory() {
   const { profile, demoMode } = useAuth();
@@ -103,9 +104,18 @@ export default function TeamDirectory() {
 
   return (
     <div className="space-y-6" data-testid="team-directory">
-      <div className="animate-fadeIn">
-        <h1 className="text-2xl lg:text-3xl font-bold gradient-text">Team Directory</h1>
-        <p className="text-slate-400 mt-1">{members.length} team members across {units.length} units</p>
+      <div className="animate-fadeIn flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl lg:text-3xl font-bold gradient-text">Team Directory</h1>
+          <p className="text-slate-400 mt-1">{members.length} team members across {units.length} units</p>
+        </div>
+        <button
+          onClick={() => exportToCSV(filteredMembers.map(m => ({ Name: m.name, Email: m.email || '', Role: m.role, Unit: m.unit || '', Skills: m.skills?.join(', ') || '', Availability: m.availability || '' })), 'team_directory')}
+          className="px-3 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm hover:bg-slate-700 transition-all"
+          data-testid="export-team-csv"
+        >
+          Export CSV
+        </button>
       </div>
 
       {/* Filters */}
@@ -161,9 +171,13 @@ export default function TeamDirectory() {
               style={{ animationDelay: `${idx * 0.05}s` }}
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
-                  {member.name?.charAt(0) || '?'}
-                </div>
+                {member.profile_picture_url ? (
+                  <img src={member.profile_picture_url} alt={member.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-lg shrink-0">
+                    {member.name?.charAt(0) || '?'}
+                  </div>
+                )}
                 <div className="flex-1 min-w-0">
                   <h3 className="text-white font-medium truncate">{member.name}</h3>
                   <div className="flex flex-wrap items-center gap-2 mt-2">

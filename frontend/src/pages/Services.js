@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
+import { generateGoogleCalendarUrl, exportToCSV } from '../lib/helpers';
 
 export default function Services() {
   const { profile, demoMode } = useAuth();
@@ -119,17 +120,26 @@ export default function Services() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold text-white">Services</h1>
           <p className="text-slate-400 mt-1">{services.length} scheduled services</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all"
-        >
-          + Add Service
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(services.map(s => ({ Title: s.title, Date: s.date, Time: s.time, Type: s.type, Description: s.description || '' })), 'services')}
+            className="px-3 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm hover:bg-slate-700 transition-all"
+            data-testid="export-services-csv"
+          >
+            Export CSV
+          </button>
+          <button
+            onClick={() => setShowAddModal(true)}
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-xl font-medium hover:from-blue-600 hover:to-purple-600 transition-all"
+          >
+            + Add Service
+          </button>
+        </div>
       </div>
 
       {/* Services List */}
@@ -166,6 +176,18 @@ export default function Services() {
               {service.description && (
                 <p className="mt-3 text-slate-400 text-sm">{service.description}</p>
               )}
+              <div className="mt-3 pt-3 border-t border-slate-800 flex gap-2">
+                <a
+                  href={generateGoogleCalendarUrl(service)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-testid={`gcal-${service.service_id || service.id}`}
+                  className="px-3 py-1.5 bg-slate-800 text-slate-300 rounded-lg text-xs hover:bg-slate-700 transition-all flex items-center gap-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>
+                  Add to Calendar
+                </a>
+              </div>
             </div>
           ))}
         </div>
