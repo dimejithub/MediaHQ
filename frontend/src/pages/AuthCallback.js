@@ -9,12 +9,25 @@ export default function AuthCallback() {
   useEffect(() => {
     const handleCallback = async () => {
       try {
-        // Get the session from the URL hash
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        
-        if (sessionError) {
-          throw sessionError;
+        // For PKCE flow: exchange the code from URL for a session
+        const url = new URL(window.location.href);
+        const code = url.searchParams.get('code');
+        const errorParam = url.searchParams.get('error');
+        const errorDescription = url.searchParams.get('error_description');
+
+        if (errorParam) {
+          throw new Error(errorDescription || errorParam);
         }
+
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+        }
+
+        // Wait for auth state to settle
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError) throw sessionError;
 
         if (session) {
           // Check if user has completed onboarding
@@ -31,7 +44,30 @@ export default function AuthCallback() {
             navigate('/onboarding', { replace: true });
           }
         } else {
-          navigate('/login', { replace: true });
+          // No session yet - wait for onAuthStateChange
+          const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+              subscription.unsubscribe();
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('onboarding_completed')
+                .eq('id', session.user.id)
+                .single();
+
+              if (profile?.onboarding_completed) {
+                localStorage.setItem('onboarding_complete', 'true');
+                navigate('/dashboard', { replace: true });
+              } else {
+                navigate('/onboarding', { replace: true });
+              }
+            }
+          });
+
+          // Timeout fallback - if no auth event after 10s, redirect to login
+          setTimeout(() => {
+            subscription.unsubscribe();
+            navigate('/login', { replace: true });
+          }, 10000);
         }
       } catch (err) {
         console.error('Auth callback error:', err);
