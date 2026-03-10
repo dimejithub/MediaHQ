@@ -37,8 +37,9 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 - [x] Equipment inventory with add/checkout
 - [x] Attendance tracking
 - [x] Calendar view
-- [x] Rotas management
-- [x] Checklists
+- [x] Rotas management (My Rotas view)
+- [x] **Assign Rotas page** (fixed: migrated from deprecated BACKEND_URL to Supabase client) — Feb 2026
+- [x] **Checklists** (fixed: updated to 29 items in 5 sections matching docx) — Feb 2026
 - [x] Notifications with real-time updates
 - [x] Admin Panel (role + unit management)
 - [x] Settings with phone number + WhatsApp config
@@ -57,6 +58,7 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 ---
 
 ## User Action Items
+- [ ] Run `supabase_update_checklists.sql` in SQL Editor (updates checklist to 29 items)
 - [ ] Run `supabase_rls_policies.sql` in SQL Editor
 - [ ] Run `supabase_schema_updates.sql` in SQL Editor (adds phone column + enables realtime)
 - [ ] Deploy Twilio Edge Function: `supabase functions deploy send-whatsapp`
@@ -64,9 +66,14 @@ profiles, services, equipment, attendance, rotas, notifications, checklists
 - [ ] Share TCE team data for E-Nation seed
 - [ ] Save to GitHub and redeploy to Cloudflare
 
-## Future
+## Upcoming Tasks
+- [ ] Twilio Edge Function deployment guidance
+- [ ] Custom domain setup (tenmediahq.com) with Cloudflare Pages
 - [ ] TCE team data seeding
+
+## Future/Backlog
 - [ ] Activity log
 - [ ] Google Calendar sync
 - [ ] CSV/Excel import/export
 - [ ] Profile photo uploads
+- [ ] User notification preferences

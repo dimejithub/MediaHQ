@@ -199,10 +199,6 @@ export default function AssignRotas() {
     }
   };
 
-  const getMemberName = (userId) => {
-    return members.find(m => m.user_id === userId || m.id === userId)?.name || 'Unknown';
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
