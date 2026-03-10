@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { supabase } from '../lib/supabase';
+import { useNavigate } from 'react-router-dom';
 
 export default function Onboarding() {
   const { user, profile, setProfile, demoMode } = useAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [selectedTeams, setSelectedTeams] = useState([]);
   const [rosterMembers, setRosterMembers] = useState([]);
@@ -428,7 +430,7 @@ export default function Onboarding() {
         }
       }
       
-      window.location.href = '/dashboard';
+      navigate('/dashboard');
     }
   };
 
@@ -446,7 +448,7 @@ export default function Onboarding() {
       }
     }
     
-    window.location.href = '/dashboard';
+    navigate('/dashboard');
   };
 
   return (
