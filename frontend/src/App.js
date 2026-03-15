@@ -46,28 +46,38 @@ function AuthProvider({ children }) {
       return;
     }
 
+    // Load cached profile for instant display
+    const cachedProfile = localStorage.getItem('cached_profile');
+    if (cachedProfile) {
+      try {
+        setProfile(JSON.parse(cachedProfile));
+      } catch {}
+    }
+
     // Get initial session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      console.log('Session:', session);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: profileData, error } = await getProfile(session.user.id);
-        console.log('Profile:', profileData, 'Error:', error);
+        const { data: profileData } = await getProfile(session.user.id);
         
         if (profileData) {
           setProfile(profileData);
+          localStorage.setItem('cached_profile', JSON.stringify(profileData));
         } else {
-          // Create a basic profile from user data
-          setProfile({
+          const basicProfile = {
             id: session.user.id,
             email: session.user.email,
             name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
             role: 'member',
             primary_team: 'envoy_nation',
             teams: ['envoy_nation']
-          });
+          };
+          setProfile(basicProfile);
+          localStorage.setItem('cached_profile', JSON.stringify(basicProfile));
         }
+      } else {
+        localStorage.removeItem('cached_profile');
       }
       
       setLoading(false);
@@ -75,34 +85,36 @@ function AuthProvider({ children }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth event:', event, session?.user?.email);
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        const { data: profileData, error } = await getProfile(session.user.id);
-        console.log('Profile on auth change:', profileData, 'Error:', error);
+        const { data: profileData } = await getProfile(session.user.id);
         
         if (profileData) {
           setProfile(profileData);
+          localStorage.setItem('cached_profile', JSON.stringify(profileData));
         } else {
-          // Create a basic profile from user data
-          setProfile({
+          const basicProfile = {
             id: session.user.id,
             email: session.user.email,
             name: session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
             role: 'member',
             primary_team: 'envoy_nation',
             teams: ['envoy_nation']
-          });
+          };
+          setProfile(basicProfile);
+          localStorage.setItem('cached_profile', JSON.stringify(basicProfile));
         }
       } else {
         setProfile(null);
+        localStorage.removeItem('cached_profile');
       }
       
       if (event === 'SIGNED_OUT') {
         localStorage.removeItem('demoMode');
         localStorage.removeItem('demoRole');
         localStorage.removeItem('onboarding_complete');
+        localStorage.removeItem('cached_profile');
       }
     });
 

@@ -8,6 +8,7 @@ export default function Services() {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [filterType, setFilterType] = useState('all');
   const [newService, setNewService] = useState({
     title: '',
     date: '',
@@ -105,8 +106,24 @@ export default function Services() {
       midweek: { bg: 'bg-green-500/20 text-green-400', label: 'Midweek' },
       standup: { bg: 'bg-purple-500/20 text-purple-400', label: 'Standup' },
       special: { bg: 'bg-orange-500/20 text-orange-400', label: 'Special' },
+      program: { bg: 'bg-pink-500/20 text-pink-400', label: 'Program' },
+      training: { bg: 'bg-cyan-500/20 text-cyan-400', label: 'Training' },
+      service: { bg: 'bg-blue-500/20 text-blue-400', label: 'Service' },
+      workers_retreat: { bg: 'bg-amber-500/20 text-amber-400', label: 'Retreat' },
+      director_retreat: { bg: 'bg-amber-500/20 text-amber-400', label: 'Director Retreat' },
+      fellowship: { bg: 'bg-emerald-500/20 text-emerald-400', label: 'Fellowship' },
+      outreach: { bg: 'bg-rose-500/20 text-rose-400', label: 'Outreach' },
     };
-    return badges[type] || badges.sunday_service;
+    return badges[type] || { bg: 'bg-slate-500/20 text-slate-400', label: type?.replace(/_/g, ' ') || 'Event' };
+  };
+
+  const getTypeIcon = (type) => {
+    const icons = {
+      sunday_service: '⛪', midweek: '🙏', standup: '🎤', special: '🌟',
+      program: '🎪', training: '📚', service: '⛪', workers_retreat: '🏕',
+      director_retreat: '👑', fellowship: '🤝', outreach: '📢',
+    };
+    return icons[type] || '📅';
   };
 
   if (loading) {
@@ -127,7 +144,7 @@ export default function Services() {
         </div>
         <div className="flex gap-2">
           <button
-            onClick={() => exportToCSV(services.map(s => ({ Title: s.title, Date: s.date, Time: s.time, Type: s.type, Description: s.description || '' })), 'services')}
+            onClick={() => exportToCSV(services.map(s => ({ Title: s.title, Date: s.date, Time: s.time, Type: s.type, Venue: s.venue || '', Lead: s.responsible_lead || '', Unit: s.unit || '', Status: s.status || '', Notes: s.notes || '' })), 'services')}
             className="px-3 py-2 bg-slate-800 text-slate-300 rounded-xl text-sm hover:bg-slate-700 transition-all"
             data-testid="export-services-csv"
           >
@@ -140,6 +157,21 @@ export default function Services() {
             + Add Service
           </button>
         </div>
+      </div>
+
+      {/* Type Filter */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {['all', 'program', 'training', 'service', 'workers_retreat', 'outreach', 'fellowship'].map(t => (
+          <button
+            key={t}
+            onClick={() => setFilterType(t)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-all ${
+              filterType === t ? 'bg-white text-slate-900' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+            }`}
+          >
+            {t === 'all' ? 'All' : t === 'workers_retreat' ? 'Retreats' : t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
       </div>
 
       {/* Services List */}
@@ -156,18 +188,25 @@ export default function Services() {
         </div>
       ) : (
         <div className="space-y-3">
-          {services.map((service) => (
+          {services.filter(s => filterType === 'all' || s.type === filterType).map((service) => (
             <div
               key={service.id || service.service_id}
               className="bg-slate-900/50 rounded-2xl p-5 border border-slate-800 hover:border-slate-700 transition-all"
             >
               <div className="flex items-center gap-4">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-500/20 flex items-center justify-center text-2xl">
-                  {service.type === 'sunday_service' ? '⛪' : service.type === 'standup' ? '🎤' : '🙏'}
+                  {getTypeIcon(service.type)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-white font-medium">{service.title}</h3>
-                  <p className="text-slate-400 text-sm">{formatDate(service.date)} • {service.time}</p>
+                  <p className="text-slate-400 text-sm">{formatDate(service.date)} {service.time ? `• ${service.time}` : ''}</p>
+                  {(service.venue || service.responsible_lead) && (
+                    <p className="text-slate-500 text-xs mt-0.5">
+                      {service.venue && <span>{service.venue}</span>}
+                      {service.venue && service.responsible_lead && <span> • </span>}
+                      {service.responsible_lead && <span>Lead: {service.responsible_lead}</span>}
+                    </p>
+                  )}
                 </div>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${getTypeBadge(service.type).bg}`}>
                   {getTypeBadge(service.type).label}
