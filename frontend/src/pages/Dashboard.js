@@ -38,26 +38,33 @@ export default function Dashboard() {
       }
 
       try {
-        const [membersRes, servicesRes, equipmentRes, activityRes] = await Promise.all([
-          supabase.from('profiles').select('id', { count: 'exact' }),
-          supabase.from('services').select('*').eq('team_id', teamId).gte('date', new Date().toISOString().split('T')[0]).order('date').limit(5),
-          supabase.from('equipment').select('id, status').eq('team_id', teamId),
-          supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(5),
+        // Run queries independently so one failure doesn't block others
+        const [membersRes, servicesRes, equipmentRes] = await Promise.all([
+          supabase.from('profiles').select('id', { count: 'exact' }).then(r => r).catch(() => ({ count: 0 })),
+          supabase.from('services').select('*').eq('team_id', teamId).gte('date', new Date().toISOString().split('T')[0]).order('date').limit(5).then(r => r).catch(() => ({ data: [] })),
+          supabase.from('equipment').select('id, status').eq('team_id', teamId).then(r => r).catch(() => ({ data: [] })),
         ]);
+
+        // Activity logs query separately — table might not exist yet
+        let activityData = [];
+        try {
+          const actRes = await supabase.from('activity_logs').select('*').order('created_at', { ascending: false }).limit(5);
+          activityData = actRes.data || [];
+        } catch {}
 
         const availableEquipment = equipmentRes.data?.filter(e => e.status === 'available').length || 0;
         setStats({
-          total_members: membersRes.count || 1,
+          total_members: membersRes.count || 0,
           total_services: servicesRes.data?.length || 0,
           total_equipment: equipmentRes.data?.length || 0,
           available_equipment: availableEquipment,
           pending_rotas: 0
         });
         setUpcomingServices(servicesRes.data || []);
-        setRecentActivity(activityRes.data || []);
+        setRecentActivity(activityData);
       } catch (err) {
         console.error('Error fetching dashboard data:', err);
-        setStats({ total_members: 1, total_services: 0, total_equipment: 0, available_equipment: 0, pending_rotas: 0 });
+        setStats({ total_members: 0, total_services: 0, total_equipment: 0, available_equipment: 0, pending_rotas: 0 });
         setUpcomingServices([]);
         setRecentActivity([]);
       } finally {

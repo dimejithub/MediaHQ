@@ -19,6 +19,7 @@ import AuthCallback from './pages/AuthCallback';
 import DirectorDashboard from './pages/DirectorDashboard';
 import AdminPanel from './pages/AdminPanel';
 import AssignRotas from './pages/AssignRotas';
+import Training from './pages/Training';
 
 // Auth Context
 const AuthContext = createContext(null);
@@ -170,6 +171,7 @@ const navItems = [
   { path: '/checklists', label: 'Checklists', icon: 'CheckSquare', roles: ['all'] },
   { path: '/calendar', label: 'Calendar', icon: 'CalendarDays', roles: ['all'] },
   { path: '/attendance', label: 'Attendance', icon: 'UserCheck', roles: ['all'] },
+  { path: '/training', label: 'Training', icon: 'BookOpen', roles: ['all'] },
   { path: '/notifications', label: 'Notifications', icon: 'Bell', roles: ['all'] },
   { path: '/director', label: 'Director View', icon: 'Crown', roles: ['director'] },
   { path: '/admin', label: 'Admin', icon: 'Settings', roles: ['director', 'team_lead', 'assistant_lead'] },
@@ -365,6 +367,7 @@ function App() {
           <Route path="/director" element={<ProtectedRoute><DirectorDashboard /></ProtectedRoute>} />
           <Route path="/admin" element={<ProtectedRoute><AdminPanel /></ProtectedRoute>} />
           <Route path="/assign-rotas" element={<ProtectedRoute><AssignRotas /></ProtectedRoute>} />
+          <Route path="/training" element={<ProtectedRoute><Training /></ProtectedRoute>} />
           <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
